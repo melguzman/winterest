@@ -25,10 +25,10 @@ def userInfo_forFriendMatching(conn, userEmail):
     '''Collect needed information of user to match for a friend'''
     curs = dbi.dict_cursor(conn)
     curs.execute('select major, city, state, country, onCampus, industry, dreamJob, \
-                  personality, genres.type, genres.type, favorites.type, favorites.name, \
-                  classCode from userAccount inner join professionalInterests using (wemail)\
-                  inner join MyersBriggs using (wemail) inner join genres using (wemail) \
-                  inner join favorites using (wemail) inner join classes using (wemail) \
+                  personality, genres.itemType, genres.name, favorites.itemType, favorites.name \
+                  from userAccount inner join professionalInterests using (wemail)\
+                  inner join MBResults using (MBCode) inner join genres using (wemail) \
+                  inner join favorites using (wemail) \
                   where wemail = %s', [userEmail])
     return curs.fetchall()
 
@@ -36,20 +36,20 @@ def userInfo_forFriendMatching(conn, userEmail):
 def getPossibleFriendMatchings(conn):
     '''Collect all people and their traits that a user could meet as a friend'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('select major, city, state, country, onCampus, personality, genres.type, \
-                  genres.type, favorites.type, favorites.name, classCode, industry, dreamJob \
+    curs.execute('select major, city, state, country, onCampus, personality, genres.itemType, \
+                  genres.name, favorites.itemType, favorites.name, industry, dreamJob \
                   from userAccount inner join professionalInterests using (wemail) \
-                  inner join MyersBriggs using (wemail) inner join genres using (wemail) \
-                  inner join favorites using (wemail) inner join classes using (wemail)')
+                  inner join MBResults using (MBCode) inner join genres using (wemail) \
+                  inner join favorites using (wemail)')
     return curs.fetchall()
 
 def userInfo_forRomanticMatching(conn, userEmail): 
     '''Collect needed information of user to match for a romantic relationship'''
     curs = dbi.dict_cursor(conn)
     curs.execute('select major, city, state, country, onCampus, industry, dreamJob, \
-                  personality, genres.type, genres.type, favorites.type, favorites.name, \
+                  personality, genres.itemType, genres.name, favorites.itemType, favorites.name, \
                   language from userAccount inner join professionalInterests using (wemail)\
-                  inner join MyersBriggs using (wemail) inner join genres using (wemail) \
+                  inner join MBResults using (MBCode) inner join genres using (wemail) \
                   inner join favorites using (wemail) \
                   inner join loveLanguages using (wemail) where wemail = %s', [userEmail])
     reurn curs.fetchall()
@@ -59,7 +59,7 @@ def getPossibleRomanceMatchings(conn):
     '''Collect all people and their traits that a user could meet as a romantic partner'''
     curs = dbi.dict_cursor(conn)
     curs.execute('select major, city, state, country, onCampus, personality, language, \
-                  genres.type, genres.type, favorites.type, favorites.name from userAccount \
-                  inner join MyersBriggs using (wemail) inner join genres using (wemail) \
+                  genres.itemType, genres.name, favorites.itemType, favorites.name from userAccount \
+                  inner join MBResults using (MBCode) inner join genres using (wemail) \
                   inner join favorites using (wemail) inner join loveLanguages using (wemail)')
     return curs.fetchall()
