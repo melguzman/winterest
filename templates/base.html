@@ -23,15 +23,16 @@
             
 {% block nav %}
 <nav>
-  <ul>
-    <li><a href="{{url_for('landing')}}">Home</a></li>
-    <li><a href="{{url_for('faq')}}">FAQs</a></li>
-  </ul>
+  <a href="{{url_for('index')}}"><p id="winterest-logo">Winterest</p></a>
+  <a href="{{url_for('profile')}}">
+    <div id="user-circle" class="circle-img">
+      <p>JL</p>
+    </div>
+  </a>
 </nav>
 {% endblock %}
 
 {% block main_content %}
-<h1>Welcome!</h1>
 {% endblock %}
 
   <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>

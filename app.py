@@ -6,6 +6,8 @@ app = Flask(__name__)
 #import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
+import userInfoQueries
+
 import random
 
 app.secret_key = 'your secret here'
@@ -26,10 +28,10 @@ def landing():
 def faq():
     return render_template('faq.html', page_title = 'Winterest FAQ')
 
-@app.route('/greet/', methods=["GET", "POST"])
-def greet():
+@app.route('/demographics/', methods = ["GET", "POST"])
+def demographics():
     if request.method == 'GET':
-        return render_template('greet.html', title ='Customized Greeting')
+        return render_template('demographics.html', title ='Fill out your demographics:')
     else:
         try:
             username = request.form['username'] # throws error if there's trouble
@@ -68,7 +70,13 @@ def testform():
 def init_db():
     dbi.cache_cnf()
     # set this local variable to 'wmdb' or your personal or team db
+<<<<<<< HEAD:flask-starter/profile.py
     dbi.use('wellesleymatch_db')
+=======
+    db_to_use = 'wellesleymatch_db' 
+    dbi.use(db_to_use)
+    print('will connect to {}'.format(db_to_use))
+>>>>>>> 00097186a19289cb8750406e4e463b7951b730d9:app.py
 
 if __name__ == '__main__':
     import sys, os

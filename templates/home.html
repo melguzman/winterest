@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<div class="main-content">
+  <section class="match-section">
+    <h1 class="section-header">Find Friends</h1>
+    <div class="match-photo">
+      <img id="match-image" src="person.jpg" alt="">
+      <div class="match-header">
+        <h2 class="match-name">Elizabeth</h2>
+        <p class="match-subheader">2nd Year</p>
+
+        <div id="more-profile">
+          <p class="profile-bio">
+            Hi there! My name is Selena and I am a product manager at Amazon!
+            I am eager to meet and share more about my experiences.
+          </p>
+          <div class="profile-interests" data-state="closed">
+            <div class="interest-box">
+              <div class="interest-emoji">🎵</div>
+              <p>My favorite genre of music is <strong>Rock</strong></p>
+            </div>
+            <div class="interest-box">
+              <div class="interest-emoji">⚽️</div>
+              <p>My favorite sport is <strong>soccer</strong></p>
+            </div>
+            <div class="interest-box">
+              <div class="interest-emoji">💻</div>
+              <p>My passion is <strong>technology</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="circle left-arrow">
+        <img src="arrow.png" alt="">
+      </div>
+      <div class="circle right-arrow">
+        <img src="arrow.png" alt="">
+      </div>
+    </div>
+    <div class="match-buttons">
+      <button class="blue-button" id="more-info-button" type="button" name="button">👀 More Information</button>
+      <button id="match-button" type="button" name="button">❤️ Match</button>
+      <button class="gray-button" id="shuffle-button" type="button" name="button">🔀 Shuffle</button>
+    </div>
+  </section>
+  <section id="current-matches">
+    <h1 class="section-header">Current Matches</h1>
+    <div class="match-containers">
+      <div class="circle-img">
+        <p>BL</p>
+      </div>
+      <div class="matches-info">
+        <h3>Bella</h3>
+        <p class="match-subheader">2nd Year</p>
+      </div>
+    </div>
+    <div class="match-containers">
+      <div class="circle-img">
+        <p>JT</p>
+      </div>
+      <div class="matches-info">
+        <h3>Julia</h3>
+        <p class="match-subheader">2nd Year</p>
+      </div>
+    </div>
+    <div class="match-containers">
+      <div class="circle-img">
+        <p>HB</p>
+      </div>
+      <div class="matches-info">
+        <h3>Heather</h3>
+        <p class="match-subheader">3rd Year</p>
+      </div>
+    </div>
+    <div class="more-container">
+      <div class="matches-info">
+        <h3>much empty.</h3>
+        <p class="match-subheader">get matching!</p>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block end_scripts %}
+<script>
+
+    $("#more-info-button").on("click", function(event) {
+      $button = $("#more-info-button");
+      $profile = $("#more-profile");
+      if ($profile.css("display") == 'none') {
+        $profile.css("display", "block");
+        $button.text("✌️ Less Information");
+      }
+      else {
+        $profile.css("display", "none");
+        $button.text("👀 More Information");
+      }
+    });
+  </script>
+{% endblock %}
+
