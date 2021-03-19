@@ -1,4 +1,5 @@
-use wellesleymatch_db;
+use sk1_db;
+--use wellesleymatch_db;
 
 drop table if exists meeting;
 drop table if exists icebreaker;
@@ -54,10 +55,10 @@ ENGINE = InnoDB;
 
 create table favorites (
     wemail varchar(50) not null,
-    favoritesID int not null primary key,
     name varchar(50),
-    type enum('album', 'song', 'artist', 'book', 'movie', 'tvshow', 'color', 'emoji', 'food', 'restaurant', 'game'),
-    INDEX (favoritesID),
+    itemType enum('album', 'song', 'artist', 'book', 'movie',
+        'tvshow', 'color', 'emoji', 'food', 'restaurant', 'game'),
+    INDEX (itemType),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
@@ -67,10 +68,8 @@ ENGINE = InnoDB;
 
 create table loveLanguages (
     wemail varchar(50) not null,
-    loveLangID int not null primary key,
-    ranking int,
-    type enum('affirmation', 'service', 'gift', 'time', 'physical'),
-    INDEX (loveLangID),
+    langNum enum("1", "2", "3"),
+    language enum('affirmation', 'service', 'gift', 'time', 'physical'),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
@@ -94,7 +93,7 @@ ENGINE = InnoDB;
 create table genres (
     wemail varchar(50) not null,
     genresID int not null primary key,
-    type enum('music', 'book', 'movie', 'tvshow'),
+    itemType enum('music', 'book', 'movie', 'tvshow'),
     name varchar(20),
     INDEX (genresID),
     foreign key (wemail) references userAccount(wemail)
@@ -145,7 +144,7 @@ create table meeting (
     wemail varchar(50) not null,
     meetingID int not null primary key,
     time date,
-    type varchar(30),
+    itemType varchar(30),
     wemailMatch varchar(50),
     location varchar(30),
     INDEX (meetingID),

@@ -6,6 +6,8 @@ app = Flask(__name__)
 import cs304_db as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
+import profileQueries
+
 import random
 
 app.secret_key = 'your secret here'
