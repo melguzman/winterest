@@ -24,6 +24,14 @@ app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 def index():
     return render_template('landing.html')
 
+@app.route('login')
+def login():
+    return render_template('login.html')
+
+@app.route('signup')
+def signup():
+    return render_template('signup.html')
+
 @app.route('/faq/')
 def faq():
     return render_template('faq.html', page_title = 'Winterest FAQ')
