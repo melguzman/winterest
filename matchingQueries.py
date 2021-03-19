@@ -10,7 +10,7 @@ def userInfo_forMentorMatching(conn, userEmail):
     curs = dbi.dict_cursor(conn)
     curs.execute('select major, city, state, country, industry, dreamJob \
                   from userAccount inner join professionalInterests using (wemail) where userAccount.wemail = %s', [userEmail])
-    reurn curs.fetchall()
+    return curs.fetchall()
 
 def getPossibleMentorMatchings(conn, userIndustry, userDreamJob):
     '''Collect all eligible people who the user could meet as a possible mentor. Eligible here means
@@ -52,7 +52,7 @@ def userInfo_forRomanticMatching(conn, userEmail):
                 inner join MBResults using (MBCode) \
                 inner join favorites using (wemail) \
                 inner join loveLanguages using (wemail) where userAccount.wemail = %s', [userEmail])
-    reurn curs.fetchall()
+    return curs.fetchall()
 
 #later will be changed so meets certains requirements for romantic matching as the group sees fit
 def getPossibleRomanceMatchings(conn): 
