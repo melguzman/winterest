@@ -6,29 +6,6 @@ import cs304dbi as dbi # fix dbi name
 
 '''**************** Queries for getting info ****************'''
 
-def find_user(conn, wemail):
-    curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM userAccount WHERE wemail =\
-         {wemail}')
-    person = curs.fetchall()
-    # returns a string in the case where the person has not filled info out
-    # otherwise, returns the demographics
-    if len(person) != 0:
-        return curs.fetchall()
-    return "No user by that name yet"
-
-def find_dem(conn, wemail):
-    '''Returns a user's demographic information; singular row returned'''
-    curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT country, state, city FROM userAccount WHERE wemail =\
-         {wemail}')
-    demographics = curs.fetchall()
-    # returns a string in the case where the person has not filled info out
-    # otherwise, returns the demographics
-    if len(demographics) != 0:
-        return curs.fetchall()
-    return "No demographics input yet"
-
 def find_profInt(conn, wemail):
     '''Returns a user's professional interest information; singular
     row returned'''
@@ -80,38 +57,7 @@ def find_MB_info(conn, wemail, MBCode):
 
 '''**************** Queries for changing tables ****************'''
 
-############ INSERT, UPDATE Demographics
-
-def insert_demographics(conn, wemail, country, state, city):
-    '''Takes user's initial inputs for their demographics and
-    inserts them into the table.'''
-
-    # assumption: user MUST input all categories 
-    curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT country FROM userAccount WHERE wemail = {wemail}')
-    checkDem = curs.fetchall()
-    # if list of demographics by said wemail doesn't exist,
-    # we will insert a new row into the table for this person
-    if len(checkDem) == 0: 
-        curs.execute(f'INSERT INTO userAccount (wemail, country, state, city) \
-                VALUES ({wemail}, {country}, {state}, {city})')
-        conn.commit()
-
-def update_demographics(conn, wemail, country, state, city): 
-    '''Takes user's changed inputs for their demographics and
-    updates them.'''
-    
-    curs = dbi.dict_cursor(conn)
-    wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f'UPDATE userAccount SET country = {country} \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET state = {state} \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET city = {city} \
-        WHERE wemail = {wemail}')
-    conn.commit()
-
-############ INSERT, UPDATE Professional Intersets
+############ INSERT, UPDATE Professional Interests
 
 def insert_professionalInterests(conn, wemail, industry, dreamJob):
     '''Takes user's initial inputs for their professional interests and
