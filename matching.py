@@ -5,7 +5,6 @@ app = Flask(__name__)
 
 import cs304dbi as dbi
 
-#need to change naming of variables to stay consistent with table
 def userInfo_forMentorMatching(conn, userEmail):
     '''Collect needed information of user to match for a mentor'''
     curs = dbi.dict_cursor(conn)
@@ -19,10 +18,9 @@ def getPossibleMenotrMatchings(conn, userIndustry, userDreamJob):
         dream job of the user'''
     curs = dbi.dict_cursor(conn)
     curs.execute('select * from userAccount inner join professionalInterests using (wemail) \
-    where industry = %s or dreamJob = %s',[userIndustry, userDreamJob]) #need to check if sql works
+    where industry = %s or dreamJob = %s',[userIndustry, userDreamJob]) 
     return curs.fetchall()
 
-#check if you can have so many inner joins
 def userInfo_forFriendMatching(conn, userEmail): 
     '''Collect needed information of user to match for a friend'''
     curs = dbi.dict_cursor(conn)
