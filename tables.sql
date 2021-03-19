@@ -6,12 +6,20 @@ drop table if exists icebreaker;
 drop table if exists firstMatch;
 drop table if exists bio;
 drop table if exists genres;
-drop table if exists MyersBriggs;
 drop table if exists loveLanguages;
 drop table if exists favorites;
 drop table if exists professionalInterests;
 drop table if exists contact;
 drop table if exists userAccount;
+drop table if exists MBResults;
+
+create table MBResults (
+    MBCode varchar(6) not null primary key,
+    personality enum('analysts', 'diplomats', 'sentinels', 'explorers'),
+    role varchar(15),
+    INDEX (role)
+)
+ENGINE = InnoDB;
  
 create table userAccount ( 
     wemail varchar(50) not null primary key,
@@ -22,7 +30,12 @@ create table userAccount (
     country varchar(50),
     state varchar(2),
     city varchar(50),
-    onCampus enum("yes", "no")
+    onCampus enum("yes", "no"),
+    MBCode varchar(6),
+
+    foreign key (MBCode) references MBResults(MBCode)
+        on update restrict
+        on delete restrict
     )
 
 ENGINE = InnoDB;
@@ -70,19 +83,6 @@ create table loveLanguages (
     wemail varchar(50) not null,
     langNum enum("1", "2", "3"),
     language enum('affirmation', 'service', 'gift', 'time', 'physical'),
-    foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
-)
-
-ENGINE = InnoDB;
-
-create table MyersBriggs (
-    wemail varchar(50) not null,
-    myersBID int not null primary key,
-    personality enum('analysts', 'diplomats', 'sentinels', 'explorers'),
-    role varchar(15),
-    INDEX (myersBID),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
