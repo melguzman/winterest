@@ -10,4 +10,4 @@ On a global level, the coronavirus pandemic has rendered many of the ways we hav
 
 ## Entity Relation Diagram of Key Components
 
-![Image of ERD](https://github.com/melguzman/wintrest/blob/main/Wellesley%20Match%20ERD.png)
+![Image of ERD](https://github.com/melguzman/wintrest/blob/main/WintrestERD.png)
