@@ -12,7 +12,7 @@ def userInfo_forMentorMatching(conn, userEmail):
                   from userAccount inner join professionalInterests where wemail = %s', [userEmail])
     reurn curs.fetchall()
 
-def getPossibleMenotrMatchings(conn, userIndustry, userDreamJob):
+def getPossibleMentorMatchings(conn, userIndustry, userDreamJob):
     '''Collect all eligible people who the user could meet as a possible mentor. Eligible here means
         that a person is either in an industry that the user is interested in or has a job that is the
         dream job of the user'''
