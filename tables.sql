@@ -5,7 +5,6 @@ drop table if exists meeting;
 drop table if exists icebreaker;
 drop table if exists firstMatch;
 drop table if exists bio;
-drop table if exists genres;
 drop table if exists loveLanguages;
 drop table if exists favorites;
 drop table if exists professionalInterests;
@@ -83,19 +82,6 @@ create table loveLanguages (
     wemail varchar(50) not null,
     langNum enum("1", "2", "3"),
     language enum('affirmation', 'service', 'gift', 'time', 'physical'),
-    foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
-)
-
-ENGINE = InnoDB;
-
-create table genres (
-    wemail varchar(50) not null,
-    genresID int not null primary key,
-    itemType enum('music', 'book', 'movie', 'tvshow'),
-    name varchar(20),
-    INDEX (genresID),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
