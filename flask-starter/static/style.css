@@ -1,0 +1,260 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+body  {
+  font-family: 'Inter';
+  background-color: #F5F9FF;
+  font-size: 0px;
+  margin: 0px;
+}
+
+nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  background-color: #FFF;
+  padding: 0px 40px;
+}
+
+nav a {
+  text-decoration: none;
+}
+
+#winterest-logo {
+  font-family: 'Inter';
+  font-weight: bold;
+  font-size: 20px;
+  line-height: 24px;
+  text-transform: uppercase;
+  color: #1B3966;
+}
+
+#user-circle {
+  background-color: #4377C6;
+}
+
+
+.main-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: auto;
+  padding: 25px 250px;
+}
+
+.match-section {
+  width: 440px;
+  margin-right: 65px;
+}
+
+.section-header {
+  font-weight: bold;
+  font-size: 20px;
+  line-height: 24px;
+  text-transform: uppercase;
+  color: #1B3966;
+}
+
+.match-name {
+  font-weight: bold;
+  font-size: 24px;
+  line-height: 29px;
+  margin: 0px;
+}
+
+.match-subheader {
+  font-size: 14px;
+  line-height: 17px;
+  color: #696969;
+  margin: 0px;
+}
+
+.match-photo {
+  position: relative;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+
+}
+
+#match-image {
+  height: 380px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 14px 14px 0px 0px;
+}
+
+.match-containers, .more-container {
+  display: flex;
+  flex-direction: row;
+
+  width: 335px;
+  background-color: #FFF;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+
+  transition: opacity 0.5s linear;
+  transition: .5s ease-out;
+}
+
+.more-container {
+  background: #ECEDEF;
+  box-sizing: border-box;
+  border-radius: 6px;
+  width: 375px;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.02);
+
+}
+
+.more-container .matches-info {
+  margin: 0px;
+}
+
+.matches-info h3{
+  font-weight: bold;
+  font-size: 16px;
+  line-height: 19px;
+  margin: 0px;
+}
+
+.matches-info {
+  margin-left: 16px;
+}
+
+.match-header {
+  bottom: 0px;
+  background: #FFFFFF;
+  border-radius: 0px 0px 14px 14px;
+  padding: 18px 26px;
+}
+
+.match-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0px;
+  margin-top: 8px;
+}
+
+button {
+  font-family: 'Inter';
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 19px;
+  color: #FFFFFF;
+
+  width: 100%;
+  background: #4377C6;
+  padding: 12px;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.20);
+  border-radius: 6px;
+  border: none;
+  margin: 8px 0px;
+
+  transition: opacity 0.5s linear;
+  transition: .5s ease-out;
+}
+
+#match-button {
+  background-color: #1B3966;
+}
+
+#shuffle-button {
+  background-color: #F4F4F4;
+  color: #2D2D2D;
+}
+
+.circle {
+    position: absolute;
+    top: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #FFF;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.circle-img {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 50%;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+
+  background: #1B3966;
+  width: 36px;
+  height: 36px;
+}
+
+.circle-img p {
+  font-size: 14px;
+  color: #FFF;
+}
+
+.left-arrow {
+  transform: rotate(-180deg);
+  left: -25px;
+}
+
+.right-arrow {
+  right: -25px;
+}
+
+.circle img {
+  opacity: 0.4;
+}
+
+/* More Profile Stuff */
+.profile-bio {
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.interest-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  background: #FFFFFF;
+  border: 1px solid #2B3640;
+  box-sizing: border-box;
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.interest-box > * {
+  margin: 0px;
+  font-size: 14px;
+  line-height: 17px;
+}
+
+#more-profile {
+  display: none;
+}
+
+#more-info-button:hover {
+  background: rgba(67, 119, 198, 0.8);
+}
+
+#match-button:hover {
+  background: rgba(27, 57, 102, 0.8);}
+
+#shuffle-button:hover {
+  background: #E6E6E6;
+}
+
+.match-containers:hover {
+  transform: translate(0px, -3px);
+}
