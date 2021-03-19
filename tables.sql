@@ -1,4 +1,4 @@
-use mguzman2_db;
+use wellesleymatch_db;
 
 drop table if exists meeting;
 drop table if exists icebreaker;
@@ -6,7 +6,7 @@ drop table if exists firstMatch;
 drop table if exists bio;
 drop table if exists classes;
 drop table if exists genres;
-drop table if exists Myers-Briggs;
+drop table if exists MyersBriggs;
 drop table if exists loveLanguages;
 drop table if exists favorites;
 drop table if exists professionalInterests;
@@ -14,12 +14,12 @@ drop table if exists contact;
 drop table if exists userAccount;
  
 create table userAccount ( 
-    wemail varchar(50) primary key,
+    wemail varchar(50) not null primary key,
     fname varchar(30),
     lname varchar(30),
     major varchar(50),
     year int unsigned,
-    country varchar(50).
+    country varchar(50),
     state varchar(2),
     city varchar(50),
     onCampus enum("yes", "no")
@@ -28,12 +28,12 @@ create table userAccount (
 ENGINE = InnoDB;
 
 create table contact (
-    contactID int not null primary key,
-    number int unsigned primary key,
+    wemail varchar(50) not null,
+    phoneNumber int unsigned not null primary key,
     handle varchar(50),
     URL varchar(150),
     platform enum('facebook', 'instagram', 'whatsapp', 'text'),
-    INDEX (contactID),
+    INDEX (phoneNumber),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
@@ -42,9 +42,10 @@ create table contact (
 ENGINE = InnoDB;
 
 create table professionalInterests (
+    wemail varchar(50) not null,
     profInt int not null primary key,
     industry varchar(50),
-    dream job varchar(50),
+    dreamJob varchar(50),
     INDEX (profInt),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
@@ -54,9 +55,10 @@ create table professionalInterests (
 ENGINE = InnoDB;
 
 create table favorites (
+    wemail varchar(50) not null,
     favoritesID int not null primary key,
     name varchar(50),
-    type enum('album' 'song' 'artist' 'book' 'movie' 'tvshow' 'color' 'emoji' 'food' 'restaurant' 'game'),
+    type enum('album', 'song', 'artist', 'book', 'movie', 'tvshow', 'color', 'emoji', 'food', 'restaurant', 'game'),
     INDEX (favoritesID),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
@@ -66,9 +68,10 @@ create table favorites (
 ENGINE = InnoDB;
 
 create table loveLanguages (
+    wemail varchar(50) not null,
     loveLangID int not null primary key,
     ranking int,
-    type enum('affirmation' 'service' 'gift' 'time' 'physical'),
+    type enum('affirmation', 'service', 'gift', 'time', 'physical'),
     INDEX (loveLangID),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
@@ -77,11 +80,11 @@ create table loveLanguages (
 
 ENGINE = InnoDB;
 
-create table Myers-Briggs (
+create table MyersBriggs (
+    wemail varchar(50) not null,
     myersBID int not null primary key,
     personality enum('analysts', 'diplomats', 'sentinels', 'explorers'),
     role varchar(15),
-    rode varchar(6),
     INDEX (myersBID),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
@@ -91,8 +94,9 @@ create table Myers-Briggs (
 ENGINE = InnoDB;
 
 create table genres (
+    wemail varchar(50) not null,
     genresID int not null primary key,
-    type enum(‘music’, ‘book’, ‘movie’, ‘tvshow’),
+    type enum('music', 'book', 'movie', 'tvshow'),
     name varchar(20),
     INDEX (genresID),
     foreign key (wemail) references userAccount(wemail)
@@ -103,6 +107,7 @@ create table genres (
 ENGINE = InnoDB;
 
 create table classes (
+    wemail varchar(50) not null,
     classesID int not null primary key,
     classCode varchar(8),
     INDEX (classesID),
@@ -114,6 +119,7 @@ create table classes (
 ENGINE = InnoDB;
 
 create table bio (
+    wemail varchar(50) not null,
     bioID int not null primary key,
     bio varchar(200),
     INDEX (bioID),
@@ -125,8 +131,8 @@ create table bio (
 ENGINE = InnoDB;
 
 create table firstMatch (
+    wemail varchar(50) not null,
     matchID int not null primary key,
-    wemail varchar(50),
     wemailMatch varchar(50),
     INDEX (matchID),
     foreign key (wemail) references userAccount(wemail)
@@ -137,6 +143,7 @@ create table firstMatch (
 ENGINE = InnoDB;
 
 create table icebreaker (
+    wemail varchar(50) not null,
     icebreakerID int not null primary key,
     question varchar(50),
     answer varchar(70),
@@ -149,6 +156,7 @@ create table icebreaker (
 ENGINE = InnoDB;
 
 create table meeting (
+    wemail varchar(50) not null,
     meetingID int not null primary key,
     time date,
     type varchar(30),
