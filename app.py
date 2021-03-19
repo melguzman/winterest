@@ -3,7 +3,7 @@ from flask import (Flask, render_template, make_response, url_for, request,
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
-#import cs304dbi as dbi # figure out which dbi to use
+import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
 import userInfoQueries
@@ -22,7 +22,7 @@ app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
 @app.route('/')
 def landing():
-    return render_template('main.html', page_title = 'Winterest Home')
+    return render_template('landing.html')
 
 @app.route('/faq/')
 def faq():
