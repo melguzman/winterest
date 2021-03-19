@@ -24,11 +24,11 @@ app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 def index():
     return render_template('landing.html')
 
-@app.route('login')
+@app.route('/login/')
 def login():
     return render_template('login.html')
 
-@app.route('signup')
+@app.route('/signup/')
 def signup():
     return render_template('signup.html')
 
