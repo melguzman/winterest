@@ -70,13 +70,9 @@ def testform():
 def init_db():
     dbi.cache_cnf()
     # set this local variable to 'wmdb' or your personal or team db
-<<<<<<< HEAD:flask-starter/profile.py
-    dbi.use('wellesleymatch_db')
-=======
     db_to_use = 'wellesleymatch_db' 
     dbi.use(db_to_use)
     print('will connect to {}'.format(db_to_use))
->>>>>>> 00097186a19289cb8750406e4e463b7951b730d9:app.py
 
 if __name__ == '__main__':
     import sys, os
