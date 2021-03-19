@@ -21,7 +21,7 @@ app.secret_key = ''.join([ random.choice(('ABCDEFGHIJKLMNOPQRSTUVXYZ' +
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
 @app.route('/')
-def landing():
+def index():
     return render_template('landing.html')
 
 @app.route('/faq/')
