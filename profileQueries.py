@@ -56,7 +56,7 @@ def insert_profile(conn, wemail, fname, lname, country,
     # if account for this user doesn't already exist, we will add them to
     # the userAccounts table
     if len(checkUser) == 0: 
-        curs.execute(f'INSERT INTO userAccount (wemail, fname, lname, country,
+        curs.execute(f'INSERT INTO userAccount (wemail, fname, lname, country, \
             state, city, MBCode, major, year, onCampus) \
             VALUES ({wemail}, {fname}, {lname}, {country}, \
             {state}, {city}, {MBCode}, {major}, {year}, {onCmpus})')
