@@ -44,7 +44,7 @@ create table contact (
     wemail varchar(50) not null,
     phoneNumber int unsigned not null primary key,
     handle varchar(50),
-    URL varchar(150),
+    url varchar(150),
     platform enum('facebook', 'instagram', 'whatsapp', 'text'),
     INDEX (phoneNumber),
     foreign key (wemail) references userAccount(wemail)
