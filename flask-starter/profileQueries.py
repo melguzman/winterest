@@ -6,6 +6,17 @@ import cs304dbi as dbi # fix dbi name
 
 '''**************** Queries for getting info ****************'''
 
+def find_user(conn, wemail):
+    curs = dbi.dict_cursor(conn)
+    curs.execute(f'SELECT * FROM userAccount WHERE wemail =\
+         {wemail}')
+    person = curs.fetchall()
+    # returns a string in the case where the person has not filled info out
+    # otherwise, returns the demographics
+    if len(person) != 0:
+        return curs.fetchall()
+    return "No user by that name yet"
+
 def find_dem(conn, wemail):
     '''Returns a user's demographic information; singular row returned'''
     curs = dbi.dict_cursor(conn)
@@ -34,30 +45,42 @@ def find_profInt(conn, wemail):
 def find_favorites(conn, wemail):
     '''Returns a user's favorites things and their respective genres; will be 
     multiple rows'''
+    curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT * FROM favorites\
         WHERE wemail = {wemail}')
     genreInt = curs.fetchall()
     # returns a string in the case where the person has not filled info out
-    # otherwise, returns the professional interests
+    # otherwise, returns their favorite things and the respective genres
     if len(genreInt) != 0:
         return curs.fetchall()
     return "No favorite genres input yet"
 
 def find_person_LLs(conn, wemail):
     '''Returns all of user's love languages; 3 rows returned'''
+    curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT * FROM loveLanguages \
         WHERE wemail = {wemail}')
     LLInt = curs.fetchall()
     # returns a string in the case where the person has not filled info out
-    # otherwise, returns the professional interests
+    # otherwise, returns the love languages
     if len(LLInt) != 0:
         return curs.fetchall()
     return "No LLs input yet"
 
+def find_MB_info(conn, wemail, MBCode):
+    '''Takes a user's MBCode and uses it to generate their personality
+    information and role in society as per the Myers-Briggs test.'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute(f'SELECT personality, role FROM MBResults INNER JOIN \
+        userAccount WHERE wemail = {wemail}')
+    MBVals = curs.fetchall()
+    if len(MBVals) != 0:
+        return curs.fetchall()
+    return "No MB code input yet"
 
 '''**************** Queries for changing tables ****************'''
 
-############ INSERT, UPDATE, DELETE Demographics
+############ INSERT, UPDATE Demographics
 
 def insert_demographics(conn, wemail, country, state, city):
     '''Takes user's initial inputs for their demographics and
@@ -88,7 +111,7 @@ def update_demographics(conn, wemail, country, state, city):
         WHERE wemail = {wemail}')
     conn.commit()
 
-############ INSERT, UPDATE, DELETE Professional Intersets
+############ INSERT, UPDATE Professional Intersets
 
 def insert_professionalInterests(conn, wemail, industry, dreamJob):
     '''Takes user's initial inputs for their professional interests and
@@ -145,8 +168,9 @@ def update_favorites(conn, wemail, name, itemType):
     curs.execute(f'UPDATE favorites SET itemType = {itemType} \
         WHERE name = {name}')
     conn.commit()
+    
 
-############ INSERT, UPDATE, DELETE Love languages
+############ INSERT, UPDATE Love languages
 
 def insert_top3_LL(conn, wemail, language, langNum):
     '''Takes user's inputs for a love language and inserts it into the
@@ -174,32 +198,24 @@ def update_top3_lang(conn, wemail, language, langNum):
         WHERE wemail = {wemail} and langNum = {langNum}')
     conn.commit()
 
-############ INSERT, DELETE Myers-Briggs test results
+
+############ INSERT Myers-Briggs test results
 
 # can add update but I don't really feel it's needed bc doesn't usually change
 
-def insert_LL(conn, wemail, rank, language):
+def insert_Myers_Briggs(conn, wemail, MBCode):
     '''Takes inputs from user based off of their Myers-Briggs test results.
-    Inserts the user's results into the database'''
+    Inserts the user's code from the test results into the database.'''
 
     curs = dbi.dict_cursor(conn)
     # if list of professional interests by said wemail doesn't exist
-    curs.execute(f'INSERT INTO loveLanguages (wemail, name, type) \
-        VALUES ({wemail}, {rank}, {language})')
+    curs.execute(f'INSERT INTO userAccounts (wemail, MBCode) \
+        VALUES ({wemail}, {MBCode})')
     conn.commit()
 
 
 if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
-    dbi.use('sk1_db')
+    dbi.use('wellesleymatch_db')
     conn = dbi.connect()
     curs = dbi.dict_cursor(conn)
-    """ insert_movie(conn, 8648, 'Wick', 1818)
-    curs.execute(f'SELECT * from movie where tt = 8648')
-    print(curs.fetchone())
-    #deleteEntry(conn, 8648)
-    #print(curs.fetchone())
-    curs.execute(f'SELECT * from movie where tt = 2')
-    print(curs.fetchone()) """
-
-    #print(get_incomplete_movies(conn))
