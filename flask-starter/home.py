@@ -26,10 +26,10 @@ def landing():
 def faq():
     return render_template('faq.html', page_title = 'Winterest FAQ')
 
-@app.route('/greet/', methods=["GET", "POST"])
-def greet():
+@app.route('/demographics/', methods = ["GET", "POST"])
+def demographics():
     if request.method == 'GET':
-        return render_template('greet.html', title ='Customized Greeting')
+        return render_template('demographics.html', title ='Fill out your demographics:')
     else:
         try:
             username = request.form['username'] # throws error if there's trouble
@@ -68,7 +68,7 @@ def testform():
 def init_db():
     dbi.cache_cnf()
     # set this local variable to 'wmdb' or your personal or team db
-    db_to_use = 'put_database_name_here_db' 
+    db_to_use = 'wellesleymatch_db' 
     dbi.use(db_to_use)
     print('will connect to {}'.format(db_to_use))
 

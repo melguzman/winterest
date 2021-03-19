@@ -4,7 +4,6 @@ drop table if exists meeting;
 drop table if exists icebreaker;
 drop table if exists firstMatch;
 drop table if exists bio;
-drop table if exists classes;
 drop table if exists genres;
 drop table if exists MyersBriggs;
 drop table if exists loveLanguages;
@@ -24,7 +23,7 @@ create table userAccount (
     city varchar(50),
     onCampus enum("yes", "no")
     )
- 
+
 ENGINE = InnoDB;
 
 create table contact (
@@ -43,10 +42,9 @@ ENGINE = InnoDB;
 
 create table professionalInterests (
     wemail varchar(50) not null,
-    profInt int not null primary key,
     industry varchar(50),
     dreamJob varchar(50),
-    INDEX (profInt),
+    INDEX (industry),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
@@ -99,18 +97,6 @@ create table genres (
     type enum('music', 'book', 'movie', 'tvshow'),
     name varchar(20),
     INDEX (genresID),
-    foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
-)
-
-ENGINE = InnoDB;
-
-create table classes (
-    wemail varchar(50) not null,
-    classesID int not null primary key,
-    classCode varchar(8),
-    INDEX (classesID),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
