@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<div class="main-content">
+    <section class="match-section">
+      <div class="match-photo">
+        <img id="match-image" src="person.jpg" alt="">
+        <div class="match-header">
+          <h2 class="match-name">Elizabeth</h2>
+          <p class="match-subheader">2nd Year</p>
+          <div >
+            <p class="profile-bio">
+              Hi there! My name is Selena and I am a product manager at Amazon!
+              I am eager to meet and share more about my experiences.
+            </p>
+            <div class="profile-interests" data-state="closed">
+              <div class="interest-box">
+                <div class="interest-emoji">🎵</div>
+                <p>My favorite genre of music is <strong>Rock</strong></p>
+              </div>
+              <div class="interest-box">
+                <div class="interest-emoji">⚽️</div>
+                <p>My favorite sport is <strong>soccer</strong></p>
+              </div>
+              <div class="interest-box">
+                <div class="interest-emoji">💻</div>
+                <p>My passion is <strong>technology</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="match-actions">
+      <div class="icebreaker-action">
+        <h2 class="action-title">Random Icebreaker</h2>
+        <p id="icebreaker">If you inherited or won a million dollars, what’s
+          the very first thing you would do with the money?</p>
+        <div id="icebreaker-buttons">
+          <button class="gray-button" id="ice-shuffle-button" type="button" name="button">🔀 Shuffle</button>
+          <button class="blue-button" id="copy-button" type="button" name="button">Copy</button>
+        </div>
+      </div>
+      <div id="schedule-meeting">
+        <h2 class="action-title">Schedule meeting</h2>
+        <form method="post" action="#">
+						<fieldset class="r-pill">
+							<legend>
+								What
+							</legend>
+
+							<span class="r-pill__item">
+								<input type="radio" id="coffee" name="radios_2" checked>
+								<label for="coffee">Coffee Chat</label>
+							</span>
+
+							<span class="r-pill__item">
+								<input type="radio" id="study" name="radios_2">
+								<label for="study">Study Session</label>
+							</span>
+
+							<span class="r-pill__item">
+								<input type="radio" id="hangout" name="radios_2">
+								<label for="hangout">General Hangout</label>
+							</span>
+
+							<span class="r-pill__item">
+								<input type="radio" id="game" name="radios_2">
+								<label for="game">Game Night</label>
+							</span>
+
+              <span class="r-pill__item">
+								<input type="radio" id="food" name="radios_2">
+								<label for="food">Grab some food</label>
+							</span>
+						</fieldset>
+
+            <fieldset class="r-pill">
+							<legend>
+								Where
+							</legend>
+
+							<span class="r-pill__item">
+								<input type="radio" id="remote" name="radios_3" checked>
+								<label for="remote">Remote</label>
+							</span>
+
+							<span class="r-pill__item">
+								<input type="radio" id="inperson" name="radios_3">
+								<label for="inperson">In-Person</label>
+							</span>
+            </fieldset>
+
+            <div class="textbox">
+              <label for="avail">When</label>
+              <input type="text" id="avail" name="avail" placeholder="I’m available from...">
+            </div>
+
+            <div id="notes-textbox" class="textbox">
+              <label for="notes">Notes</label>
+              <input type="text" id="notes" name="notes" placeholder="Excited to chat with you!">
+            </div>
+
+            <button class="blue-button" id="schedule-button" type="submit" value="Submit Form" name="button">Schedule</button>
+					</form>
+      </div>
+      <div class="upcoming-meetings">
+          <h2 class="action-title">Upcoming meetings</h2>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block end_scripts %}
+{% endblock %}
+

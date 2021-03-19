@@ -12,6 +12,11 @@ body  {
   margin: 0px;
 }
 
+p {
+  font-size: 14px;
+  line-height: 17px;
+}
+
 nav {
   display: flex;
   flex-direction: row;
@@ -166,7 +171,7 @@ button {
   background-color: #1B3966;
 }
 
-#shuffle-button {
+.gray-button {
   background-color: #F4F4F4;
   color: #2D2D2D;
 }
@@ -244,17 +249,187 @@ button {
   display: none;
 }
 
-#more-info-button:hover {
+.blue-button:hover {
   background: rgba(67, 119, 198, 0.8);
 }
 
 #match-button:hover {
   background: rgba(27, 57, 102, 0.8);}
 
-#shuffle-button:hover {
+.gray-button:hover {
   background: #E6E6E6;
 }
 
 .match-containers:hover {
   transform: translate(0px, -3px);
+}
+
+/* Matches.html */
+#match-actions {
+  width: 440px;
+}
+
+#match-actions > div {
+  background: #FFFFFF;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  margin-bottom: 24px;
+  padding: 20px;
+}
+
+#icebreaker {
+  margin-top: 6px;
+  margin-bottom: 16px;
+}
+
+#icebreaker-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#icebreaker-buttons button{
+  width: 48%;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.0);
+
+}
+
+.action-title {
+  font-weight: bold;
+  font-size: 20px;
+  line-height: 24px;
+  color: #1B3966;
+  margin: 0px;
+}
+
+/* Forms, Pill Form from
+https://github.com/scottaohara/a11y_styled_form_controls/blob/main/src/assets/css/radio--pill.css */
+
+/* parent container <fieldset> */
+.r-pill {
+	border: 0;
+	padding: 0;
+	margin: 0;
+  margin-top: 12px;
+}
+
+/* radio groups need a legend */
+.r-pill legend, #avail label {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 17px;
+  color: #000000;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+/*
+	Optional inner wrapper (<div>) to provide additional styling.
+*/
+.r-pill__group {
+	background: #fafafa;
+	border: 1px solid #083851;
+	border-radius: 2em;
+	display: inline-block;
+	padding: .25em;
+}
+
+.r-pill__item {
+	display: inline-block;
+	position: relative;
+  border: 2px solid #4377C6;
+  box-sizing: border-box;
+  border-radius: 100px;
+  margin-bottom: 8px;
+}
+
+
+.r-pill input {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	background: none;
+	border: 2px solid;
+	height: 100%;
+	left: 0;
+	opacity: .00001;
+	position: absolute;
+	top: 0;
+	width: 100%;
+	z-index: 2;
+}
+
+.r-pill__item label {
+	border-radius: 2em;
+	border: 2px solid transparent;
+	color: #4377C6;
+  font-size: 14px;
+	display: block;
+	padding: .25em .75em;
+}
+
+.r-pill__item input:hover ~ label,
+.r-pill__item label:hover {
+	background: #E2F1FD;
+	/* border-color: #4377C6; */
+}
+
+.r-pill[disabled] .r-pill__item input:checked + label:hover,
+.r-pill__item input:checked + label {
+  background: rgba(67, 119, 198, 0.15);
+  border: 1px solid #4377C6;
+  color: #4377C6;
+}
+
+.r-pill__item label:after {
+	border: 1px solid;
+	border-color: rgba(0,0,0,0);
+	border-radius: 2em;
+	bottom: 0;
+	content: "";
+	left: 0;
+	position: absolute;
+	right: 0;
+	top: 0;
+	transition:
+		bottom .2s ease-in-out,
+		border-color .2s ease-in-out,
+		left .2s ease-in-out,
+		right .2s ease-in-out,
+		top .2s ease-in-out;
+	/*
+		1. Don't like pointer-events?
+			 then use z-index: -1;
+			 but we don't want this getting in the way
+			 of touch / mouse clicks.
+	*/
+}
+
+.textbox input {
+  display: block;
+  padding: 8px 12px;
+  border: 1.5px solid #C6C7CA;
+  box-sizing: border-box;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.textbox label{
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+#notes-textbox {
+  margin-top: 8px;
+}
+
+#schedule-button {
+  margin-top: 18px;
+}
+
+form {
+  font-size: 14px;
 }
