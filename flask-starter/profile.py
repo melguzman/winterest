@@ -3,7 +3,7 @@ from flask import (Flask, render_template, make_response, url_for, request,
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
-import cs304_db as dbi # figure out which dbi to use
+#import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
 import random
@@ -68,9 +68,7 @@ def testform():
 def init_db():
     dbi.cache_cnf()
     # set this local variable to 'wmdb' or your personal or team db
-    db_to_use = 'put_database_name_here_db' 
-    dbi.use(db_to_use)
-    print('will connect to {}'.format(db_to_use))
+    dbi.use('wellesleymatch_db')
 
 if __name__ == '__main__':
     import sys, os
