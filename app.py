@@ -58,7 +58,7 @@ def authenticate(kind):
 
             curs = dbi.dict_cursor(conn)
             curs.execute('INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)' % (email, fname, lname, country, state, city, MBCode, major, year, onCampus, password))
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
             #flash('Signup successful!')
             return '<h1>SUCCESS</h1>'
             #curs.execute('''insert into userAccount (wemail, password, fname, lname, major, year, country, state, city, onCampus, MBCode) 
