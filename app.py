@@ -57,7 +57,7 @@ def authenticate(kind):
             #profileQueries.insert_profile(conn, email, fname, lname, country, state, city, 'NULL', major, year, 'NULL')
 
             curs = dbi.dict_cursor(conn)
-            curs.execute(f'INSERT INTO userAccount (wemail, fname, lname, country, \
+            curs.execute('INSERT INTO userAccount (wemail, fname, lname, country, \
             state, city, MBCode, major, year, onCampus) \
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)' % (email, fname, lname, country, state, city, MBCode, major, year, onCampus))
             flash('Signup successful!')
