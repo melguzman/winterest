@@ -1,5 +1,7 @@
 use wellesleymatch_db;
 
+drop table if exists matches;
+drop table if exists matches_scored;
 drop table if exists meeting;
 drop table if exists icebreaker;
 drop table if exists firstMatch;
@@ -20,7 +22,7 @@ create table MBResults (
 ENGINE = InnoDB;
  
 create table userAccount ( 
-    wemail varchar(50) not null primary key,
+    wemail char(8) not null primary key,
     password varchar(50),
     fname varchar(30),
     lname varchar(30),
@@ -40,7 +42,7 @@ create table userAccount (
 ENGINE = InnoDB;
 
 create table contact (
-    wemail varchar(50) not null,
+    wemail char(8) not null,
     phoneNumber int unsigned not null primary key,
     handle varchar(50),
     url varchar(150),
@@ -54,7 +56,7 @@ create table contact (
 ENGINE = InnoDB;
 
 create table professionalInterests (
-    wemail varchar(50) not null,
+    wemail char(8) not null,
     industry varchar(50),
     dreamJob varchar(50),
     INDEX (industry),
@@ -66,7 +68,7 @@ create table professionalInterests (
 ENGINE = InnoDB;
 
 create table favorites (
-    wemail varchar(50) not null,
+    wemail char(8) not null,
     name varchar(50),
     itemType enum('album', 'song', 'artist', 'book', 'movie',
         'tvshow', 'color', 'emoji', 'food', 'restaurant', 'game'),
@@ -79,7 +81,7 @@ create table favorites (
 ENGINE = InnoDB;
 
 create table loveLanguages (
-    wemail varchar(50) not null,
+    wemail char(8) not null,
     langNum enum("1", "2", "3"),
     language enum('affirmation', 'service', 'gift', 'time', 'physical'),
     foreign key (wemail) references userAccount(wemail)
@@ -90,7 +92,7 @@ create table loveLanguages (
 ENGINE = InnoDB;
 
 create table bio (
-    wemail varchar(50) not null,
+    wemail char(8) not null,
     bioID int not null primary key,
     bio varchar(200),
     INDEX (bioID),
@@ -102,7 +104,7 @@ create table bio (
 ENGINE = InnoDB;
 
 create table firstMatch (
-    wemail varchar(50) not null,
+    wemail char(8) not null,
     matchID int not null primary key,
     wemailMatch varchar(50),
     INDEX (matchID),
@@ -114,7 +116,7 @@ create table firstMatch (
 ENGINE = InnoDB;
 
 create table icebreaker (
-    wemail varchar(50) not null,
+    wemail char(8) not null,
     icebreakerID int not null primary key,
     question varchar(50),
     answer varchar(70),
@@ -127,13 +129,36 @@ create table icebreaker (
 ENGINE = InnoDB;
 
 create table meeting (
-    wemail varchar(50) not null,
+    wemail char(8) not null,
     meetingID int not null primary key,
     time date,
     itemType varchar(30),
     wemailMatch varchar(50),
     location varchar(30),
     INDEX (meetingID),
+    foreign key (wemail) references userAccount(wemail)
+        on update restrict
+        on delete restrict
+)
+
+ENGINE = InnoDB;
+
+create table matches_scored (
+    wemail char(8), -- person who is logged in
+    wemail2 char(8), -- wemail of second person, unmatched yet
+    score int not null,
+    INDEX (wemail),
+    foreign key (wemail) references userAccount(wemail)
+        on update restrict
+        on delete restrict
+)
+
+ENGINE = InnoDB;
+
+create table matches (
+    wemail char(8), -- person who is logged in
+    wemail2 char(8), -- wemail of matched person
+    INDEX (wemail),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
