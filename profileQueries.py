@@ -70,8 +70,7 @@ def update_profile(conn, wemail, password, fname, lname, country,
     curs = dbi.dict_cursor(conn)
     wemail = f'''"{wemail}"''' if wemail else "NULL" # i think i can just get rid of these but idk
 
-    curs.execute(f'UPDATE userAccount SET password = {password} \ 
-        WHERE wemail = {wemail}') #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
+    curs.execute(f'UPDATE userAccount SET password = {password} \ WHERE wemail = {wemail}') 
     curs.execute(f'UPDATE userAccount SET fname = {fname} \
         WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET lname = {lname} \
