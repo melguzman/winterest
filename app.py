@@ -52,7 +52,7 @@ def authenticate(kind):
 
             conn = dbi.connect()
 
-            profileQueries.insert_profile(conn, email, fname, lname, country, state, city, NULL, major, year, NULL)
+            profileQueries.insert_profile(conn, email, fname, lname, country, state, city, 'NULL', major, year, 'NULL')
             flash('Signup successful!')
             return '<h1>SUCCESS</h1>'
 
