@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
 import cs304dbi as dbi
+import random
 
 def getPossibleMentorMatchings(conn, userIndustry, userDreamJob):
     '''Collect all eligible people who the user could meet as a 
@@ -38,4 +39,17 @@ def getPossibleRomanceMatchings(conn, userLoveLanguage, userFavType, userFav):
                   where language = %s and favorites.itemType = %s \
                   and favorites.name = %s', [userLoveLanguage, userFavType, userFav])
     return curs.fetchall()
+
+def getIceBreaker():
+    '''Randomly returns an ice breaker'''
+    iceBreakers = ["Two Truths and One Lie", 
+                    "How are you feeling today?", 
+                    "Get the weirdest thing in your room, then bring it back to show".
+                    "Highlight of the month?",
+                    "Failure of the month?",
+                    "Play three rounds of Never Have I Ever",
+                    "Virtual wine tasting!",
+                    "What’s the last picture that you took?"]
+    pick = random.randint(0, len(iceBreaker)-1)
+    return iceBreaker[pick]
     
