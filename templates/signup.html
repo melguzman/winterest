@@ -19,6 +19,9 @@
 {% for msg in messages %}
     <p>{{msg}}</p>
 {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
 <form action={{ url_for('authenticate', kind = 'signup') }}>
     <label for="fname"><b>First Name</b></label>
     <input type="text" placeholder="First Name" name="fname" required>
