@@ -49,7 +49,7 @@ def find_MB_info(conn, wemail, MBCode):
     information and role in society as per the Myers-Briggs test.'''
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT personality, role FROM MBResults INNER JOIN \
-        userAccount WHERE wemail = {wemail}')
+        userAccount WHERE wemail = {wemail}') #wemail is not in userAccount, can't join like this
     MBVals = curs.fetchall()
     if len(MBVals) != 0:
         return curs.fetchall()
