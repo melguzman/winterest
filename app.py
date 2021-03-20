@@ -54,15 +54,14 @@ def authenticate(kind):
 
             conn = dbi.connect()
 
-            profileQueries.insert_profile(conn, email, fname, lname, country, state, city, 'NULL', major, year, 'NULL')
-            flash('Signup successful!')
-            return '<h1>SUCCESS</h1>'
+            #profileQueries.insert_profile(conn, email, fname, lname, country, state, city, 'NULL', major, year, 'NULL')
 
             curs = dbi.dict_cursor(conn)
             curs.execute(f'INSERT INTO userAccount (wemail, fname, lname, country, \
             state, city, MBCode, major, year, onCampus) \
-            VALUES ({email}, {fname}, {lname}, {country}, \
-            {state}, {city}, {MBCode}, {major}, {year}, {onCmpus})')
+            VALUES (%s %s %s %s %s %s %s %s %s %s)' [email, fname, lname, country, state, city, MBCode, major, year, onCampus])
+            flash('Signup successful!')
+            return '<h1>SUCCESS</h1>'
             #curs.execute('''insert into userAccount (wemail, password, fname, lname, major, year, country, state, city, onCampus, MBCode) 
             #values ('szeamer', 'password', 'Silvia', 'Zeamer', 'MAS', '2021', 'US', 'TX', 'Austin', NULL, NULL);')'''
     return '<h1>NOTHING HAPPENED</h1>'
