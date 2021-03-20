@@ -433,3 +433,11 @@ https://github.com/scottaohara/a11y_styled_form_controls/blob/main/src/assets/cs
 form {
   font-size: 14px;
 }
+
+.one-match {
+  display: none;
+}
+
+.active {
+  display: block;
+}

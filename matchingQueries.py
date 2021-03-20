@@ -4,6 +4,30 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
 import cs304dbi as dbi
+    
+def getMatches(conn, userEmail):
+    '''Returns a person's matches in a list of dictionaries'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''select wemail, name, itemType 
+    from userAccount inner join currentMatches using (userAccount.wemail = currentMatches.match1)
+    where userAccount.wemail = %s''', [userEmail]) 
+    return curs.fetchall()
+
+def insertMatches(conn, userEmail):
+    '''Returns a person's matches in a list of dictionaries'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''select wemail, name, itemType 
+    from userAccount inner join currentMatches using (userAccount.wemail = currentMatches.match1)
+    where userAccount.wemail = %s''', [userEmail]) 
+    return curs.fetchall()
+
+def getFavorites(conn, userEmail): 
+    '''Returns a person's favorites'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''select wemail, name, itemType 
+    from favorites inner join userAccount using (wemail)
+    where userAccount.wemail = %s''', [userEmail]) 
+    return curs.fetchall()
 
 def userInfo_forMentorMatching(conn, userEmail):
     '''Collect needed information of user to match for a mentor'''
