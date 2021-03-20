@@ -33,28 +33,29 @@ def login():
 def signup():
     return render_template('signup.html')
 
-@app.route('/authenticate/<kind>')
+@app.route('/authenticate/<kind>' methods = ['POST']) 
 def authenticate(kind):
-    email = request.form['email']
-    password = rquest.form['password']
+    if request.method == 'POST':
+        email = request.form['email']
+        password = rquest.form['password']
 
-    if kind == 'login':
-        pass
-    elif kind == 'signup':
-        fname = request.form['fname']
-        lname = request.form['lname']
-        major = request.form['major']
-        year = request.form['year']
-        country = request.form['country']
-        state = request.form['state']
-        city = request.form['city']
+        if kind == 'login':
+            pass
+        elif kind == 'signup':
+            fname = request.form['fname']
+            lname = request.form['lname']
+            major = request.form['major']
+            year = request.form['year']
+            country = request.form['country']
+            state = request.form['state']
+            city = request.form['city']
 
-        profileQueries.insert_profile(conn, email, fname, lname, country, state, city, NULL, major, year, NULL)
-        flash('Signup successful!')
+            profileQueries.insert_profile(conn, email, fname, lname, country, state, city, NULL, major, year, NULL)
+            flash('Signup successful!')
 
-         #curs = dbi.dict_cursor(conn)
-         #curs.execute('''insert into userAccount (wemail, password, fname, lname, major, year, country, state, city, onCampus, MBCode) 
-         #values ('szeamer', 'password', 'Silvia', 'Zeamer', 'MAS', '2021', 'US', 'TX', 'Austin', NULL, NULL);')'''
+            #curs = dbi.dict_cursor(conn)
+            #curs.execute('''insert into userAccount (wemail, password, fname, lname, major, year, country, state, city, onCampus, MBCode) 
+            #values ('szeamer', 'password', 'Silvia', 'Zeamer', 'MAS', '2021', 'US', 'TX', 'Austin', NULL, NULL);')'''
 
 
 
