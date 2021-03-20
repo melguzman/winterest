@@ -33,7 +33,7 @@ def login():
 def signup():
     return render_template('signup.html')
 
-@app.route('/authenticate/<kind>', methods = ['POST']) 
+@app.route('/authenticate/<kind>', methods = ['GET', 'POST']) 
 def authenticate(kind):
     if request.method == 'POST':
         email = request.form['email']
@@ -52,6 +52,7 @@ def authenticate(kind):
 
             profileQueries.insert_profile(conn, email, fname, lname, country, state, city, NULL, major, year, NULL)
             flash('Signup successful!')
+            render_template('base.html', page_title = 'SUCCESS')
 
             #curs = dbi.dict_cursor(conn)
             #curs.execute('''insert into userAccount (wemail, password, fname, lname, major, year, country, state, city, onCampus, MBCode) 
