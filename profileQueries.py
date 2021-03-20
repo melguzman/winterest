@@ -46,8 +46,8 @@ def find_phoneNum(conn, wemail):
 
 ############ INSERT, UPDATE User Profile
 
-def insert_profile(conn, wemail, fname, lname, country,
-            state, city, MBCode, major, year, onCampus):
+def insert_profile(conn, wemail, password, fname, lname, country,
+            state, city, MBCode, major, year, onCampus): #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
     '''Takes new user's initial inputs and adds them into the table'''
     # assumption: user MUST input all categories 
     curs = dbi.dict_cursor(conn)
@@ -56,20 +56,22 @@ def insert_profile(conn, wemail, fname, lname, country,
     # if account for this user doesn't already exist, we will add them to
     # the userAccounts table
     if len(checkUser) == 0: 
-        curs.execute(f'INSERT INTO userAccount (wemail, fname, lname, country, \
+        curs.execute(f'INSERT INTO userAccount (wemail, password, fname, lname, country, \
             state, city, MBCode, major, year, onCampus) \
-            VALUES ({wemail}, {fname}, {lname}, {country}, \
+            VALUES ({wemail}, {password}, {fname}, {lname}, {country}, \
             {state}, {city}, {MBCode}, {major}, {year}, {onCmpus})')
     conn.commit()
 
-def update_profile(conn, wemail, fname, lname, country,
-            state, city, MBCode, major, year, onCampus): 
+def update_profile(conn, wemail, password, fname, lname, country,
+            state, city, MBCode, major, year, onCampus): #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
     '''Takes user's changed inputs for their profile and updates the
     profile accordingly'''
 
     curs = dbi.dict_cursor(conn)
     wemail = f'''"{wemail}"''' if wemail else "NULL" # i think i can just get rid of these but idk
 
+    curs.execute(f'UPDATE userAccount SET password = {password} \ 
+        WHERE wemail = {wemail}') #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
     curs.execute(f'UPDATE userAccount SET fname = {fname} \
         WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET lname = {lname} \
@@ -86,7 +88,7 @@ def update_profile(conn, wemail, fname, lname, country,
         WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET year = {year} \
         WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET year = {onCampus} \
+    curs.execute(f'UPDATE userAccount SET onCampus = {onCampus} \
         WHERE wemail = {wemail}')
 
     conn.commit()
@@ -117,13 +119,15 @@ def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
             {handle}, {url}, {platform})')
     conn.commit()
 
-def update_profile(conn, wemail, phoneNumber, handle, url, platform): 
+def update_profile(conn, wemail, password, phoneNumber, handle, url, platform): #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
     '''Takes user's changed inputs for their contacts and updates the
     profile accordingly'''
 
     curs = dbi.dict_cursor(conn)
     wemail = f'''"{wemail}"''' if wemail else "NULL" # i think i can just get rid of these but idk
 
+    curs.execute(f'UPDATE contact SET password = {password} \
+        WHERE wemail = {wemail}') #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
     curs.execute(f'UPDATE contact SET fname = {phoneNumber} \
         WHERE wemail = {wemail}')
     curs.execute(f'UPDATE contact SET handle = {handle} \
