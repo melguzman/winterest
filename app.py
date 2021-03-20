@@ -7,11 +7,7 @@ import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
 import userInfoQueries
-<<<<<<< HEAD
-import matchingQueries as mq
-=======
 import profileQueries
->>>>>>> 658e4760b0cf4e44fecebdaf5675dd8ce9c51b45
 
 import random
 
