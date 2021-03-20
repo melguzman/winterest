@@ -7,12 +7,8 @@ import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
 import userInfoQueries
-<<<<<<< HEAD
 import matchingQueries as mq
-=======
-import profileQueries
->>>>>>> 658e4760b0cf4e44fecebdaf5675dd8ce9c51b45
-
+import makeMatchesQueries as matches
 import random
 
 app.secret_key = 'your secret here'
@@ -110,23 +106,32 @@ def favoritesInformation(peopleDict):
 
 @app.route('/home/', methods=['GET','POST'])
 def home():
+    # get user's email
     conn = dbi.connect()
+    wemail = session.get('user', 'jl4')
     emojis = {'album': '💿', 'song': '🎵', 'artist': '👩‍🎨', 'book': '📘', 
     'movie': '🎬', 'color': '🎨', 'emoji': '😜', 'food': '🍔', 'restaurant': '🍕',
     'game': '👾'}
-    if request.method == 'GET':
-        potentialMatches = mq.userInfo_forFriendMatching(conn, userEmail)
-        favorites = favoritesInformation(potentialMatches)
-        matches = getCurrentMatches(conn, userEmail)
-        render_template('home.html', potentialMatches = potentialMatches, currentMatches = matches, emojis = emojis)
-    else:
-        action = form_data.get('submit')
-        if action == 'match':
-            # add matching (similar to credit table)
-            
-            # reload match menu on the left
-            # move to next person 
+
+    # get list of potential matches (list of dictionaries)
+    potentialMatches = matches.generateMatches(conn, wemail)
+    # add a favorites key with a list of interests as it's value for each user
+    completedMatches = favoritesInformation(potentialMatches)
+    currentMatches = mq.getCurrentMatches(conn, wemail)
+    if request.method == 'POST':
+        # User pressed match button, so match two of them together
+        matchEmail = request.form.get('submit')
+        mq.insertMatches(wemail, matchEmail)
+        
+    return render_template('home.html', potentialMatches = completedMatches, currentIndex = currentIndex,
+        currentMatches = currentMatches, emojis = emojis)
     
+# @app.route('/match/', methods=['POST'])
+# def match():
+#     userEmail = session['username']
+#     matchEmail = request.form.get('submit')
+#     mq.insertMatches(wemail, matchEmail)
+#     return redirect(url_for('home'))
 
 @app.route('/formecho/', methods=['GET','POST'])
 def formecho():

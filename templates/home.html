@@ -2,11 +2,11 @@
 
 {% block main_content %}
 <div class="main-content">
-<section class="match-section">
+{% for person in potentialMatches %}
+<section class="match-section {% if loop.index == 0 %} active {% endif %}">
   <h1 class="section-header">Find Friends</h1>
   <div class="match-photo">
-    {% for person in potentialMatches %}
-    <div class="one-match {% if loop.index == 1 %} active {% endif %}" value="{{person.wemail}}">
+    <div class="one-match" value="{{person.wemail}}">
       <img id="match-image" src="person.jpg" alt="">
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
@@ -26,7 +26,6 @@
         </div>
       </div>
     </div>
-    {% endfor %}
     <div id="left-button" class="circle left-arrow">
       <img src="arrow.png" alt="">
     </div>
@@ -34,13 +33,15 @@
       <img src="arrow.png" alt="">
     </div>
   </div>
-  <form class="" action="index.html" method="post">
     <div class="match-buttons">
       <button class="blue-button" id="more-info-button" type="submit" name="submit" value="info">👀 More Information</button>
-      <button id="match-button" type="submit" name="submit" value="match">❤️ Match</button>
+      {% if %}
+      <form method=post action="">
+        <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">❤️ Match</button>
+      </form>
       <button class="gray-button" id="shuffle-button" type="submit" name="submit" value="shuffle">🔀 Shuffle</button>
     </div>
-  </form>
+{% endfor %}
 </section>
 <section id="current-matches">
   <h1 class="section-header">Current Matches</h1>
@@ -74,8 +75,9 @@
 
 {% block end_scripts %}
 <script>
-    $("#more-info-button").on("click", function(event) {
-      $button = $("#more-info-button");
+   /* Expands and collapses section for "More Information" */
+   $button = $("#more-info-button");
+   $button.on("click", function(event) {
       $profile = $("#more-profile");
       if ($profile.css("display") == 'none') {
         $profile.css("display", "block");
@@ -84,6 +86,19 @@
       else {
         $profile.css("display", "none");
         $button.text("👀 More Information");
+      }
+    });
+
+  /* Toggles between match and unmatch */
+  $matchButton = $("#match-button");
+  $matchButton.on("click", function(event) {
+      value = $matchButton.attr('value');
+      if (value == 'match') {
+        // Do some match thingy
+        $button.text("💔 Unmatch");
+      }
+      else {
+        $button.text("❤️ Match");
       }
     });
     

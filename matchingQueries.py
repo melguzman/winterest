@@ -8,18 +8,18 @@ import cs304dbi as dbi
 def getMatches(conn, userEmail):
     '''Returns a person's matches in a list of dictionaries'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('''select wemail, name, itemType 
-    from userAccount inner join currentMatches using (userAccount.wemail = currentMatches.match1)
-    where userAccount.wemail = %s''', [userEmail]) 
+    curs.execute('''select b.wemail, b.fname, b.lname, b.year
+    from userAccountas a inner join matches on (matches.wemail = a.wemail)
+    inner join userAccount b on (matches.wemail2 = b.wemail)
+    where a.wemail = %s''', [userEmail]) 
     return curs.fetchall()
 
-def insertMatches(conn, userEmail):
-    '''Returns a person's matches in a list of dictionaries'''
+def insertMatches(conn, userEmail, matchEmail):
+    '''Inserts a matching pair'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('''select wemail, name, itemType 
-    from userAccount inner join currentMatches using (userAccount.wemail = currentMatches.match1)
-    where userAccount.wemail = %s''', [userEmail]) 
-    return curs.fetchall()
+    curs.execute('''INSERT INTO matches (wemail, wemail2)
+            VALUES (%s, %s)''', [userEmail, matchEmail]) 
+    conn.commit()
 
 def getFavorites(conn, userEmail): 
     '''Returns a person's favorites'''
