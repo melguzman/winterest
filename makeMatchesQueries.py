@@ -5,20 +5,21 @@ app = Flask(__name__)
 
 import cs304dbi as dbi
 import userInfoQueries
+import scoreQueries
 
 def insertScores(conn, wemail):
     '''Inserts initial match scores into every person in the databases's 
     matches table. This should be done as soon as the person's account is 
     created, without the user having to recallibrate their matches manually.'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(SELECT wemail from userAccount) # gives every person in database
+    curs.execute('SELECT wemail from userAccount') # gives every person in database
     allUsers = curs.fetchall() # assuming allUsers is a list of dicts
 
     # loop through every user and insert into their database
     for user in allUsers:
         emailID = user['wemail']
         if emailID != wemail: # don't do this for the users themselves
-            score = matchScore(conn, emailID, wemail)
+            score = scoreQueries.matchScore(conn, emailID, wemail)
 
             # insert current user wemail to emailID row
             curs.execute(f'INSERT INTO matches_scored (wemail, wemail2, score) \
@@ -32,14 +33,14 @@ def insertScores(conn, wemail):
 def updateScores(conn, wemail):
     '''Only used if the user updates their profile. '''
     curs = dbi.dict_cursor(conn)
-    curs.execute(SELECT wemail from userAccount) # gives every person in database
+    curs.execute('SELECT wemail from userAccount') # gives every person in database
     allUsers = curs.fetchall() # assuming allUsers is a list of dicts
 
     # loop through every user and update their score with current user
     for user in allUsers:
         emailID = user['wemail']
         if emailID != wemail: # don't do this for the users themselves
-            score = matchScore(conn, emailID, wemail)
+            score = scoreQueries.matchScore(conn, emailID, wemail)
 
             # update current user wemail to emailID row
             curs.execute(f'UPDATE matches_scored SET score = {score} WHERE wemail \
