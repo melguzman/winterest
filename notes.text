@@ -3,3 +3,11 @@ Important things to note:
 - every time a user updates their profile, they have to click a button that recallibrates their matches
 - read the assumptions under each function; the way it's been written now essentially assumes that users 
     MUST fill out every input field given to them
+- the matching algorithm scores each person's match with another person
+    - the only way the matching algorithm will even insert the initial match scores is after the user has 
+        inputted all info 
+    - INSERTION of initial match scores: happens as SOON as user completes profile automatically (
+        BUT we could have a button instead and state that the button only works if the info is all inserted)
+    - UPDATE of match scores: happens after a user updates a profile feature; to have matches that are updated
+        to match the updates made to the user profile, users must recallibrate their matches via a button of
+        some sort
