@@ -48,7 +48,8 @@ def authenticate(kind):
             curs = dbi.dict_cursor(conn)
             curs.execute('''SELECT * FROM userAccount WHERE wemail = %s AND password = %s''', [email, password])
             if len(curs.fetchall()) == 1:
-                return '<h1>SUCCESS</h1>'
+                session['wemail'] = email
+                return redirect(url_for('home'))
             else:
                 return '<h1>FAILURE</h1>'
 
@@ -65,16 +66,13 @@ def authenticate(kind):
 
             conn = dbi.connect()
 
-            #profileQueries.insert_profile(conn, email, fname, lname, country, state, city, 'NULL', major, year, 'NULL')
-
             curs = dbi.dict_cursor(conn)
             curs.execute('''INSERT INTO MBResults (MBCode) VALUES ('purr')''')
             curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
-            #flash('Signup successful!')
-            return '<h1>SUCCESS</h1>'
-            #curs.execute('''insert into userAccount (wemail, password, fname, lname, major, year, country, state, city, onCampus, MBCode) 
-            #values ('szeamer', 'password', 'Silvia', 'Zeamer', 'MAS', '2021', 'US', 'TX', 'Austin', NULL, NULL);')'''
+            session['wemail'] = email
+            return redirect(url_for('home'))
+            
     return '<h1>NOTHING HAPPENED</h1>'
 
 
