@@ -7,7 +7,11 @@ import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
 import userInfoQueries
+<<<<<<< HEAD
 import matchingQueries as mq
+=======
+import profileQueries
+>>>>>>> 658e4760b0cf4e44fecebdaf5675dd8ce9c51b45
 
 import random
 
@@ -32,6 +36,49 @@ def login():
 @app.route('/signup/')
 def signup():
     return render_template('signup.html')
+
+@app.route('/authenticate/<kind>', methods = ['GET', 'POST']) 
+def authenticate(kind):
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        if kind == 'login':
+            conn = dbi.connect()
+            curs = dbi.dict_cursor(conn)
+            curs.execute('''SELECT * FROM userAccount WHERE wemail = %s AND password = %s''', [email, password])
+            if len(curs.fetchall()) == 1:
+                return '<h1>SUCCESS</h1>'
+            else:
+                return '<h1>FAILURE</h1>'
+
+        elif kind == 'signup':
+            fname = request.form['fname']
+            lname = request.form['lname']
+            major = request.form['major']
+            year = request.form['year']
+            country = request.form['country']
+            state = request.form['state']
+            city = request.form['city']
+            MBCode = 'purr'
+            onCampus = 'NULL'
+
+            conn = dbi.connect()
+
+            #profileQueries.insert_profile(conn, email, fname, lname, country, state, city, 'NULL', major, year, 'NULL')
+
+            curs = dbi.dict_cursor(conn)
+            curs.execute('''INSERT INTO MBResults (MBCode) VALUES ('purr')''')
+            curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
+            #flash('Signup successful!')
+            return '<h1>SUCCESS</h1>'
+            #curs.execute('''insert into userAccount (wemail, password, fname, lname, major, year, country, state, city, onCampus, MBCode) 
+            #values ('szeamer', 'password', 'Silvia', 'Zeamer', 'MAS', '2021', 'US', 'TX', 'Austin', NULL, NULL);')'''
+    return '<h1>NOTHING HAPPENED</h1>'
+
+
+
 
 @app.route('/faq/')
 def faq():
