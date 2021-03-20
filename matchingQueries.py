@@ -9,16 +9,18 @@ def userInfo_forMentorMatching(conn, userEmail):
     '''Collect needed information of user to match for a mentor'''
     curs = dbi.dict_cursor(conn)
     curs.execute('select major, city, state, country, industry, dreamJob \
-                  from userAccount inner join professionalInterests using (wemail) where userAccount.wemail = %s', [userEmail])
+                  from userAccount inner join professionalInterests using \
+                  (wemail) where userAccount.wemail = %s', [userEmail])
     return curs.fetchall()
 
 def getPossibleMentorMatchings(conn, userIndustry, userDreamJob):
-    '''Collect all eligible people who the user could meet as a possible mentor. Eligible here means
-        that a person is either in an industry that the user is interested in or has a job that is the
-        dream job of the user'''
+    '''Collect all eligible people who the user could meet as a 
+    possible mentor. Eligible here means that a person is either 
+    in an industry that the user is interested in or has a job that 
+    is the dream job of the user'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('select * from userAccount inner join professionalInterests using (wemail) \
-    where industry = %s or dreamJob = %s',[userIndustry, userDreamJob]) 
+    curs.execute('select * from userAccount inner join professionalInterests \
+    using (wemail) where industry = %s or dreamJob = %s',[userIndustry, userDreamJob]) 
     return curs.fetchall()
 
 def userInfo_forFriendMatching(conn, userEmail): 
@@ -33,14 +35,14 @@ def userInfo_forFriendMatching(conn, userEmail):
     return curs.fetchall()
 
 #later will be changed so meets certains requirements for friend matching as the group sees fit
-def getPossibleFriendMatchings(conn):
+def getPossibleFriendMatchings(conn, userFavType, userFav):
     '''Collect all people and their traits that a user could meet as a friend'''
-    curs = dbi.dict_cursor(conn)  #notes: favorites and languages are multiple 
+    curs = dbi.dict_cursor(conn) 
     curs.execute('select major, city, state, country, onCampus, personality, \
                   favorites.itemType, favorites.name, industry, dreamJob \
                   from userAccount inner join professionalInterests using (wemail) \
-                  inner join MBResults using (MBCode) \
-                  inner join favorites using (wemail)')
+                  inner join MBResults using (MBCode) inner join favorites using (wemail) \
+                  where favorites.itemType = %s and favorites.name = %s', [userFavType, userFav])
     return curs.fetchall()
 
 def userInfo_forRomanticMatching(conn, userEmail): 
@@ -55,11 +57,13 @@ def userInfo_forRomanticMatching(conn, userEmail):
     return curs.fetchall()
 
 #later will be changed so meets certains requirements for romantic matching as the group sees fit
-def getPossibleRomanceMatchings(conn): 
+def getPossibleRomanceMatchings(conn, userLoveLanguage, userFavType, userFav): 
     '''Collect all people and their traits that a user could meet as a romantic partner'''
-    curs = dbi.dict_cursor(conn) #notes: favorites and languages are multiple 
+    curs = dbi.dict_cursor(conn) 
     curs.execute('select major, city, state, country, onCampus, personality, language, \
                   favorites.itemType, favorites.name from userAccount \
                   inner join MBResults using (MBCode) \
-                  inner join favorites using (wemail) inner join loveLanguages using (wemail)')
+                  inner join favorites using (wemail) inner join loveLanguages using (wemail) \
+                  where language = %s and favorites.itemType = %s and favorites.name = %s', [userLoveLanguage, userFavType, userFav])
     return curs.fetchall()
+    
