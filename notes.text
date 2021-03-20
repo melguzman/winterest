@@ -1,0 +1,5 @@
+Important things to note:
+
+- every time a user updates their profile, they have to click a button that recallibrates their matches
+- read the assumptions under each function; the way it's been written now essentially assumes that users 
+    MUST fill out every input field given to them
