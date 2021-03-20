@@ -1,5 +1,4 @@
-use sk1_db;
---use wellesleymatch_db;
+use wellesleymatch_db;
 
 drop table if exists meeting;
 drop table if exists icebreaker;
@@ -22,6 +21,7 @@ ENGINE = InnoDB;
  
 create table userAccount ( 
     wemail varchar(50) not null primary key,
+    password varchar(50),
     fname varchar(30),
     lname varchar(30),
     major varchar(50),
