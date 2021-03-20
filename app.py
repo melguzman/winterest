@@ -49,6 +49,8 @@ def authenticate(kind):
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
+            MBCode = 'NULL'
+            onCampus = 'NULL'
 
             conn = dbi.connect()
 
@@ -56,7 +58,11 @@ def authenticate(kind):
             flash('Signup successful!')
             return '<h1>SUCCESS</h1>'
 
-            #curs = dbi.dict_cursor(conn)
+            curs = dbi.dict_cursor(conn)
+            curs.execute(f'INSERT INTO userAccount (wemail, fname, lname, country, \
+            state, city, MBCode, major, year, onCampus) \
+            VALUES ({email}, {fname}, {lname}, {country}, \
+            {state}, {city}, {MBCode}, {major}, {year}, {onCmpus})')
             #curs.execute('''insert into userAccount (wemail, password, fname, lname, major, year, country, state, city, onCampus, MBCode) 
             #values ('szeamer', 'password', 'Silvia', 'Zeamer', 'MAS', '2021', 'US', 'TX', 'Austin', NULL, NULL);')'''
     return '<h1>NOTHING HAPPENED</h1>'
