@@ -52,11 +52,12 @@ def authenticate(kind):
 
             profileQueries.insert_profile(conn, email, fname, lname, country, state, city, NULL, major, year, NULL)
             flash('Signup successful!')
-            render_template('base.html', page_title = 'SUCCESS')
+            render_template('<h1>SUCCESS</h1>')
 
             #curs = dbi.dict_cursor(conn)
             #curs.execute('''insert into userAccount (wemail, password, fname, lname, major, year, country, state, city, onCampus, MBCode) 
             #values ('szeamer', 'password', 'Silvia', 'Zeamer', 'MAS', '2021', 'US', 'TX', 'Austin', NULL, NULL);')'''
+    render_template('<h1>NOTHING</h1>')
 
 
 
