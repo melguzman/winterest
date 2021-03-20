@@ -33,7 +33,7 @@ def login():
 def signup():
     return render_template('signup.html')
 
-@app.route('/authenticate/<kind>' methods = ['POST']) 
+@app.route('/authenticate/<kind>', methods = ['POST']) 
 def authenticate(kind):
     if request.method == 'POST':
         email = request.form['email']
