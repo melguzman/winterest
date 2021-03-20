@@ -2,7 +2,9 @@ from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
-import cs304dbi as dbi # fix dbi name
+
+import cs304dbi as dbi
+import scoreQueries
 
 '''**************** Queries for getting info ****************'''
 
@@ -17,7 +19,7 @@ def find_profInt(conn, wemail):
     # otherwise, returns the professional interests
     if len(profInt) != 0:
         return curs.fetchall()
-    return "No professional intersts input yet"
+    return "No professional interests input yet"
 
 def find_favorites(conn, wemail):
     '''Returns a user's favorites things and their respective genres; will be 
@@ -30,7 +32,6 @@ def find_favorites(conn, wemail):
     # otherwise, returns their favorite things and the respective genres
     if len(genreInt) != 0:
         return curs.fetchall()
-    return "No favorite genres input yet"
 
 def find_person_LLs(conn, wemail):
     '''Returns all of user's love languages; 3 rows returned'''
@@ -42,14 +43,13 @@ def find_person_LLs(conn, wemail):
     # otherwise, returns the love languages
     if len(LLInt) != 0:
         return curs.fetchall()
-    return "No LLs input yet"
 
 def find_MB_info(conn, wemail, MBCode):
     '''Takes a user's MBCode and uses it to generate their personality
     information and role in society as per the Myers-Briggs test.'''
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT personality, role FROM MBResults INNER JOIN \
-        userAccount WHERE wemail = {wemail}') #wemail is not in userAccount, can't join like this
+        userAccount WHERE wemail = {wemail}')
     MBVals = curs.fetchall()
     if len(MBVals) != 0:
         return curs.fetchall()
@@ -89,7 +89,7 @@ def update_professionalInterests(conn, wemail, industry, dreamJob):
         WHERE wemail = {wemail}')
     conn.commit()
 
-############ INSERT, UPDATE, DELETE Favorite and Genres
+############ INSERT, UPDATE Favorite and Genres
 
 def insert_favorites(conn, wemail, name, itemType):
     '''Takes user's inputs for their favorite things and their respective 
@@ -165,3 +165,4 @@ if __name__ == '__main__':
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
     curs = dbi.dict_cursor(conn)
+
