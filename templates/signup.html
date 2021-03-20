@@ -14,8 +14,26 @@
 <body>
 <h1>Sign Up</h1>
 <form action={{ url_for('authenticate', kind = 'signup') }}>
-    <label for="username"><b>Username</b></label>
-    <input type="text" placeholder="Enter Username" name="usernamename" required>
+    <label for="fname"><b>First Name</b></label>
+    <input type="text" placeholder="First Name" name="fname" required>
+
+    <label for="lname"><b>Last Name</b></label>
+    <input type="text" placeholder="Last Name" name="lname" required>
+
+    <label for="major"><b>Major</b></label>
+    <input type="text" placeholder="Major" name="major" required>
+
+    <label for="year"><b>Class Year</b></label>
+    <input type="text" placeholder="Class Year" name="year" required>
+
+    <label for="country"><b>Country</b></label>
+    <input type="text" placeholder="Country" name="country" required>
+
+    <label for="state"><b>State</b></label>
+    <input type="text" placeholder="State" name="state" required>
+
+    <label for="city"><b>City</b></label>
+    <input type="text" placeholder="City" name="city" required>
 
     <label for="email"><b>Email</b></label>
     <input type="text" placeholder="Enter Email" name="email" required>
