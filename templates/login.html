@@ -13,7 +13,13 @@
 
 <body>
     <h1>Login</h1>
-    <form>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div id="messages">
+    {% for msg in messages %}
+        <p>{{msg}}</p>
+    {% endfor %}
+    <form action={{ url_for('authenticate', kind = 'login') }}>
         <label for="username"><b>Username</b></label>
         <input type="text" placeholder="Enter Username" name="usernamename" required>
     
