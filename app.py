@@ -41,6 +41,7 @@ def authenticate(kind):
 
         if kind == 'login':
             conn = dbi.connect()
+            curs = dbi.dict_cursor(conn)
             curs.execute('''SELECT * FROM userAccount WHERE wemail = %s''', [email])
             if curs.fetchone()['password'] == password:
                 return '<h1>SUCCESS</h1>'
