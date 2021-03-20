@@ -93,3 +93,9 @@ def matchScore_favorites(conn, wemail, wemail2):
             if fave1 == fave2 and fave1Type == fave2Type:
                 score += 1
     return score  
+
+if __name__ == '__main__':
+    dbi.cache_cnf()   # defaults to ~/.my.cnf
+    dbi.use('wellesleymatch_db')
+    conn = dbi.connect()
+    curs = dbi.dict_cursor(conn)
