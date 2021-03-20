@@ -5,6 +5,7 @@ app = Flask(__name__)
 
 import cs304dbi as dbi
 import random
+import userInfoQueries
 
 def getPossibleMentorMatchings(conn, userIndustry, userDreamJob):
     '''Collect all eligible people who the user could meet as a 
@@ -52,4 +53,3 @@ def getIceBreaker():
                     "What’s the last picture that you took?"]
     pick = random.randint(0, len(iceBreaker)-1)
     return iceBreaker[pick]
-    
