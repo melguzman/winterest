@@ -40,7 +40,13 @@ def authenticate(kind):
         password = request.form['password']
 
         if kind == 'login':
-            pass
+            conn = dbi.connect()
+            curs.execute('''SELECT * FROM userAccount WHERE wemail = %s''', [email])
+            if curs.fetchone()['password'] == password:
+                return '<h1>SUCCESS</h1>'
+            else:
+                return '<h1>FAILURE</h1>'
+
         elif kind == 'signup':
             fname = request.form['fname']
             lname = request.form['lname']
