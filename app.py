@@ -49,7 +49,7 @@ def authenticate(kind):
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
-            MBCode = 'NULL'
+            MBCode = 'purr'
             onCampus = 'NULL'
 
             conn = dbi.connect()
