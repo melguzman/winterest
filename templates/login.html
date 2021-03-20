@@ -22,7 +22,7 @@
     </div>
     {% endif %}
     {% endwith %}
-    <form action={{ url_for('authenticate', kind = 'login') }}>
+    <form method = 'POST' action={{ url_for('authenticate', kind = 'login') }}>
         <label for="email"><b>Email</b></label>
         <input type="text" placeholder="Wellesley Email" name="email" required>
     
