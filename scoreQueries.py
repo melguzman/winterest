@@ -20,7 +20,7 @@ def matchScore(conn, wemail, wemail2):
                 favorites.itemType, favorites.name FROM userAccount INNER \
                 JOIN MBResults using (MBCode) INNER JOIN favorites USING \
                 (wemail) INNER JOIN loveLanguages using (wemail) \
-                WHERE wemail = {wemail}')
+                WHERE wemail = "{wemail}"')
 
     firstInfo = curs.fetchall()
 
