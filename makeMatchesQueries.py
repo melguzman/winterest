@@ -65,8 +65,8 @@ def generatePotentialInfo(conn, wemail):
     current user given their wemail. Sorted by highest matching score 
     to lowest matching score.'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT userAccount.* FROM matches_scored 
-        INNER JOIN userAccount ON (matches_scored.wemail2 = userAccount.wemail) 
+    curs.execute(f'SELECT userAccount.* FROM matches_scored \
+        INNER JOIN userAccount ON (matches_scored.wemail2 = userAccount.wemail) \
         WHERE matches_scored.wemail = "{wemail}" \
         ORDER BY score DESC')
     return curs.fetchall()
@@ -89,9 +89,9 @@ def getMatches(conn, wemail):
     '''Returns the information of the people the user has matched with,
     given the user's wemail'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT b.wemail, b.fname, b.lname, b.year
+    curs.execute(f'SELECT b.wemail, b.fname, b.lname, b.year \
     FROM userAccount as a INNER JOIN matches_scored m ON (m.wemail \
-    = a.wemail) INNER JOIN userAccount as b ON (m.wemail2 = b.wemail)
+    = a.wemail) INNER JOIN userAccount as b ON (m.wemail2 = b.wemail) \
     WHERE m.isMatched = "yes" and m.wemail = "{wemail}"') 
     return curs.fetchall()
 
@@ -99,7 +99,7 @@ def matchExists(conn, wemail, wemail2):
     '''Checks if a match exists between two people'''
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT * FROM matches_scores \
-    WHERE wemail = "{wemail}" AND wemail2 = "{wemail}" AND isMatched = 'yes'') 
+    WHERE wemail = "{wemail}" AND wemail2 = "{wemail}" AND isMatched = "yes"') 
     return curs.fetchall()
 
 
@@ -107,4 +107,5 @@ if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
-    curs = dbi.dict_cursor(conn)
+    insertScores(conn, 'aEstrada')
+    #curs = dbi.dict_cursor(conn)
