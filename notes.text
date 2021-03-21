@@ -14,3 +14,4 @@ Important things to note:
 - new algorithm returns a table of matches and the user p much has to decide what they wanna do when
     they talk to this person / what their goals are
 - incorporate the wemails they get in their matches table to somehow redirect to each user's Wintrest profile
+- resolve the "no credentials" issues by deleting the repo and just cloning it again
