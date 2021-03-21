@@ -46,12 +46,12 @@ def find_person_LLs(conn, wemail):
     if len(LLInt) != 0:
         return LLInt
 
-def find_MB_info(conn, wemail, MBCode):
+def find_MB_info(conn, MBCode):
     '''Takes a user's MBCode and uses it to generate their personality
     information and role in society as per the Myers-Briggs test.'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT personality, role FROM MBResults INNER JOIN \
-        userAccount WHERE wemail = "{wemail}"')
+    curs.execute(f'SELECT personality, role FROM MBResults WHERE \
+                MBResults.MBCode = "{MBCode}"')
     MBVals = curs.fetchall()
     if len(MBVals) != 0:
         return MBVals
@@ -183,6 +183,8 @@ if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
+    #print(find_profInt(conn, 'aEstrada'))
     #print(find_person_LLs(conn, 'gPortill'))
+    print(find_MB_info(conn, 2)) #aEstrada
     #curs = dbi.dict_cursor(conn)
 
