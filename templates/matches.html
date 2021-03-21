@@ -4,7 +4,8 @@
 <section class="match-section">
   <div class="match-photo">
     <div class="one-match" value="{{person.wemail}}">
-      <img id="match-image" src="person.jpg" alt="">
+      <!-- Will update once we learn about file upload -->
+      <img id="match-image" src="{{url_for('static', filename = 'person.jpg')}}" alt="">
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
         <p class="match-subheader">Class of {{person.year}}</p>

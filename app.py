@@ -165,21 +165,21 @@ def home():
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
         currentMatches = currentMatches, emojis = emojis, matchBio = matchBio)
 
-@app.route('/matches/<wemail>', methods=['POST'])
+@app.route('/matches/<wemail>', methods=['GET','POST'])
 def match(wemail):
     conn = dbi.connect()
-    userEmail = session['username']
+    userEmail = session['wemail']
     info = userInfo.find_profile(conn, userEmail)
     completeInfo = favoritesInformation(info[0])
     bio = userInfo.getBio(conn, userEmail)
     
-    return render_template('home.html', person = completeInfo, emojis = emojis, personBio = bio)
+    return render_template('matches.html', person = completeInfo, emojis = emojis, personBio = bio)
 
 @app.route('/next/', methods=['POST'])
 def next():
     conn = dbi.connect()
     wemail = session.get('wemail')
-    index = session.get('index')
+    index = session.get('index', 0)
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
 
     if (index == (len(potentialMatches) - 1)):
@@ -192,7 +192,7 @@ def next():
 def back():
     conn = dbi.connect()
     wemail = session.get('wemail')
-    index = session.get('index')
+    index = session.get('index', 0)
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
 
     if (index == 0):

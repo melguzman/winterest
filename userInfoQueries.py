@@ -27,13 +27,10 @@ def find_favorites(conn, wemail):
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT * FROM favorites\
         WHERE wemail = "{wemail}"')
-    genreInt = curs.fetchall()
+    return curs.fetchall()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns their favorite things and the respective genres
-    if len(genreInt) != 0:
-        return genreInt
-    else:
-        return "Favorites string"
+    
 
 def find_person_LLs(conn, wemail):
     '''Returns all of user's love languages; 3 rows returned'''

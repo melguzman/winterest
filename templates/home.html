@@ -6,7 +6,8 @@
   <h1 class="section-header">Find Friends</h1>
   <div class="match-photo">
     <div class="one-match active" value="{{person.wemail}}">
-      <img id="match-image" src="person.jpg" alt="">
+      <!-- Will update once we learn about file upload -->
+      <img id="match-image" src="{{url_for('static', filename = 'person.jpg')}}" alt="">
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
         <p class="match-subheader">Class of {{person.year}}</p>
@@ -15,12 +16,19 @@
             {{matchBio.bio}}
           </p>
           <div class="profile-interests" data-state="closed">
-            {% for favorite in person.favorites %}
-            <div class="interest-box">
-              <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
-              <p>My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
-            </div>
-            {% endfor %}
+            {% if person.favorites %}
+              {% for favorite in person.favorites %}
+              <div class="interest-box">
+                <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
+                <p>My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="interest-box">
+                <div class="interest-emoji">❓</div>
+                <p>Ask me for my interests!</strong></p>
+              </div>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -28,14 +36,14 @@
     <form class="button-form" method=post action="{{url_for('back')}}">
       <button class="button-form-element" type="submit" name="submit" value="{{person.wemail}}">
         <div id="left-button" class="circle left-arrow">
-          <img src="arrow.png" alt="">
+          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="">
         </div>
       </button>
     </form>
     <form class="button-form" method=post action="{{url_for('back')}}">
       <button class="button-form-element" type="submit" name="submit" value="{{person.wemail}}">
         <div id="right-button" class="circle right-arrow">
-          <img src="arrow.png" alt="">
+          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="">
         </div>
       </button>
     </form>
