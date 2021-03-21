@@ -55,6 +55,7 @@ def authenticate(kind):
             conn = dbi.connect()
             curs = dbi.dict_cursor(conn)
 
+            #basic info
             fname = request.form['fname']
             lname = request.form['lname']
             major = request.form['major']
@@ -62,16 +63,36 @@ def authenticate(kind):
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
+
+            #MBCode and default oncampus to 'no'
             highestMBCode = (curs.execute('''SELECT MAX(CAST(MBCode AS int)) AS code FROM MBResults''')) 
             print(highestMBCode, flush=True)
             MBCode = int(curs.fetchone()['code']) + 1
             onCampus = 'no'
 
+            #interests
+            book = request.form['book']
+            album = request.form['album']
+            color = request.form['color']
+
+            #insert MBCode
             curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
             conn.commit()
+
+            #insert user account
             curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
             conn.commit()
+
+            #insert interests
+            curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, book, 'book'])
+            conn.commit()
+            curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, album, 'album'])
+            conn.commit()
+            curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, color, 'color'])
+            conn.commit()
+
+            #set wemail
             session['wemail'] = email
             matches.insertScores(conn, email)
             return redirect(url_for('home'))
