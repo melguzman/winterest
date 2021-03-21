@@ -9,6 +9,7 @@ import cs304dbi as dbi # figure out which dbi to use
 import userInfoQueries as userInfo
 import profileQueries
 import makeMatchesQueries as matches
+import insertFakeData
 import random
 
 app.secret_key = 'your secret here'
@@ -95,21 +96,21 @@ def demographics():
             return redirect( url_for('index') )
 
 def favoritesInformation(personDict):
-    '''Takes a dictionary and adds a favorite key with corresponding favorite info in 
-    a form of a list of dictionaries'''
+    '''Takes a dictionary and adds a favorite key and favorite info in 
+    a form of a list of dictionaries as the value'''
     conn = dbi.connect()
     temp = peopleDict
     email = personDict['wemail']
     favs = userInfo.find_favorites(conn, email) # Get list of dictionaries for each fav.
-    temp['favorites'] = favs
+    temp['favorites'] = favs # Add key value pair to the dictionary
     return temp
 
 @app.route('/home/', methods=['GET','POST'])
 def home():
     # get user's email
     conn = dbi.connect()
-    wemail = session.get('wemail', 'jl4')
-    index = session.get('index', 0)
+    wemail = session.get('wemail', 'jl4') # access users email
+    index = session.get('index', 0) # index for carosel
     matchStatus = False
     emojis = {'album': '💿', 'song': '🎵', 'artist': '👩‍🎨', 'book': '📘', 
     'movie': '🎬', 'color': '🎨', 'emoji': '😜', 'food': '🍔', 'restaurant': '🍕',
@@ -120,7 +121,7 @@ def home():
     # get list of potential matches emails (list of dictionaries) 
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
     # grab potential user via index (one place they are in the carosel)
-    potentialMatch = potentialMatches[index]  #this is a dictionary!
+    potentialMatch = potentialMatches[index]  # this is a dictionary!
     # add a favorites key with a list of interests as it's value for each user
     completedMatches = favoritesInformation(potentialMatches)
 
@@ -140,12 +141,15 @@ def home():
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
         currentMatches = currentMatches, emojis = emojis, matchBio = matchBio)
 
-@app.route('/match/', methods=['POST'])
-def match():
+@app.route('/matches/<wemail>', methods=['POST'])
+def match(wemail):
+    conn = dbi.connect()
     userEmail = session['username']
-    matchEmail = request.form.get('submit')
-    mq.insertMatches(wemail, matchEmail)
-    return redirect(url_for('home'))
+    info = userInfo.find_profile(conn, userEmail)
+    completeInfo = favoritesInformation(info[0])
+    bio = userInfo.getBio(conn, userEmail)
+    
+    return render_template('home.html', person = completeInfo, emojis = emojis, personBio = bio)
 
 @app.route('/next/', methods=['POST'])
 def next():

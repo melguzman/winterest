@@ -83,6 +83,8 @@ def getIceBreaker():
                     "Failure of the month?",
                     "Play three rounds of Never Have I Ever",
                     "Virtual wine tasting!",
-                    "What’s the last picture that you took?"]
+                    "What’s the last picture that you took?",
+                    "If you inherited or won a million dollars, what’s\
+          the very first thing you would do with the money?"]
     pick = random.randint(0, len(iceBreaker)-1)
     return iceBreaker[pick]
