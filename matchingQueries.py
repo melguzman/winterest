@@ -1,17 +1,25 @@
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
+import cs304dbi as dbi
+
 app = Flask(__name__)
 
-import cs304dbi as dbi
+def getBio(conn, userEmail):
+    '''Returns a user's bio'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT bio
+    FROM bio
+    WHERE wemail = %s''', [userEmail]) 
+    return curs.fetchall()
 
 def isMatched(conn, userEmail, matchEmail):
     '''Returns a row from matches given the user and match's email.
     Will return an empty list if the match does not exist'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('''select *
-    from matches
-    where wemail = %s AND wemail2 = %s''', [userEmail, matchEmail]) 
+    curs.execute('''SELECT *
+    FROM matches
+    WHERE wemail = %s AND wemail2 = %s''', [userEmail, matchEmail]) 
     return curs.fetchall()
 
 def getMatches(conn, userEmail):
@@ -20,7 +28,7 @@ def getMatches(conn, userEmail):
     curs.execute('''SELECT b.wemail, b.fname, b.lname, b.year
     FROM userAccount as a INNER JOIN matches ON (matches.wemail = a.wemail)
     INNER JOIN userAccount as b ON (matches.wemail2 = b.wemail)
-    where a.wemail = %s''', [userEmail]) 
+    WHERE a.wemail = %s''', [userEmail]) 
     return curs.fetchall()
 
 def insertMatches(conn, userEmail, matchEmail):
@@ -35,7 +43,7 @@ def getFavorites(conn, userEmail):
     curs = dbi.dict_cursor(conn)
     curs.execute('''SELECT wemail, name, itemType 
     FROM favorites INNER JOIN userAccount USING (wemail)
-    where userAccount.wemail = %s''', [userEmail]) 
+    WHERE userAccount.wemail = %s''', [userEmail]) 
     return curs.fetchall()
 
 def userInfo_forMentorMatching(conn, userEmail):

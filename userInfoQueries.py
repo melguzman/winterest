@@ -55,6 +55,14 @@ def find_MB_info(conn, wemail, MBCode):
         return curs.fetchall()
     return "No MB code input yet"
 
+def getBio(conn, userEmail):
+    '''Returns a user's bio'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT bio
+    FROM bio
+    WHERE wemail = %s''', [userEmail]) 
+    return curs.fetchall()
+
 '''**************** Queries for changing tables ****************'''
 
 ############ INSERT, UPDATE Professional Interests
