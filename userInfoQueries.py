@@ -149,14 +149,23 @@ def update_top3_lang(conn, wemail, language, langNum):
 
 # can add update but I don't really feel it's needed bc doesn't usually change
 
-def insert_Myers_Briggs(conn, wemail, MBCode):
+def insert_Myers_Briggs_table(conn,MBCode): #needs to be used first
+    '''Takes inputs from user's Myers-Briggs test results.
+    Inserts the user's code from the test results into the database.'''
+
+    curs = dbi.dict_cursor(conn)
+    curs.execute(f'INSERT INTO MBResults (MBCode) \
+        VALUES ({MBCode})')
+    conn.commit()
+
+
+def insert_Myers_Briggs(conn, wemail, MBCode): #then use function second
     '''Takes inputs from user based off of their Myers-Briggs test results.
     Inserts the user's code from the test results into the database.'''
 
     curs = dbi.dict_cursor(conn)
-    # if list of professional interests by said wemail doesn't exist
-    curs.execute(f'INSERT INTO userAccounts (wemail, MBCode) \
-        VALUES ({wemail}, {MBCode})')
+    curs.execute(f'UPDATE userAccount SET MBCode = {MBCode} \
+        where wemail = {wemail}')
     conn.commit()
 
 
