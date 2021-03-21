@@ -104,9 +104,8 @@ def matchExists(conn, wemail, wemail2):
     '''Checks if a match exists between two people'''
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT * FROM matches_scored \
-    WHERE wemail = "{wemail}" AND wemail2 = "{wemail}" AND isMatched = "yes"') 
+    WHERE (wemail = "{wemail}"  AND wemail2 = "{wemail2}") AND isMatched = "yes"') 
     return curs.fetchall()
-
 
 if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
@@ -116,4 +115,5 @@ if __name__ == '__main__':
     #updateScores(conn, 'aEstrada')
     #generatePotentialMatches(conn, 'aEstrada')
     #setMatched(conn, 'aEstrada', 'eRamos')
+    #print(matchExists(conn, 'aEstrada', 'eRamos'))
     #curs = dbi.dict_cursor(conn)
