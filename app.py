@@ -106,30 +106,65 @@ def favoritesInformation(peopleDict):
 def home():
     # get user's email
     conn = dbi.connect()
-    wemail = session.get('user', 'jl4')
+    wemail = session.get('wemail', 'jl4')
+    index = session.get('index', 0)
+    matchStatus = False
     emojis = {'album': '💿', 'song': '🎵', 'artist': '👩‍🎨', 'book': '📘', 
     'movie': '🎬', 'color': '🎨', 'emoji': '😜', 'food': '🍔', 'restaurant': '🍕',
     'game': '👾'}
 
+    # get a user's current matching
+    currentMatches = mq.getCurrentMatches(conn, wemail)
     # get list of potential matches (list of dictionaries)
     potentialMatches = matches.generateMatches(conn, wemail)
     # add a favorites key with a list of interests as it's value for each user
     completedMatches = favoritesInformation(potentialMatches)
-    currentMatches = mq.getCurrentMatches(conn, wemail)
+    # grab potential user via index (one place they are in the carosel)
+    potentialMatch = potentialMatches[index]
+    matchEmail = potentialMatch['wemail']
+
+    # see if the current potential match has already been matched w/ user
+    matchStatus = isMatched(wemail, matchEmail)
+
     if request.method == 'POST':
         # User pressed match button, so match two of them together
         matchEmail = request.form.get('submit')
         mq.insertMatches(wemail, matchEmail)
         
-    return render_template('home.html', potentialMatches = completedMatches, currentIndex = currentIndex,
+    return render_template('home.html', person = potentialMatch, matchStatus = matchStatus,
         currentMatches = currentMatches, emojis = emojis)
     
-# @app.route('/match/', methods=['POST'])
-# def match():
-#     userEmail = session['username']
-#     matchEmail = request.form.get('submit')
-#     mq.insertMatches(wemail, matchEmail)
-#     return redirect(url_for('home'))
+@app.route('/match/', methods=['POST'])
+def match():
+    userEmail = session['username']
+    matchEmail = request.form.get('submit')
+    mq.insertMatches(wemail, matchEmail)
+    return redirect(url_for('home'))
+
+@app.route('/next/', methods=['POST'])
+def next():
+    wemail = session.get('wemail')
+    index = session.get('index')
+    potentialMatches = matches.generateMatches(conn, wemail)
+
+    if (index == (len(potentialMatches) - 1)):
+        session['index'] = 0
+    else:
+        session['index'] = session['index'] + 1
+    return redirect(url_for('home'))
+
+@app.route('/back/', methods=['POST'])
+def back():
+    wemail = session.get('wemail')
+    index = session.get('index')
+    potentialMatches = matches.generateMatches(conn, wemail)
+
+    if (index == 0):
+        session['index'] = len(potentialMatches) - 1
+    else:
+        session['index'] = session['index'] - 1
+    return redirect(url_for('home'))
+
 
 @app.route('/formecho/', methods=['GET','POST'])
 def formecho():

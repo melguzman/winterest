@@ -3,29 +3,36 @@ from flask import (Flask, render_template, make_response, url_for, request,
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
-import cs304dbi as dbi
-    
-def getMatches(conn, userEmail):
-    '''Returns a person's matches in a list of dictionaries'''
+def isMatched(conn, userEmail, matchEmail):
+    '''Returns a row from matches given the user and match's email.
+    Will return an empty list if the match does not exist'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('''select b.wemail, b.fname, b.lname, b.year
-    from userAccountas a inner join matches on (matches.wemail = a.wemail)
-    inner join userAccount b on (matches.wemail2 = b.wemail)
+    curs.execute('''select *
+    from matches
+    where wemail = %s AND wemail2 = %s''', [userEmail, matchEmail]) 
+    return curs.fetchall()
+
+def getMatches(conn, userEmail):
+    '''Returns the information of the people the user has matched with'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT b.wemail, b.fname, b.lname, b.year
+    FROM userAccount as a INNER JOIN matches ON (matches.wemail = a.wemail)
+    INNER JOIN userAccount as b ON (matches.wemail2 = b.wemail)
     where a.wemail = %s''', [userEmail]) 
     return curs.fetchall()
 
 def insertMatches(conn, userEmail, matchEmail):
-    '''Inserts a matching pair'''
+    '''Inserts a matching pair given the user's email and their match'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('''INSERT INTO matches (wemail, wemail2)
+    curs.execute('''INSERT INTO matches(wemail, wemail2)
             VALUES (%s, %s)''', [userEmail, matchEmail]) 
     conn.commit()
 
 def getFavorites(conn, userEmail): 
     '''Returns a person's favorites'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('''select wemail, name, itemType 
-    from favorites inner join userAccount using (wemail)
+    curs.execute('''SELECT wemail, name, itemType 
+    FROM favorites INNER JOIN userAccount USING (wemail)
     where userAccount.wemail = %s''', [userEmail]) 
     return curs.fetchall()
 

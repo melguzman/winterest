@@ -2,11 +2,10 @@
 
 {% block main_content %}
 <div class="main-content">
-{% for person in potentialMatches %}
-<section class="match-section {% if loop.index == 0 %} active {% endif %}">
+<section class="match-section">
   <h1 class="section-header">Find Friends</h1>
   <div class="match-photo">
-    <div class="one-match" value="{{person.wemail}}">
+    <div class="one-match {% if loop.index == index %} active {% endif %}" value="{{person.wemail}}">
       <img id="match-image" src="person.jpg" alt="">
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
@@ -26,22 +25,36 @@
         </div>
       </div>
     </div>
-    <div id="left-button" class="circle left-arrow">
-      <img src="arrow.png" alt="">
-    </div>
-    <div id="right-button" class="circle right-arrow">
-      <img src="arrow.png" alt="">
+    <form class="button-form" method=post action="{{url_for('back')}}">
+      <button class="button-form-element" type="submit" name="submit" value="{{person.wemail}}">
+        <div id="left-button" class="circle left-arrow">
+          <img src="arrow.png" alt="">
+        </div>
+      </button>
+    </form>
+    <form class="button-form" method=post action="{{url_for('back')}}">
+      <button class="button-form-element" type="submit" name="submit" value="{{person.wemail}}">
+        <div id="right-button" class="circle right-arrow">
+          <img src="arrow.png" alt="">
+        </div>
+      </button>
+    </form>
     </div>
   </div>
     <div class="match-buttons">
       <button class="blue-button" id="more-info-button" type="submit" name="submit" value="info">👀 More Information</button>
-      {% if %}
+      {% if matchStatus %}
       <form method=post action="">
         <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">❤️ Match</button>
       </form>
+      {% else %}
+          <!-- not yet implemented -->
+      <form method=post action="">
+        <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
+      </form>
+      {end if}
       <button class="gray-button" id="shuffle-button" type="submit" name="submit" value="shuffle">🔀 Shuffle</button>
     </div>
-{% endfor %}
 </section>
 <section id="current-matches">
   <h1 class="section-header">Current Matches</h1>
@@ -102,24 +115,24 @@
       }
     });
     
-    carosel = 0;
-    matchSlides = $(".one-match")
-    length = matchSlides.length
+    // carosel = 0;
+    // matchSlides = $(".one-match")
+    // length = matchSlides.length
 
-    $("#left-button").on("click", function(event) {
-      $(matchSlides[carosel]).removeClass('active')
-      if (carosel == 0) { carosel = length-1; }
-      else { carosel -= 1;  }
-      $(matchSlides[carosel]).addClass('active')
-      console.log(carosel)
-    });
+    // $("#left-button").on("click", function(event) {
+    //   $(matchSlides[carosel]).removeClass('active')
+    //   if (carosel == 0) { carosel = length-1; }
+    //   else { carosel -= 1;  }
+    //   $(matchSlides[carosel]).addClass('active')
+    //   console.log(carosel)
+    // });
 
-    $("#right-button").on("click", function(event) {
-      $(matchSlides[carosel]).removeClass('active')
-      if (carosel == length-1) { carosel = 0; }
-      else { carosel += 1;  }
-      $(matchSlides[carosel]).addClass('active')
-      console.log(carosel)
-    });
+    // $("#right-button").on("click", function(event) {
+    //   $(matchSlides[carosel]).removeClass('active')
+    //   if (carosel == length-1) { carosel = 0; }
+    //   else { carosel += 1;  }
+    //   $(matchSlides[carosel]).addClass('active')
+    //   console.log(carosel)
+    // });
   </script>
 {% endblock %}
