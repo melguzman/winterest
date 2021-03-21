@@ -63,7 +63,7 @@ def authenticate(kind):
             conn = dbi.connect()
 
             curs = dbi.dict_cursor(conn)
-            curs.execute('''INSERT INTO MBResults (MBCode) VALUES ('purr')''')
+            curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
             curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
             session['wemail'] = email
