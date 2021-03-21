@@ -147,6 +147,7 @@ create table matches_scored (
     wemail char(8), -- person who is logged in
     wemail2 char(8), -- wemail of second person, unmatched yet
     score int not null,
+    isMatched char(3), -- value of yes/no depending on if this pair is matched or not
     INDEX (wemail),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
@@ -155,13 +156,3 @@ create table matches_scored (
 
 ENGINE = InnoDB;
 
-create table matches (
-    wemail char(8), -- person who is logged in
-    wemail2 char(8), -- wemail of matched person
-    INDEX (wemail),
-    foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
-)
-
-ENGINE = InnoDB;
