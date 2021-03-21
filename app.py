@@ -55,6 +55,7 @@ def authenticate(kind):
             conn = dbi.connect()
             curs = dbi.dict_cursor(conn)
 
+            #basic info
             fname = request.form['fname']
             lname = request.form['lname']
             major = request.form['major']
@@ -62,15 +63,36 @@ def authenticate(kind):
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
+
+            #three favorites
+            color = request.form['color']
+            album = request.form['album']
+            book = request.form['book']
+
+            #iterate MBCode
             highestMBCode = (curs.execute('''SELECT MAX(CAST(MBCode AS int)) AS code FROM MBResults''')) 
             MBCode = int(curs.fetchone()['code']) + 1
             onCampus = 'no'
 
+            #insert MBScore placeholder
             curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
             conn.commit()
+
+            #insert user into userAccounts
             curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
             conn.commit()
+
+            #insert interests into favorites table
+            curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, color, 'color'])
+            conn.commit()
+            curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, album, 'album'])
+            conn.commit()
+            curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, book, 'book'])
+            conn.commit()
+
+
+            #set session wemail and insert match scores for user
             session['wemail'] = email
             matches.insertScores(conn, email)
             return redirect(url_for('home'))
