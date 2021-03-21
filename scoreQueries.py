@@ -83,6 +83,8 @@ def matchScore_LL(conn, wemail, wemail2):
     # debug accordingly
     firstLLs = userInfoQueries.find_person_LLs(conn, wemail)
     secondLLs = userInfoQueries.find_person_LLs(conn, wemail2)
+    print(firstLLs)
+    print(secondLLs)
 
     score = 0
     if not firstLLs or not secondLLs:
@@ -121,4 +123,7 @@ if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
-    curs = dbi.dict_cursor(conn)
+    #print(matchScore(conn, 'aEstrada', 'aEstrada'))
+    #print(matchScore(conn, 'aEstrada', 'eRamos'))
+    print(matchScore_LL(conn, 'gPortill', 'eRamos'))
+    #curs = dbi.dict_cursor(conn)

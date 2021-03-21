@@ -44,7 +44,7 @@ def find_person_LLs(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the love languages
     if len(LLInt) != 0:
-        return curs.fetchall()
+        return LLInt
 
 def find_MB_info(conn, wemail, MBCode):
     '''Takes a user's MBCode and uses it to generate their personality
@@ -183,5 +183,6 @@ if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
-    curs = dbi.dict_cursor(conn)
+    print(find_person_LLs(conn, 'gPortill'))
+    #curs = dbi.dict_cursor(conn)
 
