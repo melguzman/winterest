@@ -155,7 +155,7 @@ def insert_Myers_Briggs(conn, wemail, MBCode):
 
     curs = dbi.dict_cursor(conn)
     # if list of professional interests by said wemail doesn't exist
-    curs.execute(f'INSERT INTO userAccounts (wemail, MBCode) \
+    curs.execute(f'INSERT INTO userAccount (wemail, MBCode) \
         VALUES ({wemail}, {MBCode})')
     conn.commit()
 
