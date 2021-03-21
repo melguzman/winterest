@@ -1,60 +1,94 @@
-<!doctype html>
+{% extends "base.html" %}
 
-<html lang="en">
-<head>
-  <meta charset="utf-8">
+{% block main_content %}
 
-  <title>Winterest</title>
-  <meta name="Winterest, matching the Wellesley community" content="Winterest">
+<div class="main-content">
+    <div class="signup-container">
+      <h2 class="action-title">Sign Up</h2>
+      
+      <form method='POST' action={{ url_for('authenticate', kind = 'signup') }}>
+        <div id="wellesley-email-box" class="textbox signup-textbox">
+          <label for="wemail">Wellesley Email</label>
+          <p class="match-subheader">Please omit (@wellesley.edu)</p>
+          <input type="text" id="email" name="email" placeholder="jl4" required>
+        </div>
 
-  <link rel="stylesheet" href="#">
+        <div class="twocol-flex">
+          <div class="textbox signup-textbox">
+            <label for="fname">First Name</label>
+            <input type="text" id="fname" name="fname" placeholder="First Name" required>
+          </div>
 
-</head>
+          <div class="textbox signup-textbox">
+            <label for="lname">Last Name</label>
+            <input type="text" id="lname" name="lname" placeholder="Last Name" required>
+          </div>
+        </div>
 
-<body>
-<h1>Sign Up</h1>
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-    <div id="messages">
-{% for msg in messages %}
-    <p>{{msg}}</p>
-{% endfor %}
-</div>
-{% endif %}
-{% endwith %}
-<form method='POST' action={{ url_for('authenticate', kind = 'signup') }}>
-    <label for="fname"><b>First Name</b></label>
-    <input type="text" placeholder="First Name" name="fname" required>
+        <div class="twocol-flex">
+          <div class="textbox signup-textbox">
+            <label for="city">City</label>
+            <input type="text" id="city" name="city" placeholder="City" required>
+          </div>
+          <div class="textbox signup-textbox">
+            <label for="state">State</label>
+            <input type="text" id="state" name="state" placeholder="State" required>
+          </div>
+        </div>
+        <div class="textbox signup-textbox">
+          <label for="country">Country</label>
+          <input type="text" id="country" name="country" placeholder="Country" required>
+        </div>
 
-    <label for="lname"><b>Last Name</b></label>
-    <input type="text" placeholder="Last Name" name="lname" required>
+        <div class="textbox signup-textbox">
+          <label for="password">Password</label>
+          <input type="password" placeholder="Enter Password" name="password" required>
+        </div>
 
-    <label for="major"><b>Major</b></label>
-    <input type="text" placeholder="Major" name="major" required>
+        <div class="textbox signup-textbox">
+          <label for="confirm_password">Confirm Password</label>
+          <input type="confirm_password" placeholder="Confirm Password" name="confirm_password" required>
+        </div>
 
-    <label for="year"><b>Class Year</b></label>
-    <input type="text" placeholder="Class Year" name="year" required>
+        <br>
+        <h2 class="action-title">School Information</h2>
 
-    <label for="country"><b>Country</b></label>
-    <input type="text" placeholder="Country" name="country" required>
+        <fieldset class="r-pill">
+          <legend>
+            Current Location
+          </legend>
 
-    <label for="state"><b>State</b></label>
-    <input type="text" placeholder="State" name="state" required>
+          <span class="r-pill__item">
+            <input type="radio" id="home" name="radios_3" checked>
+            <label for="home">At Home</label>
+          </span>
 
-    <label for="city"><b>City</b></label>
-    <input type="text" placeholder="City" name="city" required>
+          <span class="r-pill__item">
+            <input type="radio" id="campus" name="radios_3">
+            <label for="campus">On Campus</label>
+          </span>
 
-    <label for="email"><b>Email</b></label>
-    <input type="text" placeholder="Enter Email" name="email" required>
+          <span class="r-pill__item">
+            <input type="radio" id="other" name="radios_3">
+            <label for="other">Other</label>
+          </span>
+        </fieldset>
 
-    <label for="password"><b>Password</b></label>
-    <input type="password" placeholder="Enter Password" name="password" required>
+        <div class="twocol-flex">
+          <div class="textbox signup-textbox">
+            <label for="major">Major(s)</label>
+            <input type="text" id="major" name="major" placeholder="Major(s)" required>
+          </div>
 
-    <label for="confirm_password"><b>Confirm Password</b></label>
-    <input type="confirm_password" placeholder="Confirm Password" name="confirm_password" required>
+          <div class="textbox signup-textbox">
+            <label for="year">Year</label>
+            <input type="text" id="year" name="year" placeholder="2023" required>
+          </div>
+        </div>
+        <br>
+        <button type="submit">Sign up</button>
+      </form>
+    </div>
+  </div>
 
-    <button type="submit">Sign up</button>
-    <label>
-</form>
-</body>
-</html>
+  {% endblock %}

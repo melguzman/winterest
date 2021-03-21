@@ -454,3 +454,34 @@ form {
   color: black;
   text-decoration: none;
 }
+
+
+.signup-textbox {
+  margin-top: 12px;
+}
+
+.twocol-flex {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.twocol-flex > div {
+  width: 48%;
+}
+
+#wellesley-email-box label {
+  margin-bottom: 0px;
+}
+
+#wellesley-email-box > p {
+  margin-bottom: 8px;
+}
+
+.signup-container {
+  background-color: #FFF;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  width: 440px;
+  padding: 24px;
+}
