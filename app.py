@@ -11,6 +11,7 @@ import profileQueries
 import makeMatchesQueries as matches
 import insertFakeData
 import random
+import sys
 
 app.secret_key = 'your secret here'
 # replace that with a random key
