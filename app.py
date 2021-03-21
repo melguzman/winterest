@@ -131,12 +131,12 @@ def home():
     matchBio = userInfo.getBio(conn, matchEmail)
 
     # see if the current potential match has already been matched w/ user
-    matchStatus = matches.matchExists(wemail, matchEmail)
+    matchStatus = matches.matchExists(conn, wemail, matchEmail)
 
     if request.method == 'POST':
         # User pressed match button, so match two of them together
         matchEmail = request.form.get('submit')
-        matches.setMatched(wemail, matchEmail)
+        matches.setMatched(conn, wemail, matchEmail)
         
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
         currentMatches = currentMatches, emojis = emojis, matchBio = matchBio)
