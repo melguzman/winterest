@@ -10,7 +10,7 @@
         <p class="match-subheader">Class of {{person.fname}}</p>
         <div class="active">
           <p class="profile-bio">
-            {{matchBio.bio}}
+            {{personBio.bio}}
           </p>
           <div class="profile-interests" data-state="closed">
             {% for favorite in person.favorites %}
@@ -29,8 +29,7 @@
     <section id="match-actions">
       <div class="icebreaker-action">
         <h2 class="action-title">Random Icebreaker</h2>
-        <p id="icebreaker">If you inherited or won a million dollars, what’s
-          the very first thing you would do with the money?</p>
+        <p id="icebreaker"></p>
         <div id="icebreaker-buttons">
           <button class="gray-button" id="ice-shuffle-button" type="button" name="button">🔀 Shuffle</button>
           <button class="blue-button" id="copy-button" type="button" name="button">Copy</button>
@@ -107,5 +106,58 @@
 {% endblock %}
 
 {% block end_scripts %}
+<script>
+$("#more-info-button").on("click", function(event) {
+    $button = $("#more-info-button");
+    $profile = $("#more-profile");
+    if ($profile.css("display") == 'none') {
+      $profile.css("display", "block");
+      $button.text("✌️ Less Information");
+    }
+    else {
+      $profile.css("display", "none");
+      $button.text("👀 More Information");
+    }
+  });
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
+function getIceBreaker() {
+    // Randomly returns an ice breaker
+    choices = ["Two Truths and One Lie",
+                    "How are you feeling today?",
+                    "Get the weirdest thing in your room, then bring it back to show",
+                    "Highlight of the month?",
+                    "Failure of the month?",
+                    "Play three rounds of Never Have I Ever",
+                    "Virtual wine tasting!",
+                    "What’s the last picture that you took?",
+                    "If you inherited or won a million dollars",
+                    "what’s the very first thing you would do with the money?"]
+    return choices[getRandomInt(choices.length)]
+}
+
+function copyToClipboard(element) {
+    var $temp = $("<input>");
+    $("body").append($temp);
+    $temp.val($(element).text()).select();
+    document.execCommand("copy");
+    $temp.remove();
+    alert("Copied!");
+}
+
+$("#icebreaker").text(getIceBreaker());
+
+$("#ice-shuffle-button").on('click', function(event) {
+  $("#icebreaker").text(getIceBreaker());
+});
+
+$("#copy-button").on('click', function(event) {
+  copyToClipboard("#icebreaker");
+});
+
+</script>
 {% endblock %}
 

@@ -6,9 +6,10 @@ app = Flask(__name__)
 import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
-import userInfoQueries
+import userInfoQueries as userInfo
 import profileQueries
 import makeMatchesQueries as matches
+import insertFakeData
 import random
 
 app.secret_key = 'your secret here'
@@ -94,20 +95,22 @@ def demographics():
             flash('form submission error'+str(err))
             return redirect( url_for('index') )
 
-def favoritesInformation(peopleDict):
+def favoritesInformation(personDict):
+    '''Takes a dictionary and adds a favorite key and favorite info in 
+    a form of a list of dictionaries as the value'''
     conn = dbi.connect()
     temp = peopleDict
-    for aDict in peopleDict:
-        favs = userInfoQueries.find_favorites(conn, peopleDict['wemail']) # Get list of dictionaries for each fav.
-        temp['favorites'] = favs
+    email = personDict['wemail']
+    favs = userInfo.find_favorites(conn, email) # Get list of dictionaries for each fav.
+    temp['favorites'] = favs # Add key value pair to the dictionary
     return temp
 
 @app.route('/home/', methods=['GET','POST'])
 def home():
     # get user's email
     conn = dbi.connect()
-    wemail = session.get('wemail', 'jl4')
-    index = session.get('index', 0)
+    wemail = session.get('wemail', 'jl4') # access users email
+    index = session.get('index', 0) # index for carosel
     matchStatus = False
     emojis = {'album': '💿', 'song': '🎵', 'artist': '👩‍🎨', 'book': '📘', 
     'movie': '🎬', 'color': '🎨', 'emoji': '😜', 'food': '🍔', 'restaurant': '🍕',
@@ -116,35 +119,37 @@ def home():
     # get a user's current matching
     currentMatches = matches.getMatches(conn, wemail)
     # get list of potential matches emails (list of dictionaries) 
-    potentialMatches = matches.generateMatchesInfo(conn, wemail)
+    potentialMatches = matches.generatePotentialInfo(conn, wemail)
     # grab potential user via index (one place they are in the carosel)
-    potentialMatch = potentialMatches[index]
-    # get that user's info as a list with one dictionary in it
-    matchEmail = potentialMatch['wemail']
-    
+    potentialMatch = potentialMatches[index]  # this is a dictionary!
     # add a favorites key with a list of interests as it's value for each user
     completedMatches = favoritesInformation(potentialMatches)
 
+    # get that user's info as a list with one dictionary in it
+    matchEmail = potentialMatch['wemail']
     # get potential user's bio
-    matchBio = mq.getBio(conn, matchEmail)
+    matchBio = userInfo.getBio(conn, matchEmail)
 
     # see if the current potential match has already been matched w/ user
-    matchStatus = mq.isMatched(wemail, matchEmail)
+    matchStatus = matches.matchExists(wemail, matchEmail)
 
     if request.method == 'POST':
         # User pressed match button, so match two of them together
         matchEmail = request.form.get('submit')
-        mq.insertMatches(wemail, matchEmail)
+        matches.setMatched(wemail, matchEmail)
         
-    return render_template('home.html', person = potentialMatch, matchStatus = matchStatus,
+    return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
         currentMatches = currentMatches, emojis = emojis, matchBio = matchBio)
-    
-@app.route('/match/', methods=['POST'])
-def match():
+
+@app.route('/matches/<wemail>', methods=['POST'])
+def match(wemail):
+    conn = dbi.connect()
     userEmail = session['username']
-    matchEmail = request.form.get('submit')
-    mq.insertMatches(wemail, matchEmail)
-    return redirect(url_for('home'))
+    info = userInfo.find_profile(conn, userEmail)
+    completeInfo = favoritesInformation(info[0])
+    bio = userInfo.getBio(conn, userEmail)
+    
+    return render_template('home.html', person = completeInfo, emojis = emojis, personBio = bio)
 
 @app.route('/next/', methods=['POST'])
 def next():

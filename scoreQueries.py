@@ -28,10 +28,10 @@ def matchScore(conn, wemail, wemail2):
         return 'No possible match here'
     firstPerson = firstInfo[0] # assumes firstInfo is a list of one dictionary
 
-    curs.execute(f'SELECT major, city, state, country, onCampus, personality, \
+    curs.execute(f'SELECT major, city, state, country, onCampus, personality \
                 FROM userAccount INNER JOIN MBResults using (MBCode) \
                 INNER JOIN favorites USING (wemail) INNER JOIN loveLanguages \
-                using (wemail) WHERE wemail = {wemail2}')
+                using (wemail) WHERE wemail = "{wemail2}"')
     
     secondInfo = curs.fetchall()
 
@@ -40,20 +40,6 @@ def matchScore(conn, wemail, wemail2):
     secondPerson = secondInfo[0] # assumes secondInfo is a list of one dictionary
 
     score = 0
-
-    # all of these MUST be filled out by the user, otherwise alg breaks
-    # if secondPerson['major'] == firstPerson['major']:
-    #     score += 1
-    # if secondPerson['city'] == firstPerson['city']:
-    #     score += 1
-    # if secondPerson['state'] == firstPerson['state']:
-    #     score += 1
-    # if secondPerson['country'] == firstPerson['country']:
-    #     score += 1
-    # if secondPerson['onCampus'] == firstPerson['onCampus']:
-    #     score += 1
-    # if secondPerson['personality'] == firstPerson['personality']:
-    #     score += 1
 
     #in case information that was not filled in somehow still passes throuh
     try:

@@ -22,6 +22,7 @@ def insertDataToTables(conn,filename):
         fields = next(csvreader) 
         index = 0
         for field in fields:
+            #print(field)
             fieldsDict[field] = index
             index += 1
 
@@ -29,51 +30,52 @@ def insertDataToTables(conn,filename):
         for row in csvreader:
             #insert data into MBResults
             curs.execute(f'insert into MBResults(MBCode,personality,role) \
-            values({row[fieldsDict["MBCode"]]},{row[fieldsDict["personality"]]},\
-            {row[fieldsDict["role"]]})')
+            values("{row[fieldsDict["MBCode"]]}","{row[fieldsDict["personality"]]}",\
+            "{row[fieldsDict["role"]]}")')
             conn.commit()
 
             #insert data into userAccount
             curs.execute(f'insert into userAccount(wemail,password,fname,lname,major,year,\
-            country,state,city,onCampus,MBCode) values({row[fieldsDict["wemail"]]},\
-            {row[fieldsDict["password"]]},{row[fieldsDict["fname"]]},\
-            {row[fieldsDict["lname"]]},{row[fieldsDict["major"]]}, {row[fieldsDict["year"]]},\
-            {row[fieldsDict["country"]]},{row[fieldsDict["state"]]}, {row[fieldsDict["city"]]},\
-            {row[fieldsDict["onCampus"]]},{row[fieldsDict["MBCode"]]})')
+            country,state,city,onCampus,MBCode) values("{row[fieldsDict["wemail"]]}",\
+            "{row[fieldsDict["password"]]}","{row[fieldsDict["fname"]]}",\
+            "{row[fieldsDict["lname"]]}","{row[fieldsDict["major"]]}", "{row[fieldsDict["year"]]}",\
+            "{row[fieldsDict["country"]]}","{row[fieldsDict["state"]]}", "{row[fieldsDict["city"]]}",\
+            "{row[fieldsDict["onCampus"]]}","{row[fieldsDict["MBCode"]]}")')
             conn.commit()
 
             #insert data into contact
             curs.execute(f'insert into contact(wemail,phoneNumber,handle,url,platform) \
-            values({row[fieldsDict["wemail"]]},{row[fieldsDict["phoneNumber"]]},\
-            {row[fieldsDict["handle"]]}, {row[fieldsDict["url"]]}, \
-            {row[fieldsDict["platform"]]})')
+            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["phoneNumber"]]}",\
+            "{row[fieldsDict["handle"]]}", "{row[fieldsDict["url"]]}", \
+            "{row[fieldsDict["platform"]]}")')
             conn.commit()
 
             #insert data into professionalInterests
             curs.execute(f'insert into professionalInterests(wemail,industry,dreamJob) \
-            values({row[fieldsDict["wemail"]]},{row[fieldsDict["industry"]]},\
-            {row[fieldsDict["dreamJob"]]})')
+            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["industry"]]}",\
+            "{row[fieldsDict["dreamJob"]]}")')
             conn.commit()
 
             #insert data into favorites
             curs.execute(f'insert into favorites(wemail,name,itemType) \
-            values({row[fieldsDict["wemail"]]},{row[fieldsDict["name"]]},\
-            {row[fieldsDict["itemType"]]})')
+            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["name"]]}",\
+            "{row[fieldsDict["itemType"]]}")')
             conn.commit()
 
             #insert data into loveLanguages
             curs.execute(f'insert into loveLanguages(wemail,langNum,language) \
-            values({row[fieldsDict["wemail"]]},{row[fieldsDict["langNum"]]},\
-            {row[fieldsDict["language"]]})')
+            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["langNum"]]}",\
+            "{row[fieldsDict["language"]]}")')
             conn.commit()
 
             #insert data into bio
             curs.execute(f'insert into bio(wemail,bioID,bio) \
-            values({row[fieldsDict["wemail"]]},{row[fieldsDict["bioID"]]},\
-            {row[fieldsDict["bio"]]})')
+            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["bioID"]]}",\
+            "{row[fieldsDict["bio"]]}")')
             conn.commit()
 
 
+<<<<<<< HEAD
 def getIceBreaker():
     '''Randomly returns an ice breaker'''
     iceBreakers = ["Two Truths and One Lie", 
@@ -83,6 +85,27 @@ def getIceBreaker():
                     "Failure of the month?",
                     "Play three rounds of Never Have I Ever",
                     "Virtual wine tasting!",
-                    "What’s the last picture that you took?"]
+                    "What’s the last picture that you took?",
+                    "If you inherited or won a million dollars, what’s\
+          the very first thing you would do with the money?"]
     pick = random.randint(0, len(iceBreaker)-1)
     return iceBreaker[pick]
+=======
+# def getIceBreaker():
+#     '''Randomly returns an ice breaker'''
+#     iceBreakers = ["Two Truths and One Lie", 
+#                     "How are you feeling today?", 
+#                     "Get the weirdest thing in your room, then bring it back to show",
+#                     "Highlight of the month?",
+#                     "Failure of the month?",
+#                     "Play three rounds of Never Have I Ever",
+#                     "Virtual wine tasting!",
+#                     "What’s the last picture that you took?"]
+#     pick = random.randint(0, len(iceBreaker)-1)
+#     return iceBreaker[pick]
+
+if __name__ == '__main__':
+    filename = "users.csv"
+    conn = dbi.connect()
+    #insertDataToTables(conn,filename)
+>>>>>>> b9f589ef244e83aaf10dedd780b1e9bf3541a994

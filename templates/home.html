@@ -59,17 +59,17 @@
 <section id="current-matches">
   <h1 class="section-header">Current Matches</h1>
   {% for match in currentMatches %}
-
-  <div class="match-containers">
-    <div class="circle-img">
-      <p>{{match.fname[0] + match.lname[0] }}</p>
+  <a class="match-link" href="{{url_for('matches', wemail={{person.wemail}})}}">
+    <div class="match-containers">
+      <div class="circle-img">
+        <p>{{match.fname[0] + match.lname[0] }}</p>
+      </div>
+      <div class="matches-info">
+        <h3>match.fname</h3>
+        <p class="match-subheader">match.year</p>
+      </div>
     </div>
-    <div class="matches-info">
-      <h3>match.fname</h3>
-      <p class="match-subheader">match.year</p>
-    </div>
-  </div>
-
+  </a>
   {% endfor %}
 
   (% if len(matches) <= 4 %)
@@ -89,18 +89,19 @@
 {% block end_scripts %}
 <script>
    /* Expands and collapses section for "More Information" */
-   $button = $("#more-info-button");
-   $button.on("click", function(event) {
-      $profile = $("#more-profile");
-      if ($profile.css("display") == 'none') {
-        $profile.css("display", "block");
-        $button.text("✌️ Less Information");
-      }
-      else {
-        $profile.css("display", "none");
-        $button.text("👀 More Information");
-      }
-    });
+   $("#more-info-button").on("click", function(event) {
+    console.log("click")
+    $button = $("#more-info-button");
+    $profile = $("#more-profile");
+    if ($profile.css("display") == 'none') {
+      $profile.css("display", "block");
+      $button.text("✌️ Less Information");
+    }
+    else {
+      $profile.css("display", "none");
+      $button.text("👀 More Information");
+    }
+});
 
   /* Toggles between match and unmatch */
   $matchButton = $("#match-button");
