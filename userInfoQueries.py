@@ -60,9 +60,7 @@ def find_MB_info(conn, MBCode):
 def getBio(conn, userEmail):
     '''Returns a user's bio'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('''SELECT bio
-    FROM bio
-    WHERE wemail = %s''', [userEmail]) 
+    curs.execute('''SELECT bio FROM bio WHERE wemail = %s''', [userEmail]) 
     return curs.fetchall()
 
 '''**************** Queries for changing tables ****************'''
@@ -93,8 +91,7 @@ def update_professionalInterests(conn, wemail, industry, dreamJob):
 
     curs = dbi.dict_cursor(conn)
     wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f'UPDATE professionalInterests SET industry = "{industry}" \
-        WHERE wemail = "{wemail}"')
+    curs.execute(f' UPDATE professionalInterests SET industry = "{industry}" WHERE wemail = "{wemail}" ') 
     curs.execute(f'UPDATE professionalInterests SET dreamJob = "{dreamJob}" \
         WHERE wemail = "{wemail}"')
     conn.commit()
@@ -185,6 +182,9 @@ if __name__ == '__main__':
     conn = dbi.connect()
     #print(find_profInt(conn, 'aEstrada'))
     #print(find_person_LLs(conn, 'gPortill'))
-    print(find_MB_info(conn, 2)) #aEstrada
+    #print(find_MB_info(conn, 2)) #aEstrada
+    #print(getBio(conn, 'mPap'))
+    #insert_professionalInterests(conn, 'cat', 'Government', 'International Affairs')
+    #update_professionalInterests(conn, 'cat', 'Education', 'Teacher')
     #curs = dbi.dict_cursor(conn)
 
