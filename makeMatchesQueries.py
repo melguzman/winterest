@@ -103,7 +103,7 @@ def getMatches(conn, wemail):
 def matchExists(conn, wemail, wemail2):
     '''Checks if a match exists between two people'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM matches_scores \
+    curs.execute(f'SELECT * FROM matches_scored \
     WHERE wemail = "{wemail}" AND wemail2 = "{wemail}" AND isMatched = "yes"') 
     return curs.fetchall()
 

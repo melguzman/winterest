@@ -32,6 +32,8 @@ def find_favorites(conn, wemail):
     # otherwise, returns their favorite things and the respective genres
     if len(genreInt) != 0:
         return curs.fetchall()
+    else:
+        return "Favorites string"
 
 def find_person_LLs(conn, wemail):
     '''Returns all of user's love languages; 3 rows returned'''

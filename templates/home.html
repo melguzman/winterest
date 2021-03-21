@@ -5,7 +5,7 @@
 <section class="match-section">
   <h1 class="section-header">Find Friends</h1>
   <div class="match-photo">
-    <div class="one-match {% if loop.index == index %} active {% endif %}" value="{{person.wemail}}">
+    <div class="one-match active" value="{{person.wemail}}">
       <img id="match-image" src="person.jpg" alt="">
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
@@ -52,14 +52,14 @@
       <form method=post action="">
         <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
       </form>
-      {end if}
+      {% endif %}
       <button class="gray-button" id="shuffle-button" type="submit" name="submit" value="shuffle">🔀 Shuffle</button>
     </div>
 </section>
 <section id="current-matches">
   <h1 class="section-header">Current Matches</h1>
   {% for match in currentMatches %}
-  <a class="match-link" href="{{url_for('matches', wemail={{person.wemail}})}}">
+  <a class="match-link" href="{{url_for('matches', wemail=person.wemail)}}">
     <div class="match-containers">
       <div class="circle-img">
         <p>{{match.fname[0] + match.lname[0] }}</p>
@@ -72,7 +72,7 @@
   </a>
   {% endfor %}
 
-  (% if len(matches) <= 4 %)
+  {% if matches|length <= 4 %}
   <div class="more-container">
     <div class="matches-info">
       <h3>much empty.</h3>
@@ -84,7 +84,7 @@
 </section>
 </div>
 {% endblock %}
-{% endblock %}
+
 
 {% block end_scripts %}
 <script>
