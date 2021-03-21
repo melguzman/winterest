@@ -125,7 +125,7 @@ def home():
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
     # grab potential user via index (one place they are in the carosel)
     potentialMatch = potentialMatches[index]  # this is a dictionary!
-    # add a favorites key with a list of interests as it's value for each user
+    # add a favorites key with a list of interests as its value for each user
     completedMatches = favoritesInformation(potentialMatch)
 
     # get that user's info as a list with one dictionary in it
