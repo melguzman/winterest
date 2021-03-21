@@ -11,7 +11,6 @@ Important things to note:
     - UPDATE of match scores: happens after a user updates a profile feature; to have matches that are updated
         to match the updates made to the user profile, users must recallibrate their matches via a button of
         some sort
-- old_match.py is melissa's file // take non matching stuff out and add it to a new file
 - new algorithm returns a table of matches and the user p much has to decide what they wanna do when
     they talk to this person / what their goals are
 - incorporate the wemails they get in their matches table to somehow redirect to each user's Wintrest profile

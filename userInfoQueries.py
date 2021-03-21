@@ -13,7 +13,7 @@ def find_profInt(conn, wemail):
     row returned'''
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT * FROM professionalInterests\
-        WHERE wemail = {wemail}')
+        WHERE wemail = "{wemail}"')
     profInt = curs.fetchall()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the professional interests
@@ -26,7 +26,7 @@ def find_favorites(conn, wemail):
     multiple rows'''
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT * FROM favorites\
-        WHERE wemail = {wemail}')
+        WHERE wemail = "{wemail}"')
     genreInt = curs.fetchall()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns their favorite things and the respective genres
@@ -37,7 +37,7 @@ def find_person_LLs(conn, wemail):
     '''Returns all of user's love languages; 3 rows returned'''
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT * FROM loveLanguages \
-        WHERE wemail = {wemail}')
+        WHERE wemail = "{wemail}"')
     LLInt = curs.fetchall()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the love languages
@@ -49,7 +49,7 @@ def find_MB_info(conn, wemail, MBCode):
     information and role in society as per the Myers-Briggs test.'''
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT personality, role FROM MBResults INNER JOIN \
-        userAccount WHERE wemail = {wemail}')
+        userAccount WHERE wemail = "{wemail}"')
     MBVals = curs.fetchall()
     if len(MBVals) != 0:
         return curs.fetchall()
@@ -75,14 +75,14 @@ def insert_professionalInterests(conn, wemail, industry, dreamJob):
     # assumption: user MUST have an input for ALL categories 
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT wemail FROM professionalInterests WHERE \
-        wemail = {wemail}')
+        wemail = "{wemail}"')
     checkInt = curs.fetchall()
     # if list of professional interests by said wemail doesn't exist,
     # we will insert a new row into the table for this person
     if len(checkInt) == 0: 
         curs.execute(f'INSERT INTO professionalInterests (wemail, \
-            industry, dreamJob) VALUES ({wemail}, {industry}, \
-            {dreamJob})')
+            industry, dreamJob) VALUES ("{wemail}", "{industry}", \
+            "{dreamJob}")')
         conn.commit()
 
 def update_professionalInterests(conn, wemail, industry, dreamJob):
@@ -91,10 +91,10 @@ def update_professionalInterests(conn, wemail, industry, dreamJob):
 
     curs = dbi.dict_cursor(conn)
     wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f'UPDATE professionalInterests SET industry = {industry} \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE professionalInterests SET dreamJob = {dreamJob} \
-        WHERE wemail = {wemail}')
+    curs.execute(f'UPDATE professionalInterests SET industry = "{industry}" \
+        WHERE wemail = "{wemail}"')
+    curs.execute(f'UPDATE professionalInterests SET dreamJob = "{dreamJob}" \
+        WHERE wemail = "{wemail}"')
     conn.commit()
 
 ############ INSERT, UPDATE Favorite and Genres
@@ -106,7 +106,7 @@ def insert_favorites(conn, wemail, name, itemType):
     # assumption: user MUST have a favorite of each genre listed 
     curs = dbi.dict_cursor(conn)
     curs.execute(f'INSERT INTO favorites (wemail, name, itemType) \
-        VALUES ({wemail}, {name}, {itemType})')
+        VALUES ("{wemail}", "{name}", "{itemType}")')
     conn.commit()
 
 def update_favorites(conn, wemail, name, itemType):
@@ -117,10 +117,10 @@ def update_favorites(conn, wemail, name, itemType):
     # update favorite and genres info 
     curs = dbi.dict_cursor(conn)
     wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f'UPDATE favorites SET name = {name} \
-        WHERE itemType = {itemType}')
-    curs.execute(f'UPDATE favorites SET itemType = {itemType} \
-        WHERE name = {name}')
+    curs.execute(f'UPDATE favorites SET name = "{name}" \
+        WHERE itemType = "{itemType}"')
+    curs.execute(f'UPDATE favorites SET itemType = "{itemType}" \
+        WHERE name = "{name}"')
     conn.commit()
     
 
@@ -135,7 +135,7 @@ def insert_top3_LL(conn, wemail, language, langNum):
     # assumption: user MUST have 3 LLs
     curs = dbi.dict_cursor(conn)
     curs.execute(f'INSERT INTO loveLanguages (wemail, language, langNum) \
-        VALUES ({wemail}, {language}, {langNum})')
+        VALUES ("{wemail}", "{language}", "{langNum}")')
     conn.commit()
 
 def update_top3_lang(conn, wemail, language, langNum):
@@ -148,8 +148,8 @@ def update_top3_lang(conn, wemail, language, langNum):
     curs = dbi.dict_cursor(conn)
 
     wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f'UPDATE loveLanguages SET language = {language} \
-        WHERE wemail = {wemail} and langNum = {langNum}')
+    curs.execute(f'UPDATE loveLanguages SET language = "{language}" \
+        WHERE wemail = "{wemail}" and langNum = "{langNum}"')
     conn.commit()
 
 
@@ -163,7 +163,7 @@ def insert_Myers_Briggs_table(conn,MBCode): #needs to be used first
 
     curs = dbi.dict_cursor(conn)
     curs.execute(f'INSERT INTO MBResults (MBCode) \
-        VALUES ({MBCode})')
+        VALUES ("{MBCode}")')
     conn.commit()
 
 
@@ -172,8 +172,8 @@ def insert_Myers_Briggs(conn, wemail, MBCode): #then use function second
     Inserts the user's code from the test results into the database.'''
 
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'UPDATE userAccount SET MBCode = {MBCode} \
-        where wemail = {wemail}')
+    curs.execute(f'UPDATE userAccount SET MBCode = "{MBCode}" \
+        where wemail = "{wemail}"')
     conn.commit()
 
 
