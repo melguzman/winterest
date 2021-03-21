@@ -1,20 +1,16 @@
-<!doctype html>
+{% extends "base.html" %}
 
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-
-  <title>Winterest</title>
-  <meta name="Winterest, matching the Wellesley community" content="Winterest">
-
-  <link rel="stylesheet" href="#">
-
-</head>
+{% block main_content %}
 
 <body>
-<h1>Welcome to Wintrest</h1>
-<a href={{ url_for('login') }}>Login</a>
-<a href={{ url_for('signup') }}>Sign Up</a>
-<a href={{ url_for('faq') }}>About the Project</a>
+<div class="main-content">
+<div class="signup-container">
+<p>WELCOME</p>>
+<button><a href={{ url_for('login') }}>Login</a></button>
+<button><a href={{ url_for('signup') }}>Sign Up</a></button>
+<button><a href={{ url_for('faq') }}>About the Project</a></button>
+</div>
+</div>
 </body>
-</html>
+
+{% endblock %}
