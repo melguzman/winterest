@@ -18,7 +18,7 @@ def find_profInt(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the professional interests
     if len(profInt) != 0:
-        return curs.fetchall()
+        return profInt
     return "No professional interests input yet"
 
 def find_favorites(conn, wemail):
@@ -54,7 +54,7 @@ def find_MB_info(conn, wemail, MBCode):
         userAccount WHERE wemail = "{wemail}"')
     MBVals = curs.fetchall()
     if len(MBVals) != 0:
-        return curs.fetchall()
+        return MBVals
     return "No MB code input yet"
 
 def getBio(conn, userEmail):
