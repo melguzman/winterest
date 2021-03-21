@@ -107,5 +107,5 @@ if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
-    insertScores(conn, 'aEstrada')
+    #insertScores(conn, 'aEstrada')
     #curs = dbi.dict_cursor(conn)
