@@ -2,7 +2,7 @@ from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
-import cs304dbi as dbi # fix dbi name
+import cs304dbi as dbi 
 
 '''**************** Queries for getting info ****************'''
 
@@ -15,7 +15,7 @@ def find_profile(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the demographics
     if len(person) != 0:
-        return curs.fetchall()
+        return person
     return "No user by that name yet"
 
 def find_dem(conn, wemail):
@@ -27,7 +27,7 @@ def find_dem(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the demographics
     if len(demographics) != 0:
-        return curs.fetchall()
+        return demographics
     return "No demographics input yet"
 
 def find_phoneNum(conn, wemail):
@@ -39,7 +39,7 @@ def find_phoneNum(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the demographics
     if len(phoneNum) != 0:
-        return curs.fetchall()
+        return phoneNum
     return "No phone number input yet"
 
 '''**************** Queries for changing tables ****************'''
@@ -47,7 +47,7 @@ def find_phoneNum(conn, wemail):
 ############ INSERT, UPDATE User Profile
 
 def insert_profile(conn, wemail, password, fname, lname, country,
-            state, city, MBCode, major, year, onCampus): #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
+            state, city, MBCode, major, year, onCampus): 
     '''Takes new user's initial inputs and adds them into the table'''
     # assumption: user MUST input all categories 
     curs = dbi.dict_cursor(conn)
@@ -63,42 +63,42 @@ def insert_profile(conn, wemail, password, fname, lname, country,
     conn.commit()
 
 def update_profile(conn, wemail, password, fname, lname, country,
-            state, city, MBCode, major, year, onCampus): #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
+            state, city, MBCode, major, year, onCampus): 
     '''Takes user's changed inputs for their profile and updates the
     profile accordingly'''
 
     curs = dbi.dict_cursor(conn)
-    wemail = f'''"{wemail}"''' if wemail else "NULL" # i think i can just get rid of these but idk
+    wemail = f'''"{wemail}"''' if wemail else "NULL" #this causes wemail to not need quotes below
 
-    curs.execute(f'UPDATE userAccount SET password = {password} \ WHERE wemail = {wemail}') 
+    curs.execute(f'UPDATE userAccount SET password = "{password}" \
+         WHERE wemail = {wemail}') 
     curs.execute(f'UPDATE userAccount SET fname = "{fname}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET lname = "{lname}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET country = "{country}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET state = "{state}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET city = "{city}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET MBCode = "{MBCode}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET major = "{major}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET year = "{year}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE userAccount SET onCampus = "{onCampus}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
 
     conn.commit()
 
 def delete_profile(conn, wemail):
     '''Deletes a user profile given their ID'''
     curs = dbi.dict_cursor(conn)
-    wemail = f'''"{wemail}"''' if wemail else "NULL"
     user = find_profile(conn, wemail)
     if len(user) != 0:
-        curs.execute(f'DELETE FROM userAccount WHERE wemail = {wemail}')
+        curs.execute(f'DELETE FROM userAccount WHERE wemail = "{wemail}"')
 
     conn.commit()
 
@@ -110,7 +110,7 @@ def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
     Note: users can only insert one row of their contact information''' 
 
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM contact WHERE wemail = {wemail}')
+    curs.execute(f'SELECT * FROM contact WHERE wemail = "{wemail}"')
     checkContact = curs.fetchall()
     # if contact for this user doesn't already exist, we will add their info to
     # the contact table
@@ -120,33 +120,41 @@ def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
             "{handle}", "{url}", "{platform}")')
     conn.commit()
 
-def update_contact(conn, wemail, password, phoneNumber, handle, url, platform): #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
+def update_contact(conn, wemail, phoneNumber, handle, url, platform): 
     '''Takes user's changed inputs for their contacts and updates the
     profile accordingly'''
 
     curs = dbi.dict_cursor(conn)
-    wemail = f'''"{wemail}"''' if wemail else "NULL" # i think i can just get rid of these but idk
+    wemail = f'''"{wemail}"''' if wemail else "NULL" #this causes wemail to not need quotes below
 
-    curs.execute(f'UPDATE contact SET password = "{password}" \
-        WHERE wemail = "{wemail}"') #password added!!!!!!!!!!!!!!!!!!!!!!!!!!
-    curs.execute(f'UPDATE contact SET fname = "{phoneNumber}" \
-        WHERE wemail = "{wemail}"')
+    curs.execute(f'UPDATE contact SET phoneNumber = "{phoneNumber}" \
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE contact SET handle = "{handle}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE contact SET url = "{url}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
     curs.execute(f'UPDATE contact SET platform = "{platform}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}')
 
     conn.commit()
 
 def delete_contact(conn, wemail):
     '''Deletes a user's contact information given their wemail'''
     curs = dbi.dict_cursor(conn)
-    wemail = f'''"{wemail}"''' if wemail else "NULL"
     phone = find_phoneNum(conn, wemail)
     if len(phone) != 0:
         curs.execute(f'DELETE FROM contact WHERE wemail = "{wemail}"')
     conn.commit()
 
-
+if __name__ == '__main__':
+    dbi.cache_cnf()   # defaults to ~/.my.cnf
+    dbi.use('wellesleymatch_db')
+    conn = dbi.connect()
+    #print(find_profile(conn, 'mTuzman'))
+    #print(find_dem(conn, 'mTuzman'))
+    #print(find_phoneNum(conn, 'aEstrada'))
+    #update_profile(conn, 'mTuzman', 'fake6', 'Melissa', 'Guzman', 'USA',
+            #'CA', 'Bellflower', '1', 'Computer Science', 2020, 'no')
+    #insert_contact(conn, 'mTuzman', 703, 'somehandle11', 'someurlq', 'facebook')
+    #update_contact(conn, 'mTuzman', 703, 'somehandle11', 'someurlq', 'instagram')
+    #delete_contact(conn, 'mTuzman')
