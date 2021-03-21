@@ -2,7 +2,7 @@ from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
-import cs304dbi as dbi # fix dbi name
+import cs304dbi as dbi 
 
 '''**************** Queries for getting info ****************'''
 
@@ -15,7 +15,7 @@ def find_profile(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the demographics
     if len(person) != 0:
-        return curs.fetchall()
+        return person
     return "No user by that name yet"
 
 def find_dem(conn, wemail):
@@ -27,7 +27,7 @@ def find_dem(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the demographics
     if len(demographics) != 0:
-        return curs.fetchall()
+        return demographics
     return "No demographics input yet"
 
 def find_phoneNum(conn, wemail):
@@ -39,7 +39,7 @@ def find_phoneNum(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the demographics
     if len(phoneNum) != 0:
-        return curs.fetchall()
+        return phoneNum
     return "No phone number input yet"
 
 '''**************** Queries for changing tables ****************'''
@@ -149,4 +149,7 @@ def delete_contact(conn, wemail):
         curs.execute(f'DELETE FROM contact WHERE wemail = "{wemail}"')
     conn.commit()
 
-
+if __name__ == '__main__':
+    dbi.cache_cnf()   # defaults to ~/.my.cnf
+    dbi.use('wellesleymatch_db')
+    conn = dbi.connect()
