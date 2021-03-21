@@ -62,15 +62,17 @@ def matchScore(conn, wemail, wemail2):
 def matchScore_LL(conn, wemail, wemail2):
     # assumes that firstFaves and secondFaves is a list of dictionaries
     # debug accordingly
-    firstLLs = userInfoQueries.find_favorites(conn, wemail)
-    secondLLs = userInfoQueries.find_favorites(conn, wemail2)
+    firstLLs = userInfoQueries.find_person_LLs(conn, wemail)
+    secondLLs = userInfoQueries.find_person_LLs(conn, wemail2)
 
     score = 0
     if not firstLLs or not secondLLs:
         return score
-    for langDict in firstLLs:
+
+    #handles case in which a user can have more than 1 love language
+    for langDict in firstLLs: 
         language = langDict['language']
-        for langDict2 in secondLLs:
+        for langDict2 in secondLLs: 
             if langDict2['language'] == language:
                 score += 1
     return score 
