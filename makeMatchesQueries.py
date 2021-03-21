@@ -18,6 +18,7 @@ def insertScores(conn, wemail):
 
     # loop through every user and insert into their database
     for user in allUsers:
+        #print(user)
         emailID = user['wemail']
         if emailID != wemail: # don't do this for the users themselves
             score = scoreQueries.matchScore(conn, emailID, wemail)
@@ -29,6 +30,8 @@ def insertScores(conn, wemail):
             # insert emailID to current user wemail row
             curs.execute(f'INSERT INTO matches_scored (wemail, wemail2, score, \
             isMatched) VALUES ("{emailID}", "{wemail}", "{score}", "no")')
+            
+    conn.commit()
             
 
 def updateScores(conn, wemail):
@@ -51,6 +54,8 @@ def updateScores(conn, wemail):
             # update emailID to current user wemail row
             curs.execute(f'UPDATE matches_scored SET score = "{score}" WHERE wemail \
                  = "{emailID}" and wemail2 = "{wemail}"')
+
+    conn.commit()
 
 def generatePotentialMatches(conn, wemail): 
     '''Generates the matches for the current user given their wemail.
@@ -83,7 +88,7 @@ def setMatched(conn, wemail, wemail2):
         # update matching status for matched person's row
     curs.execute(f'UPDATE matches_scored SET isMatched = "yes" WHERE wemail \
         = "{wemail2}" and wemail2 = "{wemail}"')
-    return curs.fetchall()
+    conn.commit()
 
 def getMatches(conn, wemail):
     '''Returns the information of the people the user has matched with,
@@ -98,7 +103,7 @@ def getMatches(conn, wemail):
 def matchExists(conn, wemail, wemail2):
     '''Checks if a match exists between two people'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM matches_scores \
+    curs.execute(f'SELECT * FROM matches_scored \
     WHERE wemail = "{wemail}" AND wemail2 = "{wemail}" AND isMatched = "yes"') 
     return curs.fetchall()
 
@@ -107,5 +112,8 @@ if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
-    insertScores(conn, 'aEstrada')
+    #insertScores(conn, 'aEstrada')
+    #updateScores(conn, 'aEstrada')
+    #generatePotentialMatches(conn, 'aEstrada')
+    #setMatched(conn, 'aEstrada', 'eRamos')
     #curs = dbi.dict_cursor(conn)
