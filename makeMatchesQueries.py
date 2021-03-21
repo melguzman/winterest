@@ -60,7 +60,7 @@ def generatePotentialMatches(conn, wemail):
         ORDER BY score DESC')
     return curs.fetchall() # returns table of matches
 
-def generateMatchesInfo(conn, wemail):
+def generatePotentialInfo(conn, wemail):
     '''Generates the matches for the current user given their wemail.
     Sorted by highest matching score to lowest matching score.'''
     curs = dbi.dict_cursor(conn)
@@ -70,7 +70,7 @@ def generateMatchesInfo(conn, wemail):
         ORDER BY score DESC')
     return curs.fetchall()
 
-def isMatched(conn, wemail, wemail2):
+def setMatched(conn, wemail, wemail2):
     '''Takes current user and their matched person's info and updates
     both of their matched status accordingly; wemail is the current user,
     wemail2 is the matched person'''
@@ -92,6 +92,13 @@ def getMatches(conn, wemail):
     FROM userAccount as a INNER JOIN matches_scored m ON (m.wemail \
     = a.wemail) INNER JOIN userAccount as b ON (m.wemail2 = b.wemail)
     WHERE m.isMatched = "yes" and m.wemail = {wemail}') 
+    return curs.fetchall()
+
+def matchExists(conn, wemail, wemail2):
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT *
+    FROM matches_scores
+    WHERE wemail = %s AND wemail2 = %s AND isMatched = 'yes' ''',[]) 
     return curs.fetchall()
 
 
