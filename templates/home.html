@@ -59,7 +59,7 @@
 <section id="current-matches">
   <h1 class="section-header">Current Matches</h1>
   {% for match in currentMatches %}
-  <a class="match-link" href="{{url_for('matches', wemail={{person.wemail}})}}">
+  <a class="match-link" href="{{url_for('matches', wemail=person.wemail)}}">
     <div class="match-containers">
       <div class="circle-img">
         <p>{{match.fname[0] + match.lname[0] }}</p>
