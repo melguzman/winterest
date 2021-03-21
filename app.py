@@ -114,7 +114,7 @@ def home():
     'game': '👾'}
 
     # get a user's current matching
-    currentMatches = mq.getCurrentMatches(conn, wemail)
+    currentMatches = mq.getMatches(conn, wemail)
     # get list of potential matches (list of dictionaries)
     potentialMatches = matches.generateMatches(conn, wemail)
     # add a favorites key with a list of interests as it's value for each user
@@ -122,6 +122,9 @@ def home():
     # grab potential user via index (one place they are in the carosel)
     potentialMatch = potentialMatches[index]
     matchEmail = potentialMatch['wemail']
+
+    # get potential user's bio
+    matchBio = mq.getBio(conn, matchEmail)
 
     # see if the current potential match has already been matched w/ user
     matchStatus = isMatched(wemail, matchEmail)
@@ -132,7 +135,7 @@ def home():
         mq.insertMatches(wemail, matchEmail)
         
     return render_template('home.html', person = potentialMatch, matchStatus = matchStatus,
-        currentMatches = currentMatches, emojis = emojis)
+        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio)
     
 @app.route('/match/', methods=['POST'])
 def match():
