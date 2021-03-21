@@ -80,7 +80,6 @@ def matchScore(conn, wemail, wemail2):
 
 def matchScore_LL(conn, wemail, wemail2):
     # assumes that firstFaves and secondFaves is a list of dictionaries
-    # debug accordingly
     firstLLs = userInfoQueries.find_person_LLs(conn, wemail)
     secondLLs = userInfoQueries.find_person_LLs(conn, wemail2)
 
@@ -98,7 +97,6 @@ def matchScore_LL(conn, wemail, wemail2):
 
 def matchScore_favorites(conn, wemail, wemail2):
     # assumes that firstFaves and secondFaves is a list of dictionaries
-    # debug accordingly
     firstFaves = userInfoQueries.find_favorites(conn, wemail)
     secondFaves = userInfoQueries.find_favorites(conn, wemail2)
 
@@ -121,4 +119,8 @@ if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
-    curs = dbi.dict_cursor(conn)
+    #print(matchScore(conn, 'aEstrada', 'aEstrada'))
+    #print(matchScore(conn, 'aEstrada', 'eRamos'))
+    #print(matchScore_LL(conn, 'gPortill', 'eRamos'))
+    #print(matchScore_favorites(conn, 'mPap', 'eRamos'))
+    #curs = dbi.dict_cursor(conn)
