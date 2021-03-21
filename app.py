@@ -66,6 +66,7 @@ def authenticate(kind):
             curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
             curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
+            conn.commit()
             session['wemail'] = email
             return redirect(url_for('home'))
             
@@ -124,7 +125,7 @@ def home():
     matchEmail = potentialMatch['wemail']
 
     # see if the current potential match has already been matched w/ user
-    matchStatus = isMatched(wemail, matchEmail)
+    matchStatus = mq.isMatched(wemail, matchEmail)
 
     if request.method == 'POST':
         # User pressed match button, so match two of them together
