@@ -58,6 +58,15 @@ def generateMatches(conn, wemail):
         ORDER BY score DESC')
     return curs.fetchall() # returns table of matches
 
+def generateMatchesInfo(conn, wemail):
+    '''Generates the matches for the current user given their wemail.
+    Sorted by highest matching score to lowest matching score.'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute(f'SELECT userAccount.* FROM matches_scored 
+        INNER JOIN userAccount ON (matches_scored.wemail2 = userAccount.wemail) 
+        WHERE matches_scored.wemail = {wemail} \
+        ORDER BY score DESC')
+    return curs.fetchall()
 
 if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf

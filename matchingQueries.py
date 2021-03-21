@@ -1,9 +1,10 @@
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
+import cs304dbi as dbi
+
 app = Flask(__name__)
 
-<<<<<<< HEAD
 def getBio(conn, userEmail):
     '''Returns a user's bio'''
     curs = dbi.dict_cursor(conn)
@@ -11,9 +12,6 @@ def getBio(conn, userEmail):
     FROM bio
     WHERE wemail = %s''', [userEmail]) 
     return curs.fetchall()
-=======
-import cs304dbi as dbi
->>>>>>> 991b9bc7c193a604c807d803c0773f18fc128bbd
 
 def isMatched(conn, userEmail, matchEmail):
     '''Returns a row from matches given the user and match's email.

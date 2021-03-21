@@ -7,7 +7,7 @@ import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
 import userInfoQueries
-import matchingQueries as mq
+import profileQueries
 import makeMatchesQueries as matches
 import random
 
@@ -74,9 +74,6 @@ def authenticate(kind):
             
     return '<h1>NOTHING HAPPENED</h1>'
 
-
-
-
 @app.route('/faq/')
 def faq():
     return render_template('faq.html', page_title = 'Winterest FAQ')
@@ -101,7 +98,7 @@ def favoritesInformation(peopleDict):
     conn = dbi.connect()
     temp = peopleDict
     for aDict in peopleDict:
-        favs = mq.getFavorites(conn, peopleDict['wemail']) # Get list of dictionaries for each fav.
+        favs = userInfoQueries.find_favorites(conn, peopleDict['wemail']) # Get list of dictionaries for each fav.
         temp['favorites'] = favs
     return temp
 
@@ -117,14 +114,16 @@ def home():
     'game': '👾'}
 
     # get a user's current matching
-    currentMatches = mq.getMatches(conn, wemail)
-    # get list of potential matches (list of dictionaries)
-    potentialMatches = matches.generateMatches(conn, wemail)
-    # add a favorites key with a list of interests as it's value for each user
-    completedMatches = favoritesInformation(potentialMatches)
+    currentMatches = matches.getMatches(conn, wemail)
+    # get list of potential matches emails (list of dictionaries) 
+    potentialMatches = matches.generateMatchesInfo(conn, wemail)
     # grab potential user via index (one place they are in the carosel)
     potentialMatch = potentialMatches[index]
+    # get that user's info as a list with one dictionary in it
     matchEmail = potentialMatch['wemail']
+    
+    # add a favorites key with a list of interests as it's value for each user
+    completedMatches = favoritesInformation(potentialMatches)
 
     # get potential user's bio
     matchBio = mq.getBio(conn, matchEmail)
