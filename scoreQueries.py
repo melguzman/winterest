@@ -42,18 +42,51 @@ def matchScore(conn, wemail, wemail2):
     score = 0
 
     # all of these MUST be filled out by the user, otherwise alg breaks
-    if secondPerson['major'] == firstPerson['major']:
-        score += 1
-    if secondPerson['city'] == firstPerson['city']:
-        score += 1
-    if secondPerson['state'] == firstPerson['state']:
-        score += 1
-    if secondPerson['country'] == firstPerson['country']:
-        score += 1
-    if secondPerson['onCampus'] == firstPerson['onCampus']:
-        score += 1
-    if secondPerson['personality'] == firstPerson['personality']:
-        score += 1
+    # if secondPerson['major'] == firstPerson['major']:
+    #     score += 1
+    # if secondPerson['city'] == firstPerson['city']:
+    #     score += 1
+    # if secondPerson['state'] == firstPerson['state']:
+    #     score += 1
+    # if secondPerson['country'] == firstPerson['country']:
+    #     score += 1
+    # if secondPerson['onCampus'] == firstPerson['onCampus']:
+    #     score += 1
+    # if secondPerson['personality'] == firstPerson['personality']:
+    #     score += 1
+
+    #in case information that was not filled in somehow still passes throuh
+    try:
+        if secondPerson['major'] == firstPerson['major']:
+            score += 1
+    except KeyError:
+        score += 0
+    try:
+        if secondPerson['city'] == firstPerson['city']:
+            score += 1
+    except KeyError:
+        score += 0
+    try:
+        if secondPerson['state'] == firstPerson['state']:
+            score += 1
+    except KeyError:
+        score += 0
+    try:
+        if secondPerson['country'] == firstPerson['country']:
+            score += 1
+    except KeyError:
+        score += 0
+    try:
+        if secondPerson['onCampus'] == firstPerson['onCampus']:
+            score += 1
+    except KeyError:
+        score += 0
+    try:
+        if secondPerson['personality'] == firstPerson['personality']:
+            score += 1
+    except KeyError:
+        score += 0
+
     score += matchScore_LL # add in score from love languages
     score += matchScore_favorites # add in score from favorites
 
@@ -69,7 +102,7 @@ def matchScore_LL(conn, wemail, wemail2):
     if not firstLLs or not secondLLs:
         return score
 
-    #handles case in which a user can have more than 1 love language
+    #handles case in which users can have more than 1 love language
     for langDict in firstLLs: 
         language = langDict['language']
         for langDict2 in secondLLs: 
@@ -86,6 +119,8 @@ def matchScore_favorites(conn, wemail, wemail2):
     score = 0
     if not firstFaves or not secondFaves:
         return score
+
+    #handles case in which users can have more than 1 favorite item
     for faveDict in firstFaves:
         fave1 = faveDict['name'].lower()
         fave1Type = faveDict['itemType']
