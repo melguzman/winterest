@@ -78,10 +78,10 @@ def getMatches(conn, wemail):
     '''Returns the information of the people the user has matched with,
     given the user's wemail'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT b.wemail, b.fname, b.lname, b.year
+    curs.execute(f'''SELECT b.wemail, b.fname, b.lname, b.year
     FROM userAccount as a INNER JOIN matches_scored m ON (m.wemail \
     = a.wemail) INNER JOIN userAccount as b ON (m.wemail2 = b.wemail)
-    WHERE m.isMatched = "yes" and m.wemail = {wemail}') 
+    WHERE m.isMatched = "yes" and m.wemail = {wemail}''') 
 
     return curs.fetchall()
 
