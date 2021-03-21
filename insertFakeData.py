@@ -75,17 +75,20 @@ def insertDataToTables(conn,filename):
             conn.commit()
 
 
-def getIceBreaker():
-    '''Randomly returns an ice breaker'''
-    iceBreakers = ["Two Truths and One Lie", 
-                    "How are you feeling today?", 
-                    "Get the weirdest thing in your room, then bring it back to show",
-                    "Highlight of the month?",
-                    "Failure of the month?",
-                    "Play three rounds of Never Have I Ever",
-                    "Virtual wine tasting!",
-                    "What’s the last picture that you took?",
-                    "If you inherited or won a million dollars, what’s\
-          the very first thing you would do with the money?"]
-    pick = random.randint(0, len(iceBreaker)-1)
-    return iceBreaker[pick]
+# def getIceBreaker():
+#     '''Randomly returns an ice breaker'''
+#     iceBreakers = ["Two Truths and One Lie", 
+#                     "How are you feeling today?", 
+#                     "Get the weirdest thing in your room, then bring it back to show",
+#                     "Highlight of the month?",
+#                     "Failure of the month?",
+#                     "Play three rounds of Never Have I Ever",
+#                     "Virtual wine tasting!",
+#                     "What’s the last picture that you took?"]
+#     pick = random.randint(0, len(iceBreaker)-1)
+#     return iceBreaker[pick]
+
+if __name__ == '__main__':
+    filename = "users.csv"
+    conn = dbi.connect()
+    #insertDataToTables(conn,filename)

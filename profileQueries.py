@@ -100,6 +100,8 @@ def delete_profile(conn, wemail):
     if len(user) != 0:
         curs.execute(f'DELETE FROM userAccount WHERE wemail = {wemail}')
 
+    conn.commit()
+
 ############ INSERT, UPDATE User Profile
 
 def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
@@ -145,10 +147,6 @@ def delete_contact(conn, wemail):
     phone = find_phoneNum(conn, wemail)
     if len(phone) != 0:
         curs.execute(f'DELETE FROM contact WHERE wemail = "{wemail}"')
+    conn.commit()
 
 
-if __name__ == '__main__':
-    dbi.cache_cnf()   # defaults to ~/.my.cnf
-    dbi.use('wellesleymatch_db')
-    conn = dbi.connect()
-    curs = dbi.dict_cursor(conn)

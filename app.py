@@ -11,6 +11,7 @@ import profileQueries
 import makeMatchesQueries as matches
 import insertFakeData
 import random
+import sys
 
 app.secret_key = 'your secret here'
 # replace that with a random key
@@ -61,7 +62,9 @@ def authenticate(kind):
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
-            MBCode = (curs.execute('''SELECT MAX('MBCode') AS lastScore FROM MBResults''')) + 12
+            highestMBCode = (curs.execute('''SELECT MAX(MBCode) AS code FROM MBResults''')) 
+            print(highestMBCode, flush=True)
+            MBCode = int(curs.fetchone()['code']) + 1
             onCampus = 'no'
 
             curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
@@ -99,7 +102,7 @@ def favoritesInformation(personDict):
     '''Takes a dictionary and adds a favorite key and favorite info in 
     a form of a list of dictionaries as the value'''
     conn = dbi.connect()
-    temp = peopleDict
+    temp = personDict
     email = personDict['wemail']
     favs = userInfo.find_favorites(conn, email) # Get list of dictionaries for each fav.
     temp['favorites'] = favs # Add key value pair to the dictionary
@@ -122,8 +125,8 @@ def home():
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
     # grab potential user via index (one place they are in the carosel)
     potentialMatch = potentialMatches[index]  # this is a dictionary!
-    # add a favorites key with a list of interests as it's value for each user
-    completedMatches = favoritesInformation(potentialMatches)
+    # add a favorites key with a list of interests as its value for each user
+    completedMatches = favoritesInformation(potentialMatch)
 
     # get that user's info as a list with one dictionary in it
     matchEmail = potentialMatch['wemail']
@@ -131,12 +134,12 @@ def home():
     matchBio = userInfo.getBio(conn, matchEmail)
 
     # see if the current potential match has already been matched w/ user
-    matchStatus = matches.matchExists(wemail, matchEmail)
+    matchStatus = matches.matchExists(conn, wemail, matchEmail)
 
     if request.method == 'POST':
         # User pressed match button, so match two of them together
         matchEmail = request.form.get('submit')
-        matches.setMatched(wemail, matchEmail)
+        matches.setMatched(conn, wemail, matchEmail)
         
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
         currentMatches = currentMatches, emojis = emojis, matchBio = matchBio)

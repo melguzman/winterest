@@ -73,8 +73,8 @@ def matchScore(conn, wemail, wemail2):
     except KeyError:
         score += 0
 
-    score += matchScore_LL # add in score from love languages
-    score += matchScore_favorites # add in score from favorites
+    score += matchScore_LL(conn, wemail, wemail2) # add in score from love languages
+    score += matchScore_favorites(conn,wemail,wemail2) # add in score from favorites
 
     return score
 
