@@ -61,8 +61,8 @@ def authenticate(kind):
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
-            highestMBCode = (curs.execute('''SELECT MAX('MBCode') AS lastScore FROM MBResults''')) 
-            MBCode = int(curs.fetchone()['lastScore']) + 1
+            highestMBCode = (curs.execute('''SELECT MAX('MBCode') FROM MBResults''')) 
+            MBCode = int(curs.fetchone()['MBCode']) + 1
             onCampus = 'no'
 
             curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
