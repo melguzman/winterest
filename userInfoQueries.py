@@ -18,7 +18,7 @@ def find_profInt(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the professional interests
     if len(profInt) != 0:
-        return curs.fetchall()
+        return profInt
     return "No professional interests input yet"
 
 def find_favorites(conn, wemail):
@@ -31,7 +31,7 @@ def find_favorites(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns their favorite things and the respective genres
     if len(genreInt) != 0:
-        return curs.fetchall()
+        return genreInt
     else:
         return "Favorites string"
 
@@ -44,25 +44,23 @@ def find_person_LLs(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the love languages
     if len(LLInt) != 0:
-        return curs.fetchall()
+        return LLInt
 
-def find_MB_info(conn, wemail, MBCode):
+def find_MB_info(conn, MBCode):
     '''Takes a user's MBCode and uses it to generate their personality
     information and role in society as per the Myers-Briggs test.'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT personality, role FROM MBResults INNER JOIN \
-        userAccount WHERE wemail = "{wemail}"')
+    curs.execute(f'SELECT personality, role FROM MBResults WHERE \
+                MBResults.MBCode = "{MBCode}"')
     MBVals = curs.fetchall()
     if len(MBVals) != 0:
-        return curs.fetchall()
+        return MBVals
     return "No MB code input yet"
 
 def getBio(conn, userEmail):
     '''Returns a user's bio'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('''SELECT bio
-    FROM bio
-    WHERE wemail = %s''', [userEmail]) 
+    curs.execute('''SELECT bio FROM bio WHERE wemail = %s''', [userEmail]) 
     return curs.fetchall()
 
 '''**************** Queries for changing tables ****************'''
@@ -93,8 +91,7 @@ def update_professionalInterests(conn, wemail, industry, dreamJob):
 
     curs = dbi.dict_cursor(conn)
     wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f'UPDATE professionalInterests SET industry = "{industry}" \
-        WHERE wemail = "{wemail}"')
+    curs.execute(f' UPDATE professionalInterests SET industry = "{industry}" WHERE wemail = "{wemail}" ') 
     curs.execute(f'UPDATE professionalInterests SET dreamJob = "{dreamJob}" \
         WHERE wemail = "{wemail}"')
     conn.commit()
@@ -183,5 +180,11 @@ if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
-    curs = dbi.dict_cursor(conn)
+    #print(find_profInt(conn, 'aEstrada'))
+    #print(find_person_LLs(conn, 'gPortill'))
+    #print(find_MB_info(conn, 2)) #aEstrada
+    #print(getBio(conn, 'mPap'))
+    #insert_professionalInterests(conn, 'cat', 'Government', 'International Affairs')
+    #update_professionalInterests(conn, 'cat', 'Education', 'Teacher')
+    #curs = dbi.dict_cursor(conn)
 
