@@ -22,15 +22,23 @@
     </div>
     {% endif %}
     {% endwith %}
+    <div class="main-content">
+        <div class="signup-container">
     <form method = 'POST' action={{ url_for('authenticate', kind = 'login') }}>
-        <label for="email"><b>Email</b></label>
-        <input type="text" placeholder="Wellesley Email" name="email" required>
+        <div id="wellesley-email-box" class="textbox signup-textbox">
+            <label for="email"><b>Email</b></label>
+            <input type="text" placeholder="Wellesley Email" name="email" required>
+        </div>
     
-        <label for="password"><b>Password</b></label>
-        <input type="password" placeholder="Enter Password" name="password" required>
+        <div class="textbox signup-textbox">
+            <label for="password"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="password" required>
+        </div>
     
         <button type="submit">Login</button>
         <label>
     </form>
+    </div>
+    </div>
 </body>
 </html>
