@@ -50,6 +50,9 @@ def authenticate(kind):
                 return '<h1>FAILURE</h1>'
 
         elif kind == 'signup':
+            conn = dbi.connect()
+            curs = dbi.dict_cursor(conn)
+
             fname = request.form['fname']
             lname = request.form['lname']
             major = request.form['major']
@@ -57,17 +60,15 @@ def authenticate(kind):
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
-            MBCode = '5'
+            MBCode = curs.execute('''SELECT MAX('MBCode') FROM MBResults''')['max(MBCode)'] + 1
             onCampus = 'no'
 
-            conn = dbi.connect()
-
-            curs = dbi.dict_cursor(conn)
             curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
             curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
             conn.commit()
             session['wemail'] = email
+            matches.insertScores(conn, email)
             return redirect(url_for('home'))
             
     return '<h1>NOTHING HAPPENED</h1>'
