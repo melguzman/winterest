@@ -91,9 +91,10 @@ def update_professionalInterests(conn, wemail, industry, dreamJob):
 
     curs = dbi.dict_cursor(conn)
     wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f' UPDATE professionalInterests SET industry = "{industry}" WHERE wemail = "{wemail}" ') 
+    curs.execute(f'UPDATE professionalInterests SET industry = "{industry}" \
+                WHERE wemail = {wemail}') #doesnt need quotes around wemail here
     curs.execute(f'UPDATE professionalInterests SET dreamJob = "{dreamJob}" \
-        WHERE wemail = "{wemail}"')
+        WHERE wemail = {wemail}') #doesnt need quotes around wemail here
     conn.commit()
 
 ############ INSERT, UPDATE Favorite and Genres
@@ -117,9 +118,9 @@ def update_favorites(conn, wemail, name, itemType):
     curs = dbi.dict_cursor(conn)
     wemail = f'''"{wemail}"''' if wemail else "NULL"
     curs.execute(f'UPDATE favorites SET name = "{name}" \
-        WHERE itemType = "{itemType}"')
+        WHERE itemType = "{itemType}" and wemail = {wemail}') #doesnt need quotes around wemail here
     curs.execute(f'UPDATE favorites SET itemType = "{itemType}" \
-        WHERE name = "{name}"')
+        WHERE name = "{name}" and wemail = {wemail}') #doesnt need quotes around wemail here
     conn.commit()
     
 
@@ -148,13 +149,11 @@ def update_top3_lang(conn, wemail, language, langNum):
 
     wemail = f'''"{wemail}"''' if wemail else "NULL"
     curs.execute(f'UPDATE loveLanguages SET language = "{language}" \
-        WHERE wemail = "{wemail}" and langNum = "{langNum}"')
+        WHERE wemail = {wemail} and langNum = "{langNum}"') #doesnt need quotes around wemail here
     conn.commit()
 
 
 ############ INSERT Myers-Briggs test results
-
-# can add update but I don't really feel it's needed bc doesn't usually change
 
 def insert_Myers_Briggs_table(conn,MBCode): #needs to be used first
     '''Takes inputs from user's Myers-Briggs test results.
@@ -186,5 +185,10 @@ if __name__ == '__main__':
     #print(getBio(conn, 'mPap'))
     #insert_professionalInterests(conn, 'cat', 'Government', 'International Affairs')
     #update_professionalInterests(conn, 'cat', 'Education', 'Teacher')
+    #insert_favorites(conn, 'aEstrada', 'Malo', 'album')
+    #update_favorites(conn, 'aEstrada', 'Azteca', 'album')
+    #insert_top3_LL(conn, 'mPap', 'gift', '1')
+    #update_top3_lang(conn, 'mPap', 'affirmation', '1')
+    #insert_Myers_Briggs_table(conn,'1')
+    #insert_Myers_Briggs(conn, 'mTuzman', '1')
     #curs = dbi.dict_cursor(conn)
-
