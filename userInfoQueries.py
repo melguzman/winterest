@@ -31,7 +31,7 @@ def find_favorites(conn, wemail):
     # returns a string in the case where the person has not filled info out
     # otherwise, returns their favorite things and the respective genres
     if len(genreInt) != 0:
-        return curs.fetchall()
+        return genreInt
     else:
         return "Favorites string"
 
@@ -183,5 +183,6 @@ if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
+    favorites = find_favorites(conn, 'jl8')
+    print(favorites)
     curs = dbi.dict_cursor(conn)
-

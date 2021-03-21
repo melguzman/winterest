@@ -9,7 +9,7 @@
       <img id="match-image" src="person.jpg" alt="">
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
-        <p class="match-subheader">Class of {{person.fname}}</p>
+        <p class="match-subheader">Class of {{person.year}}</p>
         <div id="more-profile">
           <p class="profile-bio">
             {{matchBio.bio}}
@@ -17,7 +17,7 @@
           <div class="profile-interests" data-state="closed">
             {% for favorite in person.favorites %}
             <div class="interest-box">
-              <div class="interest-emoji">{{emojis[favorite.emoji]}}</div>
+              <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
               <p>My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
             </div>
             {% endfor %}
@@ -39,19 +39,18 @@
         </div>
       </button>
     </form>
-    </div>
-  </div>
     <div class="match-buttons">
       <button class="blue-button" id="more-info-button" type="submit" name="submit" value="info">👀 More Information</button>
       {% if matchStatus %}
-      <form method=post action="">
-        <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">❤️ Match</button>
-      </form>
-      {% else %}
-          <!-- not yet implemented -->
-      <form method=post action="">
+              <!-- not yet implemented -->
+
+      <form id="match-button-form" method=post action="">
         <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
       </form>
+      {% else %}
+        <form id="match-button-form" method=post action="">
+          <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">❤️ Match</button>
+        </form>
       {% endif %}
       <button class="gray-button" id="shuffle-button" type="submit" name="submit" value="shuffle">🔀 Shuffle</button>
     </div>
@@ -59,14 +58,14 @@
 <section id="current-matches">
   <h1 class="section-header">Current Matches</h1>
   {% for match in currentMatches %}
-  <a class="match-link" href="{{url_for('matches', wemail=person.wemail)}}">
+  <a class="match-link" href="{{url_for('match', wemail=person.wemail)}}">
     <div class="match-containers">
       <div class="circle-img">
-        <p>{{match.fname[0] + match.lname[0] }}</p>
+        <p>{{match.fname[0]}} {{match.lname[0]}}</p>
       </div>
       <div class="matches-info">
-        <h3>match.fname</h3>
-        <p class="match-subheader">match.year</p>
+        <h3>{{match.fname}}</h3>
+        <p class="match-subheader">Class of {{match.year}}</p>
       </div>
     </div>
   </a>

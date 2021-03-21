@@ -94,6 +94,7 @@ def authenticate(kind):
 
             #set wemail
             session['wemail'] = email
+            session['index'] = 0
             matches.insertScores(conn, email)
             return redirect(url_for('home'))
             
@@ -135,7 +136,6 @@ def home():
     conn = dbi.connect()
     wemail = session.get('wemail', 'jl4') # access users email
     index = session.get('index', 0) # index for carosel
-    matchStatus = False
     emojis = {'album': '💿', 'song': '🎵', 'artist': '👩‍🎨', 'book': '📘', 
     'movie': '🎬', 'color': '🎨', 'emoji': '😜', 'food': '🍔', 'restaurant': '🍕',
     'game': '👾'}
@@ -148,7 +148,7 @@ def home():
     potentialMatch = potentialMatches[index]  # this is a dictionary!
     # add a favorites key with a list of interests as its value for each user
     completedMatches = favoritesInformation(potentialMatch)
-
+    print(completedMatches)
     # get that user's info as a list with one dictionary in it
     matchEmail = potentialMatch['wemail']
     # get potential user's bio
@@ -177,9 +177,10 @@ def match(wemail):
 
 @app.route('/next/', methods=['POST'])
 def next():
+    conn = dbi.connect()
     wemail = session.get('wemail')
     index = session.get('index')
-    potentialMatches = matches.generateMatches(conn, wemail)
+    potentialMatches = matches.generatePotentialInfo(conn, wemail)
 
     if (index == (len(potentialMatches) - 1)):
         session['index'] = 0
@@ -189,9 +190,10 @@ def next():
 
 @app.route('/back/', methods=['POST'])
 def back():
+    conn = dbi.connect()
     wemail = session.get('wemail')
     index = session.get('index')
-    potentialMatches = matches.generateMatches(conn, wemail)
+    potentialMatches = matches.generatePotentialInfo(conn, wemail)
 
     if (index == 0):
         session['index'] = len(potentialMatches) - 1

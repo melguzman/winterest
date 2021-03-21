@@ -485,3 +485,7 @@ form {
   width: 440px;
   padding: 24px;
 }
+
+#match-button-form {
+  width: 100%;
+}
