@@ -99,7 +99,7 @@ def favoritesInformation(personDict):
     '''Takes a dictionary and adds a favorite key and favorite info in 
     a form of a list of dictionaries as the value'''
     conn = dbi.connect()
-    temp = peopleDict
+    temp = personDict
     email = personDict['wemail']
     favs = userInfo.find_favorites(conn, email) # Get list of dictionaries for each fav.
     temp['favorites'] = favs # Add key value pair to the dictionary
