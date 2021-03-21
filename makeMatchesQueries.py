@@ -88,7 +88,7 @@ def setMatched(conn, wemail, wemail2):
         # update matching status for matched person's row
     curs.execute(f'UPDATE matches_scored SET isMatched = "yes" WHERE wemail \
         = "{wemail2}" and wemail2 = "{wemail}"')
-    return curs.fetchall()
+    conn.commit()
 
 def getMatches(conn, wemail):
     '''Returns the information of the people the user has matched with,
@@ -113,5 +113,7 @@ if __name__ == '__main__':
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
     #insertScores(conn, 'aEstrada')
-    updateScores(conn, 'aEstrada')
+    #updateScores(conn, 'aEstrada')
+    #generatePotentialMatches(conn, 'aEstrada')
+    #setMatched(conn, 'aEstrada', 'eRamos')
     #curs = dbi.dict_cursor(conn)
