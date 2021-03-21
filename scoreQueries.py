@@ -28,7 +28,7 @@ def matchScore(conn, wemail, wemail2):
         return 'No possible match here'
     firstPerson = firstInfo[0] # assumes firstInfo is a list of one dictionary
 
-    curs.execute(f'SELECT major, city, state, country, onCampus, personality, \
+    curs.execute(f'SELECT major, city, state, country, onCampus, personality \
                 FROM userAccount INNER JOIN MBResults using (MBCode) \
                 INNER JOIN favorites USING (wemail) INNER JOIN loveLanguages \
                 using (wemail) WHERE wemail = "{wemail2}"')
