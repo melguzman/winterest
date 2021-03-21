@@ -57,8 +57,8 @@ def authenticate(kind):
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
-            MBCode = 'purr'
-            onCampus = 'NULL'
+            MBCode = '5'
+            onCampus = 'no'
 
             conn = dbi.connect()
 
@@ -114,7 +114,7 @@ def home():
     'game': '👾'}
 
     # get a user's current matching
-    currentMatches = mq.getCurrentMatches(conn, wemail)
+    currentMatches = mq.getMatches(conn, wemail)
     # get list of potential matches (list of dictionaries)
     potentialMatches = matches.generateMatches(conn, wemail)
     # add a favorites key with a list of interests as it's value for each user
