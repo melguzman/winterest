@@ -5,7 +5,11 @@
 <section class="match-section">
   <h1 class="section-header">Find Friends</h1>
   <div class="match-photo">
-    <div class="one-match {% if loop.index == index %} active {% endif %}" value="{{person.wemail}}">
+    {% if loop.index == index %}
+    <div class="one-match active" value="{{person.wemail}}">
+    {% else %}
+    <div class="one-match" value="{{person.wemail}}">
+    {% endif %}
       <img id="match-image" src="person.jpg" alt="">
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
