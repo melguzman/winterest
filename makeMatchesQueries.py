@@ -18,6 +18,7 @@ def insertScores(conn, wemail):
 
     # loop through every user and insert into their database
     for user in allUsers:
+        #print(user)
         emailID = user['wemail']
         if emailID != wemail: # don't do this for the users themselves
             score = scoreQueries.matchScore(conn, emailID, wemail)
@@ -29,6 +30,8 @@ def insertScores(conn, wemail):
             # insert emailID to current user wemail row
             curs.execute(f'INSERT INTO matches_scored (wemail, wemail2, score, \
             isMatched) VALUES ("{emailID}", "{wemail}", "{score}", "no")')
+            
+    conn.commit()
             
 
 def updateScores(conn, wemail):
@@ -51,6 +54,8 @@ def updateScores(conn, wemail):
             # update emailID to current user wemail row
             curs.execute(f'UPDATE matches_scored SET score = "{score}" WHERE wemail \
                  = "{emailID}" and wemail2 = "{wemail}"')
+
+    conn.commit()
 
 def generatePotentialMatches(conn, wemail): 
     '''Generates the matches for the current user given their wemail.
@@ -108,4 +113,5 @@ if __name__ == '__main__':
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
     #insertScores(conn, 'aEstrada')
+    updateScores(conn, 'aEstrada')
     #curs = dbi.dict_cursor(conn)
