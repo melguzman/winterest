@@ -50,6 +50,9 @@ def authenticate(kind):
                 return '<h1>FAILURE</h1>'
 
         elif kind == 'signup':
+            conn = dbi.connect()
+            curs = dbi.dict_cursor(conn)
+
             fname = request.form['fname']
             lname = request.form['lname']
             major = request.form['major']
@@ -57,16 +60,16 @@ def authenticate(kind):
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
-            MBCode = 'purr'
-            onCampus = 'NULL'
+            MBCode = curs.execute('''SELECT MAX('MBCode') FROM MBResults''') + 7
+            onCampus = 'no'
 
-            conn = dbi.connect()
-
-            curs = dbi.dict_cursor(conn)
-            curs.execute('''INSERT INTO MBResults (MBCode) VALUES ('purr')''')
+            curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
+            conn.commit()
             curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
+            conn.commit()
             session['wemail'] = email
+            matches.insertScores(conn, email)
             return redirect(url_for('home'))
             
     return '<h1>NOTHING HAPPENED</h1>'
@@ -114,7 +117,7 @@ def home():
     'game': '👾'}
 
     # get a user's current matching
-    currentMatches = mq.getCurrentMatches(conn, wemail)
+    currentMatches = mq.getMatches(conn, wemail)
     # get list of potential matches (list of dictionaries)
     potentialMatches = matches.generateMatches(conn, wemail)
     # add a favorites key with a list of interests as it's value for each user
@@ -124,7 +127,7 @@ def home():
     matchEmail = potentialMatch['wemail']
 
     # see if the current potential match has already been matched w/ user
-    matchStatus = isMatched(wemail, matchEmail)
+    matchStatus = mq.isMatched(wemail, matchEmail)
 
     if request.method == 'POST':
         # User pressed match button, so match two of them together

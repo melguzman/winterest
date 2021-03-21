@@ -3,6 +3,8 @@ from flask import (Flask, render_template, make_response, url_for, request,
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
+import cs304dbi as dbi
+
 def isMatched(conn, userEmail, matchEmail):
     '''Returns a row from matches given the user and match's email.
     Will return an empty list if the match does not exist'''
