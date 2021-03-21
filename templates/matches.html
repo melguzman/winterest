@@ -7,7 +7,7 @@
       <img id="match-image" src="person.jpg" alt="">
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
-        <p class="match-subheader">Class of {{person.fname}}</p>
+        <p class="match-subheader">Class of {{person.year}}</p>
         <div class="active">
           <p class="profile-bio">
             {{personBio.bio}}
@@ -15,7 +15,7 @@
           <div class="profile-interests" data-state="closed">
             {% for favorite in person.favorites %}
             <div class="interest-box">
-              <div class="interest-emoji">{{emojis[favorite.emoji]}}</div>
+              <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
               <p>My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
             </div>
             {% endfor %}

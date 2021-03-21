@@ -16,16 +16,16 @@
     <div class="main-content">
         <div class="signup-container">
     <form method = 'POST' action={{ url_for('authenticate', kind = 'login') }}>
-        <div id="wellesley-email-box" class="textbox signup-textbox">
-            <label for="email"><b>Email</b></label>
+        <div class="textbox signup-textbox">
+            <label for="email">Email</label>
             <input type="text" placeholder="Wellesley Email" name="email" required>
         </div>
     
         <div class="textbox signup-textbox">
-            <label for="password"><b>Password</b></label>
+            <label for="password">Password</label>
             <input type="password" placeholder="Enter Password" name="password" required>
         </div>
-    
+        <br>
         <button type="submit">Login</button>
         <label>
     </form>

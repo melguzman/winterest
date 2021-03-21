@@ -5,10 +5,12 @@
 <body>
 <div class="main-content">
 <div class="signup-container">
-<p>WELCOME</p>>
-<button><a href={{ url_for('login') }}>Login</a></button>
-<button><a href={{ url_for('signup') }}>Sign Up</a></button>
-<button><a href={{ url_for('faq') }}>About the Project</a></button>
+<h2 class="action-title">👋 Welcome</h2>
+    <div class="landing-buttons">
+        <button class="blue-button"><a href="{{ url_for('login') }}">Login</a></button>
+        <button class="blue-button"><a href="{{ url_for('signup') }}">Sign Up</a></button>
+        <button class="blue-button"><a href="{{ url_for('faq') }}">About the Project</a></button>
+    </div>
 </div>
 </div>
 </body>

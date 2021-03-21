@@ -489,3 +489,12 @@ form {
 #match-button-form {
   width: 100%;
 }
+
+.landing-buttons a {
+  text-decoration: none;
+  color: white;
+}
+
+.landing-buttons {
+  margin-top: 12px;
+}
