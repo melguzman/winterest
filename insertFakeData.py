@@ -69,10 +69,10 @@ def insertDataToTables(conn,filename):
             conn.commit()
 
             #insert data into bio
-            curs.execute(f'insert into bio(wemail,bioID,bio) \
-            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["bioID"]]}",\
-            "{row[fieldsDict["bio"]]}")')
-            conn.commit()
+            #curs.execute(f'insert into bio(wemail,bioID,bio) \
+            #values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["bioID"]]}",\
+            #"{row[fieldsDict["bio"]]}")')
+            #conn.commit()
 
 
 # def getIceBreaker():
