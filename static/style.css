@@ -562,3 +562,9 @@ textarea {
   height: 380px;
   border-radius: 14px 14px 0px 0px;
 }
+
+#pic-form {
+  border: transparent;
+  padding: 10px 14px 0px 0px;
+  font-family: 'Inter';
+}
