@@ -46,6 +46,20 @@ def login():
 def signup():
     return render_template('signup.html')
 
+@app.route('/pic/<wemail>')
+def pic(wemail):
+    conn = dbi.connect()
+    curs = dbi.dict_cursor(conn)
+    numrows = curs.execute(
+        '''select filename from picfile where wemail = %s''',
+        [wemail])
+    if numrows == 0:
+        flash('No picture for {}'.format(wemail))
+        return redirect(url_for('home'))
+    row = curs.fetchone()
+    return send_from_directory(app.config['UPLOADS'],row['filename'])
+
+
 @app.route('/interests/', methods = ['GET', 'POST']) 
 def interests():
     conn = dbi.connect()
@@ -67,7 +81,28 @@ def interests():
         conn.commit()
         curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
         conn.commit()
-        return redirect(url_for('home'))
+
+        try:
+            print("Rendering files")
+            f = request.files['pic']
+            user_filename = f.filename
+            ext = user_filename.split('.')[-1]
+            filename = secure_filename('{}.{}'.format(email,ext))
+            pathname = os.path.join(app.config['UPLOADS'],filename)
+            f.save(pathname)
+            conn = dbi.connect()
+            curs = dbi.dict_cursor(conn)
+            curs.execute(
+                '''insert into picfile(wemail,filename) values (%s,%s)
+                    on duplicate key update filename = %s''',
+                [email, filename, filename])
+            conn.commit()
+            flash('Upload successful')
+            return redirect(url_for('home'))
+
+        except Exception as err:
+            flash('Upload failed {why}'.format(why=err))
+            return redirect(url_for('interests'))
     else:
         return render_template('interests.html')
 
@@ -203,12 +238,15 @@ def home():
     matchBio = userInfo.getBio(conn, matchEmail)
     if not (matchBio):
         matchBio = []
+    # see if user has photo:
+    photo = userInfo.find_photo(conn, matchEmail)
 
     # see if the current potential match has already been matched w/ user
     matchStatus = matches.matchExists(conn, wemail, matchEmail)
         
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
-        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio, currentUserInfo = currentUserInfo)
+        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio, currentUserInfo = currentUserInfo,
+        photo = photo)
 
 @app.route('/makeMatch/', methods=['POST'])
 def makeMatch():
@@ -233,8 +271,10 @@ def match(wemail):
     info = profileQueries.find_profile(conn, wemail)
     completeInfo = favoritesInformation(info)
     bio = userInfo.getBio(conn, wemail)
+    photo = userInfo.find_photo(conn, matchEmail)
     
-    return render_template('matches.html', person = completeInfo, emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo)
+    return render_template('matches.html', person = completeInfo, 
+    emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo, photo = photo)
 
 @app.route('/next/', methods=['POST'])
 def next():
@@ -274,30 +314,6 @@ def back():
         session['index'] = index - 1
     return redirect(url_for('home'))
 
-@app.route('/upload/', methods=["GET", "POST"])
-def file_upload():
-    try:
-        wemail = request.cookies.get('wemail') # may throw error
-        f = request.files['pic']
-        user_filename = f.filename
-        ext = user_filename.split('.')[-1]
-        filename = secure_filename('{}.{}'.format(wemail,ext))
-        pathname = os.path.join(app.config['UPLOADS'],filename)
-        f.save(pathname)
-        conn = dbi.connect()
-        curs = dbi.dict_cursor(conn)
-        curs.execute(
-            '''insert into picfile(nm,filename) values (%s,%s)
-                on duplicate key update filename = %s''',
-            [nm, filename, filename])
-        conn.commit()
-        flash('Upload successful')
-        return render_template('form.html',
-                                   src=url_for('pic',nm=nm),
-                                   nm=nm)
-     except Exception as err:
-        flash('Upload failed {why}'.format(why=err))
-        return render_template('form.html',src='',nm='')
 
 @app.before_first_request
 def init_db():

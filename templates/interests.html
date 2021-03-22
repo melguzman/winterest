@@ -4,7 +4,7 @@
 
 <div class="main-content">
     <div class="signup-container">      
-      <form method='POST' action="{{url_for('interests')}}">
+      <form method='POST' enctype="multipart/form-data" action="{{url_for('interests')}}">
         <br>
         <h2 class="action-title">Favorites</h2>
         <!-- <p>Choose your favorites!</p> -->
@@ -25,12 +25,17 @@
               <input type ="text" id="song" name="song" placeholder="Favorite song" required>
           </div>
 
-          <div id="bio-textbox" class = "textbox signup-textbox">
-            <label for="bio">Bio</label>
-            <p class="match-subheader">Introduce yourself! Let your personality or other
+        <div id="bio-textbox" class = "textbox signup-textbox">
+          <label for="bio">Bio</label>
+          <p class="match-subheader">Introduce yourself! Let your personality or other
                 interests shine. <i>(Limit 200 characters)</i>
-            </p>
-            <textarea type ="text" id="bio" name="bio" rows="3" cols="50" maxlength="200" placeholder="Tell us about yourself!"  required></textarea>
+          </p>
+          <textarea type ="text" id="bio" name="bio" rows="3" cols="50" maxlength="200" placeholder="Tell us about yourself!"  required></textarea>
+        </div>
+
+        <div class = "textbox signup-textbox">
+          <label for="pic">Pic</label>
+          <input type="file" name="pic">
         </div>
 
         <br>

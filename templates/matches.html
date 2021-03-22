@@ -20,8 +20,11 @@
 <section class="match-section">
   <div class="match-photo">
     <div class="one-match active" value="{{person.wemail}}">
-      <!-- Will update once we learn about file upload -->
-      <img id="match-image" src="{{url_for('static', filename = 'person.jpg')}}" alt="">
+      {% if photo %}
+      <img id="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
+      {% else %}
+      <img id="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
+      {% endif %}
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
         <p class="match-subheader">Class of {{person.year}}</p>

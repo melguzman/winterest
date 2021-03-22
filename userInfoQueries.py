@@ -21,6 +21,14 @@ def find_profInt(conn, wemail):
         return profInt
     return "No professional interests input yet"
 
+def find_photo(conn, wemail):
+    '''Returns the user's image; singular
+    row returned'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute(f'SELECT * FROM picfile\
+        WHERE wemail = "{wemail}"')
+    return curs.fetchone()
+
 def find_favorites(conn, wemail):
     '''Returns a user's favorites things and their respective genres; will be 
     multiple rows'''

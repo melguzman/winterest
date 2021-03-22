@@ -531,6 +531,7 @@ form {
   padding: 10px;
   width: 300px;
   border-radius: 10px;
+  z-index: 9999;
 }
 
 #bio-textbox input {
@@ -553,4 +554,11 @@ textarea {
 
 #about_blurb {
   padding: 40px
+}
+
+#match-image-cropped {
+  width: 100%;
+  object-fit: cover;
+  height: 380px;
+  border-radius: 14px 14px 0px 0px;
 }
