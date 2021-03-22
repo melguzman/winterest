@@ -271,7 +271,7 @@ def match(wemail):
     info = profileQueries.find_profile(conn, wemail)
     completeInfo = favoritesInformation(info)
     bio = userInfo.getBio(conn, wemail)
-    photo = userInfo.find_photo(conn, matchEmail)
+    photo = userInfo.find_photo(conn, wemail)
     
     return render_template('matches.html', person = completeInfo, 
     emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo, photo = photo)
