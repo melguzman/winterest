@@ -211,16 +211,25 @@ def makeMatch():
 
 @app.route('/matches/<wemail>', methods=['GET','POST'])
 def match(wemail):
+    if 'wemail' not in session:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+
     conn = dbi.connect()
     userEmail = session.get('wemail')
+    currentUserInfo = profileQueries.find_profile(conn, userEmail)
     info = profileQueries.find_profile(conn, wemail)
     completeInfo = favoritesInformation(info[0])
     bio = userInfo.getBio(conn, wemail)
     
-    return render_template('matches.html', person = completeInfo, emojis = emojis, personBio = bio, userEmail = userEmail)
+    return render_template('matches.html', person = completeInfo, emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo[0])
 
 @app.route('/next/', methods=['POST'])
 def next():
+    if 'wemail' not in session:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+
     conn = dbi.connect()
     wemail = session.get('wemail')
     index = session.get('index', 0)
@@ -235,6 +244,10 @@ def next():
 
 @app.route('/back/', methods=['POST'])
 def back():
+    if 'wemail' not in session:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+
     conn = dbi.connect()
     wemail = session.get('wemail')
     index = session.get('index', 0)

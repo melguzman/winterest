@@ -1,5 +1,20 @@
 {% extends "base.html" %}
 
+{% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div id="profile-logout-container">
+      <div id="user-circle" class="circle-img">
+        <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
+      </div>
+      <form method=post action="">
+        <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
+      </form>
+    </div>
+    </a>
+  </nav>
+{% endblock %}
+
 {% block main_content %}
 <div class="main-content">
 <section class="match-section">
@@ -26,6 +41,9 @@
       </div>
     </div>
   </div>
+  <form id="match-button-form2" method=post action="">
+    <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
+  </form>
 </section>
 
     <section id="match-actions">

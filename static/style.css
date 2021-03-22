@@ -486,8 +486,12 @@ form {
   padding: 24px;
 }
 
-#match-button-form {
+#match-button-form, #match-button-form2 {
   width: 100%;
+}
+
+#match-button-form2 {
+  margin-top: 18px;
 }
 
 .landing-buttons a {
