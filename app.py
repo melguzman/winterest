@@ -25,11 +25,14 @@ app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
 @app.route('/')
 def index():
-    if 'wemail' in session:
+    wemail = request.cookies.get('wemail')
+    if not wemail:
+        print('no cookie set')
+        if request.method == "GET":
+            print('case 1: first visit, just render landing page')
+            return render_template('landing.html')
+    else:
         return redirect(url_for('home'))
-    session.pop('wemail', None)
-    session.pop('index', None)
-    return render_template('landing.html')
 
 @app.route('/login/')
 def login():
@@ -43,7 +46,7 @@ def signup():
 def interests():
     conn = dbi.connect()
     curs = dbi.dict_cursor(conn)
-    email = session.get('wemail')
+    email = request.cookies.get('wemail')
     #interests
     if request.method == 'POST':
         book = request.form['book']
@@ -75,8 +78,9 @@ def authenticate(kind):
             curs = dbi.dict_cursor(conn)
             curs.execute('''SELECT * FROM userAccount WHERE wemail = %s AND password = %s''', [email, password])
             if len(curs.fetchall()) == 1:
-                session['wemail'] = email
-                return redirect(url_for('home'))
+                resp = make_response(redirect(url_for('home')))
+                resp.set_cookie('wemail', email)
+                return resp
             else:
                 flash("Incorrect information. Try again?")
                 return render_template('landing.html')
@@ -112,11 +116,13 @@ def authenticate(kind):
             matches.insertScores(conn, email)
 
         #set wemail
-        session['wemail'] = email
         session['index'] = 0
-        return redirect(url_for('interests'))
-            
-    return '<h1>NOTHING HAPPENED</h1>'
+        resp = make_response(redirect(url_for('interests')))
+        resp.set_cookie('wemail', email)
+        return resp
+
+    flash ("Error during authentication. Try again.") 
+    return redirect(url_for("landing.html"))
 
 @app.route('/faq/')
 def faq():
@@ -154,21 +160,22 @@ emojis = {'album': '💿', 'song': '🎵', 'artist': '👩‍🎨', 'book': '�
 
 @app.route('/home/', methods=['GET','POST'])
 def home():
-
-    if 'wemail' not in session:
+    # grab wemail from cookie
+    wemail = request.cookies.get('wemail')
+    if not wemail:
         flash('You are not logged in. Please log in or sign up!')
         return redirect(url_for('index'))
 
     if request.method == 'POST':
         # User wants to logout
-        if 'logout' in request.form:
-            session.pop('wemail', None)
-            session.pop('index', None)
-            flash('You successfully logged out. Come back again!')
-            return redirect(url_for('index'))
-    
-    # grab wemail from current session
-    wemail = session.get('wemail')
+        if "logout" in request.form: 
+                flash('You successfully logged out. Come back again!')
+                resp = make_response(
+                    render_template('landing.html'))
+                resp.set_cookie('wemail', '', expires=0)
+                session.pop('index', None)
+                # resp.set_cookie('index', '', expires=0)
+                return resp
 
     conn = dbi.connect()
 
@@ -176,8 +183,6 @@ def home():
 
     # get index from current carousel
     index = session.get('index', 0) 
-
-    print("session wemail: " + wemail + " index session: " + str(index))
 
     # get a user's current matching
     currentMatches = matches.getMatches(conn, wemail)
@@ -203,20 +208,23 @@ def home():
 
 @app.route('/makeMatch/', methods=['POST'])
 def makeMatch():
+    '''Triggered when user presses the "Match" button on the home page.
+    Adds the match pairing to the website'''
     conn = dbi.connect()
-    userEmail = session.get('wemail')
+    userEmail = request.cookies.get('wemail')
     matchEmail = request.form.get('submit')
     matches.setMatched(conn, userEmail, matchEmail)
     return redirect(url_for('home'))
 
 @app.route('/matches/<wemail>', methods=['GET','POST'])
 def match(wemail):
-    if 'wemail' not in session:
+    '''Redirects user to a page with matching interactions'''
+    userEmail = request.cookies.get('wemail')
+    if not userEmail:
         flash('Session timed out. Log in again!')
         return redirect(url_for('index'))
 
     conn = dbi.connect()
-    userEmail = session.get('wemail')
     currentUserInfo = profileQueries.find_profile(conn, userEmail)
     info = profileQueries.find_profile(conn, wemail)
     completeInfo = favoritesInformation(info)
@@ -226,15 +234,16 @@ def match(wemail):
 
 @app.route('/next/', methods=['POST'])
 def next():
-    if 'wemail' not in session:
+    '''Cycles to the next potential match with the 
+    user presses the next button'''
+    userEmail = request.cookies.get('wemail')
+    if not userEmail:
         flash('Session timed out. Log in again!')
         return redirect(url_for('index'))
 
     conn = dbi.connect()
-    wemail = session.get('wemail')
     index = session.get('index', 0)
-    print("[IN NEXT:] session wemail: " + wemail + " index session: " + str(index))
-    potentialMatches = matches.generatePotentialInfo(conn, wemail)
+    potentialMatches = matches.generatePotentialInfo(conn, userEmail)
 
     if (index == (len(potentialMatches) - 1)):
         session['index'] = 0
@@ -244,44 +253,22 @@ def next():
 
 @app.route('/back/', methods=['POST'])
 def back():
-    if 'wemail' not in session:
+    '''Cycles to the previous potential match with the 
+    user presses the back button'''
+    userEmail = request.cookies.get('wemail')
+    if not userEmail:
         flash('Session timed out. Log in again!')
         return redirect(url_for('index'))
 
     conn = dbi.connect()
-    wemail = session.get('wemail')
     index = session.get('index', 0)
-    print("[IN BACK] session wemail: " + wemail + " index session: " + str(index))
-
-    potentialMatches = matches.generatePotentialInfo(conn, wemail)
+    potentialMatches = matches.generatePotentialInfo(conn, userEmail)
 
     if (index == 0):
         session['index'] = len(potentialMatches) - 1
     else:
         session['index'] = index - 1
     return redirect(url_for('home'))
-
-
-@app.route('/formecho/', methods=['GET','POST'])
-def formecho():
-    if request.method == 'GET':
-        return render_template('form_data.html',
-                               method=request.method,
-                               form_data=request.args)
-    elif request.method == 'POST':
-        return render_template('form_data.html',
-                               method=request.method,
-                               form_data=request.form)
-    else:
-        # maybe PUT?
-        return render_template('form_data.html',
-                               method=request.method,
-                               form_data={})
-
-@app.route('/testform/')
-def testform():
-    # these forms go to the formecho route
-    return render_template('testform.html')
 
 
 @app.before_first_request

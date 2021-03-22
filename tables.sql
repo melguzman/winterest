@@ -93,9 +93,7 @@ ENGINE = InnoDB;
 
 create table bio (
     wemail char(8) not null,
-    bioID int not null primary key,
     bio varchar(200),
-    INDEX (bioID),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
