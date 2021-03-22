@@ -1,5 +1,6 @@
 use wellesleymatch_db;
 
+drop table if exists picfile;
 drop table if exists matches;
 drop table if exists matches_scored;
 drop table if exists meeting;
@@ -150,6 +151,16 @@ create table matches_scored (
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict
+)
+
+ENGINE = InnoDB;
+
+create table picfile (
+    wemail char(8),
+    filename varchar(50),
+    foreign key (wemail) references userAccount(wemail) 
+        on delete cascade 
+        on update cascade
 )
 
 ENGINE = InnoDB;
