@@ -58,7 +58,7 @@ def getBio(conn, userEmail):
     '''Returns a user's bio'''
     curs = dbi.dict_cursor(conn)
     curs.execute('''SELECT bio FROM bio WHERE wemail = %s''', [userEmail]) 
-    return curs.fetchall()
+    return curs.fetchone()
 
 '''**************** Queries for changing tables ****************'''
 

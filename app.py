@@ -27,6 +27,8 @@ app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 def index():
     if 'wemail' in session:
         return redirect(url_for('home'))
+    session.pop('wemail', None)
+    session.pop('index', None)
     return render_template('landing.html')
 
 @app.route('/login/')
@@ -190,16 +192,14 @@ def home():
     matchEmail = potentialMatch['wemail']
     # get potential user's bio
     matchBio = userInfo.getBio(conn, matchEmail)
-    if (matchBio):
-        matchBio = matchBio[0]
-    else:
+    if not (matchBio):
         matchBio = []
 
     # see if the current potential match has already been matched w/ user
     matchStatus = matches.matchExists(conn, wemail, matchEmail)
         
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
-        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio, currentUserInfo = currentUserInfo[0])
+        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio, currentUserInfo = currentUserInfo)
 
 @app.route('/makeMatch/', methods=['POST'])
 def makeMatch():
@@ -219,10 +219,10 @@ def match(wemail):
     userEmail = session.get('wemail')
     currentUserInfo = profileQueries.find_profile(conn, userEmail)
     info = profileQueries.find_profile(conn, wemail)
-    completeInfo = favoritesInformation(info[0])
+    completeInfo = favoritesInformation(info)
     bio = userInfo.getBio(conn, wemail)
     
-    return render_template('matches.html', person = completeInfo, emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo[0])
+    return render_template('matches.html', person = completeInfo, emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo)
 
 @app.route('/next/', methods=['POST'])
 def next():

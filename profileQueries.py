@@ -11,7 +11,7 @@ def find_profile(conn, wemail):
     curs = dbi.dict_cursor(conn)
     curs.execute(f'SELECT * FROM userAccount WHERE wemail =\
          "{wemail}"')
-    person = curs.fetchall()
+    person = curs.fetchone()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the demographics
     if len(person) != 0:
