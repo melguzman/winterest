@@ -23,6 +23,10 @@ app.secret_key = ''.join([ random.choice(('ABCDEFGHIJKLMNOPQRSTUVXYZ' +
 # This gets us better error messages for certain common request errors
 app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
+# new for file upload
+app.config['UPLOADS'] = 'uploads'
+app.config['MAX_CONTENT_LENGTH'] = 1*1024*1024 # 1 MB
+
 @app.route('/')
 def index():
     wemail = request.cookies.get('wemail')
@@ -270,6 +274,30 @@ def back():
         session['index'] = index - 1
     return redirect(url_for('home'))
 
+@app.route('/upload/', methods=["GET", "POST"])
+def file_upload():
+    try:
+        wemail = request.cookies.get('wemail') # may throw error
+        f = request.files['pic']
+        user_filename = f.filename
+        ext = user_filename.split('.')[-1]
+        filename = secure_filename('{}.{}'.format(wemail,ext))
+        pathname = os.path.join(app.config['UPLOADS'],filename)
+        f.save(pathname)
+        conn = dbi.connect()
+        curs = dbi.dict_cursor(conn)
+        curs.execute(
+            '''insert into picfile(nm,filename) values (%s,%s)
+                on duplicate key update filename = %s''',
+            [nm, filename, filename])
+        conn.commit()
+        flash('Upload successful')
+        return render_template('form.html',
+                                   src=url_for('pic',nm=nm),
+                                   nm=nm)
+     except Exception as err:
+        flash('Upload failed {why}'.format(why=err))
+        return render_template('form.html',src='',nm='')
 
 @app.before_first_request
 def init_db():
