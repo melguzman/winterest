@@ -9,32 +9,38 @@
     <link rel='stylesheet' href="{{url_for('static', filename = 'style.css')}}">
     {% block head_stuff %} {% endblock %}
 </head>
+
 <body>
+  {% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+      <div id="user-circle" class="circle-img">
+        <p>?</p>
+      </div>
+    </a>
+  </nav>
+  {% endblock %}
 
 {% with messages = get_flashed_messages() %}
 {% if messages %}
 <div id="messages">
   {% for msg in messages %}
-  <p>{{msg}}</p>
+  <p>❗{{msg}}</p>
   {% endfor %}
 </div>
 {% endif %}
 {% endwith %}
             
-{% block nav %}
-<nav>
-  <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
-    <div id="user-circle" class="circle-img">
-      <p>JL</p>
-    </div>
-  </a>
-</nav>
-{% endblock %}
 
 {% block main_content %}
 {% endblock %}
 
   <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  <script>
+    setTimeout(function() {
+        $('#messages').fadeOut('slow');
+    }, 4000); 
+  </script>
   {% block end_scripts %}
   {% endblock %}
   

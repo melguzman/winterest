@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
 {% block main_content %}
+<div class="main-content">
 <section class="match-section">
   <div class="match-photo">
-    <div class="one-match" value="{{person.wemail}}">
+    <div class="one-match active" value="{{person.wemail}}">
       <!-- Will update once we learn about file upload -->
       <img id="match-image" src="{{url_for('static', filename = 'person.jpg')}}" alt="">
       <div class="match-header">
@@ -103,7 +104,7 @@
           <h2 class="action-title">Upcoming meetings</h2>
       </div>
     </section>
-  </div>
+</div>
 {% endblock %}
 
 {% block end_scripts %}

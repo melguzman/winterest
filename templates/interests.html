@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+
+<div class="main-content">
+    <div class="signup-container">      
+      <form method='POST' action="{{url_for('interests')}}">
+        <br>
+        <h2 class="action-title">Favorites</h2>
+        <!-- <p>Choose your favorites!</p> -->
+        <div class = "textbox signup-textbox">
+          <label for="book">Book</label>
+          <input type ="text" id="book" name="book" placeholder="Favorite book" required>
+        </div>
+
+          <div class = "textbox signup-textbox">
+            <label for="color">Color</label>
+            <input type ="text" id="color" name="color" placeholder="Favorite color" required>
+            <!-- <label for="color">Color:</label>
+            <input type ="color" id="color" name="color" required> -->
+          </div>
+
+          <div class = "textbox signup-textbox">
+              <label for="song">Song</label>
+              <input type ="text" id="song" name="song" placeholder="Favorite song" required>
+          </div>
+
+          <div id="bio-textbox" class = "textbox signup-textbox">
+            <label for="bio">Bio</label>
+            <p class="match-subheader">Introduce yourself! Let your personality or other
+                interests shine. <i>(Limit 200 characters)</i>
+            </p>
+            <textarea type ="text" id="bio" name="bio" rows="3" cols="50" maxlength="200" placeholder="Tell us about yourself!"  required></textarea>
+        </div>
+
+        <br>
+        <button type="submit">Sign up</button>
+      </form>
+    </div>
+  </div>
+
+  {% endblock %}

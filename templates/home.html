@@ -1,5 +1,20 @@
 {% extends "base.html" %}
 
+{% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div id="profile-logout-container">
+      <div id="user-circle" class="circle-img">
+        <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
+      </div>
+      <form method=post action="">
+        <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
+      </form>
+    </div>
+    </a>
+  </nav>
+{% endblock %}
+
 {% block main_content %}
 <div class="main-content">
 <section class="match-section">
@@ -40,7 +55,7 @@
         </div>
       </button>
     </form>
-    <form class="button-form" method=post action="{{url_for('back')}}">
+    <form class="button-form" method=post action="{{url_for('next')}}">
       <button class="button-form-element" type="submit" name="submit" value="{{person.wemail}}">
         <div id="right-button" class="circle right-arrow">
           <img src="{{url_for('static', filename = 'arrow.png')}}" alt="">
@@ -56,8 +71,8 @@
         <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
       </form>
       {% else %}
-        <form id="match-button-form" method=post action="">
-          <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">❤️ Match</button>
+        <form id="match-button-form" method=post action="{{url_for('makeMatch')}}">
+          <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💖 Match</button>
         </form>
       {% endif %}
       <button class="gray-button" id="shuffle-button" type="submit" name="submit" value="shuffle">🔀 Shuffle</button>
@@ -66,7 +81,7 @@
 <section id="current-matches">
   <h1 class="section-header">Current Matches</h1>
   {% for match in currentMatches %}
-  <a class="match-link" href="{{url_for('match', wemail=person.wemail)}}">
+  <a class="match-link" href="{{url_for('match', wemail=match.wemail)}}">
     <div class="match-containers">
       <div class="circle-img">
         <p>{{match.fname[0]}}{{match.lname[0]}}</p>

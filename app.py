@@ -25,6 +25,8 @@ app.config['TRAP_BAD_REQUEST_ERRORS'] = True
 
 @app.route('/')
 def index():
+    if 'wemail' in session:
+        return redirect(url_for('home'))
     return render_template('landing.html')
 
 @app.route('/login/')
@@ -34,6 +36,31 @@ def login():
 @app.route('/signup/')
 def signup():
     return render_template('signup.html')
+
+@app.route('/interests/', methods = ['GET', 'POST']) 
+def interests():
+    conn = dbi.connect()
+    curs = dbi.dict_cursor(conn)
+    email = session.get('wemail')
+    #interests
+    if request.method == 'POST':
+        book = request.form['book']
+        album = request.form['song']
+        color = request.form['color']
+        bio = request.form['bio']
+
+        #insert interests
+        curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, book, 'book'])
+        conn.commit()
+        curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, album, 'song'])
+        conn.commit()
+        curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, color, 'color'])
+        conn.commit()
+        curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
+        conn.commit()
+        return redirect(url_for('home'))
+    else:
+        return render_template('interests.html')
 
 @app.route('/authenticate/<kind>', methods = ['GET', 'POST']) 
 def authenticate(kind):
@@ -49,7 +76,8 @@ def authenticate(kind):
                 session['wemail'] = email
                 return redirect(url_for('home'))
             else:
-                return '<h1>FAILURE</h1>'
+                flash("Incorrect information. Try again?")
+                return render_template('landing.html')
 
         elif kind == 'signup':
             conn = dbi.connect()
@@ -70,11 +98,6 @@ def authenticate(kind):
             MBCode = int(curs.fetchone()['code']) + 1
             onCampus = 'no'
 
-            #interests
-            book = request.form['book']
-            album = request.form['album']
-            color = request.form['color']
-
             #insert MBCode
             curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
             conn.commit()
@@ -84,19 +107,12 @@ def authenticate(kind):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
             conn.commit()
 
-            #insert interests
-            curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, book, 'book'])
-            conn.commit()
-            curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, album, 'album'])
-            conn.commit()
-            curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, color, 'color'])
-            conn.commit()
-
-            #set wemail
-            session['wemail'] = email
-            session['index'] = 0
             matches.insertScores(conn, email)
-            return redirect(url_for('home'))
+
+        #set wemail
+        session['wemail'] = email
+        session['index'] = 0
+        return redirect(url_for('interests'))
             
     return '<h1>NOTHING HAPPENED</h1>'
 
@@ -130,15 +146,36 @@ def favoritesInformation(personDict):
     temp['favorites'] = favs # Add key value pair to the dictionary
     return temp
 
-@app.route('/home/', methods=['GET','POST'])
-def home():
-    # get user's email
-    conn = dbi.connect()
-    wemail = session.get('wemail', 'jl4') # access users email
-    index = session.get('index', 0) # index for carosel
-    emojis = {'album': '💿', 'song': '🎵', 'artist': '👩‍🎨', 'book': '📘', 
+emojis = {'album': '💿', 'song': '🎵', 'artist': '👩‍🎨', 'book': '📘', 
     'movie': '🎬', 'color': '🎨', 'emoji': '😜', 'food': '🍔', 'restaurant': '🍕',
     'game': '👾'}
+
+@app.route('/home/', methods=['GET','POST'])
+def home():
+
+    if 'wemail' not in session:
+        flash('You are not logged in. Please log in or sign up!')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        # User wants to logout
+        if 'logout' in request.form:
+            session.pop('wemail', None)
+            session.pop('index', None)
+            flash('You successfully logged out. Come back again!')
+            return redirect(url_for('index'))
+    
+    # grab wemail from current session
+    wemail = session.get('wemail')
+
+    conn = dbi.connect()
+
+    currentUserInfo = profileQueries.find_profile(conn, wemail)
+
+    # get index from current carousel
+    index = session.get('index', 0) 
+
+    print("session wemail: " + wemail + " index session: " + str(index))
 
     # get a user's current matching
     currentMatches = matches.getMatches(conn, wemail)
@@ -148,44 +185,52 @@ def home():
     potentialMatch = potentialMatches[index]  # this is a dictionary!
     # add a favorites key with a list of interests as its value for each user
     completedMatches = favoritesInformation(potentialMatch)
-    print(completedMatches)
+    print("Completed matches: " + str(completedMatches))
     # get that user's info as a list with one dictionary in it
     matchEmail = potentialMatch['wemail']
     # get potential user's bio
     matchBio = userInfo.getBio(conn, matchEmail)
+    if (matchBio):
+        matchBio = matchBio[0]
+    else:
+        matchBio = []
 
     # see if the current potential match has already been matched w/ user
     matchStatus = matches.matchExists(conn, wemail, matchEmail)
-
-    if request.method == 'POST':
-        # User pressed match button, so match two of them together
-        matchEmail = request.form.get('submit')
-        matches.setMatched(conn, wemail, matchEmail)
         
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
-        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio)
+        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio, currentUserInfo = currentUserInfo[0])
+
+@app.route('/makeMatch/', methods=['POST'])
+def makeMatch():
+    conn = dbi.connect()
+    userEmail = session.get('wemail')
+    matchEmail = request.form.get('submit')
+    matches.setMatched(conn, userEmail, matchEmail)
+    return redirect(url_for('home'))
 
 @app.route('/matches/<wemail>', methods=['GET','POST'])
 def match(wemail):
     conn = dbi.connect()
-    userEmail = session['wemail']
-    info = userInfo.find_profile(conn, userEmail)
+    userEmail = session.get('wemail')
+    info = profileQueries.find_profile(conn, wemail)
     completeInfo = favoritesInformation(info[0])
-    bio = userInfo.getBio(conn, userEmail)
+    bio = userInfo.getBio(conn, wemail)
     
-    return render_template('matches.html', person = completeInfo, emojis = emojis, personBio = bio)
+    return render_template('matches.html', person = completeInfo, emojis = emojis, personBio = bio, userEmail = userEmail)
 
 @app.route('/next/', methods=['POST'])
 def next():
     conn = dbi.connect()
     wemail = session.get('wemail')
     index = session.get('index', 0)
+    print("[IN NEXT:] session wemail: " + wemail + " index session: " + str(index))
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
 
     if (index == (len(potentialMatches) - 1)):
         session['index'] = 0
     else:
-        session['index'] = session['index'] + 1
+        session['index'] = index + 1
     return redirect(url_for('home'))
 
 @app.route('/back/', methods=['POST'])
@@ -193,12 +238,14 @@ def back():
     conn = dbi.connect()
     wemail = session.get('wemail')
     index = session.get('index', 0)
+    print("[IN BACK] session wemail: " + wemail + " index session: " + str(index))
+
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
 
     if (index == 0):
         session['index'] = len(potentialMatches) - 1
     else:
-        session['index'] = session['index'] - 1
+        session['index'] = index - 1
     return redirect(url_for('home'))
 
 
