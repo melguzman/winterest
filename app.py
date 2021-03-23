@@ -45,18 +45,20 @@ def login():
         return render_template('login.html')
     else:
         try:
-            wemail = request.form['wemail']
+            wemail = request.form['email']
             passwd = request.form['password']
             conn = dbi.connect()
             curs = dbi.dict_cursor(conn)
-            curs.execute('''SELECT hashed
+            curs.execute('''SELECT *
                         FROM userpass
                         WHERE wemail = %s''',
                         [wemail])
             row = curs.fetchone()
+            print(row)
             if row is None:
                 # Same response as wrong password,
                 # so no information about what went wrong
+                print("Row is none")
                 flash('Login incorrect. Try again or join')
                 return redirect( url_for('login'))
             hashed = row['hashed']
@@ -68,14 +70,15 @@ def login():
             print('rehash is: {} {}'.format(hashed2_str,type(hashed2_str)))
             if hashed2_str == hashed:
                 print('they match!')
-                flash('successfully logged in as '+username)
+                flash('successfully logged in as '+ wemail)
                 session['index'] = 0
-                session['wemail'] = email
-                return redirect( url_for('home') )
+                session['wemail'] = wemail
+                return redirect(url_for('home'))
             else:
                 flash('Login incorrect. Try again or join')
                 return redirect( url_for('index'))
         except Exception as err:
+            print("Exception: " + str(err))
             flash('Login incorrect. Try again or join')
             return redirect( url_for('login'))
 
