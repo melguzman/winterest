@@ -35,14 +35,14 @@ def index():
         print('no session exist')
         if request.method == "GET":
             print('case 1: first visit, just render landing page')
-            return render_template('landing.html')
+            return render_template('landing.html', page_title="Landing")
     else:
         return redirect(url_for('home'))
 
 @app.route('/login/', methods = ['GET', 'POST'])
 def login():
     if request.method == 'GET':
-        return render_template('login.html')
+        return render_template('login.html', page_title="Login")
     else:
         try:
             wemail = request.form['email']
@@ -85,7 +85,7 @@ def login():
 @app.route('/signup/', methods = ['GET', 'POST'])
 def signup():
     if request.method == 'GET':
-        return render_template('signup.html')
+        return render_template('signup.html', page_title="Signup")
     else:
         try:
             conn = dbi.connect()
@@ -204,12 +204,12 @@ def interests():
             flash('Upload failed {why}'.format(why=err))
             return redirect(url_for('interests'))
     else:
-        return render_template('interests.html')
+        return render_template('interests.html', page_title="Signup")
 
 @app.route('/logout/', methods = ["POST"])
 def logout():
     flash('You successfully logged out. Come back again!')
-    resp = make_response(render_template('landing.html'))
+    resp = make_response(render_template('landing.html', page_title="Landing"))
     session.pop('wemail', None)
     session.pop('index', None)
     return resp
@@ -228,7 +228,7 @@ def demographics():
             flash('form submission successful')
             return render_template('greet.html',
                                    title='Welcome '+username,
-                                   name=username)
+                                   name=username, page_title="Demographics")
 
         except Exception as err:
             flash('form submission error'+str(err))
@@ -286,7 +286,7 @@ def home():
         
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
         currentMatches = currentMatches, emojis = emojis, matchBio = matchBio, currentUserInfo = currentUserInfo,
-        photo = photo)
+        photo = photo, page_title="Home")
 
 @app.route('/makeMatch/', methods=['POST'])
 def makeMatch():
@@ -314,7 +314,8 @@ def match(wemail):
     photo = userInfo.find_photo(conn, wemail)
     
     return render_template('matches.html', person = completeInfo, 
-    emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo, photo = photo)
+    emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo, 
+    photo = photo, page_title=completeInfo["fname"] + "'s Profile")
 
 @app.route('/next/', methods=['POST'])
 def next():
