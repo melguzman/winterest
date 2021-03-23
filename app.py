@@ -298,6 +298,18 @@ def makeMatch():
     matches.setMatched(conn, userEmail, matchEmail)
     return redirect(url_for('home'))
 
+@app.route('/deleteMatch/', methods=['POST'])
+def deleteMatch():
+    '''Triggered when user presses the "unMatch" button on the home page.
+    Gets rid of match pairing from the website'''
+    conn = dbi.connect()
+    userEmail = session.get('wemail')
+    print('user' + userEmail)
+    matchEmail = request.form.get('submit')
+    print('elia' + matchEmail)
+    matches.unMatch(conn, userEmail, matchEmail)
+    return redirect(url_for('home'))
+
 @app.route('/matches/<wemail>', methods=['GET','POST'])
 def match(wemail):
     '''Redirects user to a page with matching interactions'''

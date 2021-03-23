@@ -90,6 +90,20 @@ def setMatched(conn, wemail, wemail2):
         = %s and wemail2 = %s''', [wemail2, wemail])
     conn.commit()
 
+def unMatch(conn, wemail, wemail2):
+    '''Takes current user and their old matched person's info and updates
+    both of their matched status to NO; wemail is the current user,
+    wemail2 is the matched person'''
+    curs = dbi.dict_cursor(conn)
+        # update matching status for user's row
+    curs.execute('''UPDATE matches_scored SET isMatched = "no" WHERE wemail 
+        = %s and wemail2 = %s''', [wemail, wemail2])
+
+        # update matching status for old matched person's row
+    curs.execute('''UPDATE matches_scored SET isMatched = "no" WHERE wemail 
+        = %s and wemail2 = %s''', [wemail2, wemail])
+    conn.commit()
+
 def getMatches(conn, wemail):
     '''Returns the information of the people the user has matched with,
     given the user's wemail'''
