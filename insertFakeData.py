@@ -6,7 +6,7 @@ app = Flask(__name__)
 import cs304dbi as dbi
 import csv 
 
-def insertDataToTables(conn,filename):
+def insertDataToTables(conn,csvFile):
     '''Extracts data on fake users and inserts their information to tables
     in database'''
     curs = dbi.dict_cursor(conn)
@@ -14,7 +14,7 @@ def insertDataToTables(conn,filename):
     rows = []
     fieldsDict = {}
     # reading csv file 
-    with open(filename, 'r') as csvfile: 
+    with open(csvFile, 'r') as csvfile: 
         # creating a csv reader object 
         csvreader = csv.reader(csvfile) 
       
@@ -70,8 +70,8 @@ def insertDataToTables(conn,filename):
 
 if __name__ == '__main__':
     dbi.cache_cnf()
-    filename = "users.csv"
+    csvFile = "users.csv"
     db_to_use = 'wellesleymatch_db' 
     dbi.use(db_to_use)
     conn = dbi.connect()
-    #insertDataToTables(conn,filename)
+    #insertDataToTables(conn,csvFile)
