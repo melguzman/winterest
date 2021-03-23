@@ -12,8 +12,8 @@ def find_profInt(conn, wemail):
     '''Returns a user's professional interest information; singular
     row returned'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM professionalInterests\
-        WHERE wemail = "{wemail}"')
+    curs.execute('''SELECT * FROM professionalInterests
+        WHERE wemail = %s''', [wemail])
     profInt = curs.fetchall()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the professional interests
@@ -25,16 +25,16 @@ def find_photo(conn, wemail):
     '''Returns the user's image; singular
     row returned'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM picfile\
-        WHERE wemail = "{wemail}"')
+    curs.execute('''SELECT * FROM picfile
+        WHERE wemail = %s''', [wemail])
     return curs.fetchone()
 
 def find_favorites(conn, wemail):
     '''Returns a user's favorites things and their respective genres; will be 
     multiple rows'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM favorites\
-        WHERE wemail = "{wemail}"')
+    curs.execute('''SELECT * FROM favorites
+        WHERE wemail = %s''', [wemail])
     return curs.fetchall()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns their favorite things and the respective genres
@@ -43,8 +43,8 @@ def find_favorites(conn, wemail):
 def find_person_LLs(conn, wemail):
     '''Returns all of user's love languages; 3 rows returned'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM loveLanguages \
-        WHERE wemail = "{wemail}"')
+    curs.execute('''SELECT * FROM loveLanguages 
+        WHERE wemail = %s''', [wemail])
     LLInt = curs.fetchall()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the love languages
@@ -79,15 +79,15 @@ def insert_professionalInterests(conn, wemail, industry, dreamJob):
 
     # assumption: user MUST have an input for ALL categories 
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT wemail FROM professionalInterests WHERE \
-        wemail = "{wemail}"')
+    curs.execute('''SELECT wemail FROM professionalInterests WHERE 
+        wemail = %s''', [wemail])
     checkInt = curs.fetchall()
     # if list of professional interests by said wemail doesn't exist,
     # we will insert a new row into the table for this person
     if len(checkInt) == 0: 
-        curs.execute(f'INSERT INTO professionalInterests (wemail, \
-            industry, dreamJob) VALUES ("{wemail}", "{industry}", \
-            "{dreamJob}")')
+        curs.execute('''INSERT INTO professionalInterests (wemail, 
+            industry, dreamJob) VALUES (%s, %s, %s)''', 
+            [wemail, industry, dreamJob])
         conn.commit()
 
 def update_professionalInterests(conn, wemail, industry, dreamJob):
@@ -95,11 +95,10 @@ def update_professionalInterests(conn, wemail, industry, dreamJob):
     updates them.'''
 
     curs = dbi.dict_cursor(conn)
-    wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f'UPDATE professionalInterests SET industry = "{industry}" \
-                WHERE wemail = {wemail}') #doesnt need quotes around wemail here
-    curs.execute(f'UPDATE professionalInterests SET dreamJob = "{dreamJob}" \
-        WHERE wemail = {wemail}') #doesnt need quotes around wemail here
+    curs.execute('''UPDATE professionalInterests SET industry = %s
+                WHERE wemail = %s''', [industry, wemail]) 
+    curs.execute('''UPDATE professionalInterests SET dreamJob = %s
+        WHERE wemail = %s''', [dreamJob, wemail]) 
     conn.commit()
 
 ############ INSERT, UPDATE Favorite and Genres
@@ -110,8 +109,8 @@ def insert_favorites(conn, wemail, name, itemType):
 
     # assumption: user MUST have a favorite of each genre listed 
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'INSERT INTO favorites (wemail, name, itemType) \
-        VALUES ("{wemail}", "{name}", "{itemType}")')
+    curs.execute('''INSERT INTO favorites (wemail, name, itemType) 
+        VALUES (%s, %s, %s)''', [wemail, name, itemType])
     conn.commit()
 
 def update_favorites(conn, wemail, name, itemType):
@@ -121,11 +120,10 @@ def update_favorites(conn, wemail, name, itemType):
 
     # update favorite and genres info 
     curs = dbi.dict_cursor(conn)
-    wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f'UPDATE favorites SET name = "{name}" \
-        WHERE itemType = "{itemType}" and wemail = {wemail}') #doesnt need quotes around wemail here
-    curs.execute(f'UPDATE favorites SET itemType = "{itemType}" \
-        WHERE name = "{name}" and wemail = {wemail}') #doesnt need quotes around wemail here
+    curs.execute('''UPDATE favorites SET name = %s
+        WHERE itemType = %s and wemail = %s''', [name, itemType, wemail]) 
+    curs.execute('''UPDATE favorites SET itemType = %s
+        WHERE name = %s and wemail = %s''', [itemType, name, wemail]) 
     conn.commit()
     
 
@@ -139,8 +137,8 @@ def insert_top3_LL(conn, wemail, language, langNum):
 
     # assumption: user MUST have 3 LLs
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'INSERT INTO loveLanguages (wemail, language, langNum) \
-        VALUES ("{wemail}", "{language}", "{langNum}")')
+    curs.execute('''INSERT INTO loveLanguages (wemail, language, langNum) 
+        VALUES (%s, %s, %s)''', [wemail, language, langNum])
     conn.commit()
 
 def update_top3_lang(conn, wemail, language, langNum):
@@ -152,9 +150,8 @@ def update_top3_lang(conn, wemail, language, langNum):
     # update love languages info 
     curs = dbi.dict_cursor(conn)
 
-    wemail = f'''"{wemail}"''' if wemail else "NULL"
-    curs.execute(f'UPDATE loveLanguages SET language = "{language}" \
-        WHERE wemail = {wemail} and langNum = "{langNum}"') #doesnt need quotes around wemail here
+    curs.execute('''UPDATE loveLanguages SET language = %s
+        WHERE wemail = %s and langNum = %s''', [language, wemail, langNum]) 
     conn.commit()
 
 
@@ -185,15 +182,16 @@ if __name__ == '__main__':
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
     #print(find_profInt(conn, 'aEstrada'))
-    #print(find_person_LLs(conn, 'gPortill'))
+    #print(find_person_LLs(conn, 'gPortillo'))
     #print(find_MB_info(conn, 2)) #aEstrada
     #print(getBio(conn, 'mPap'))
     #insert_professionalInterests(conn, 'cat', 'Government', 'International Affairs')
     #update_professionalInterests(conn, 'cat', 'Education', 'Teacher')
     #insert_favorites(conn, 'aEstrada', 'Malo', 'album')
     #update_favorites(conn, 'aEstrada', 'Azteca', 'album')
-    #insert_top3_LL(conn, 'mPap', 'gift', '1')
+    #insert_top3_LL(conn, 'mPap', 'service', '2')
     #update_top3_lang(conn, 'mPap', 'affirmation', '1')
+
     #insert_Myers_Briggs_table(conn,'1')
     #insert_Myers_Briggs(conn, 'mTuzman', '1')
     #curs = dbi.dict_cursor(conn)
