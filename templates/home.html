@@ -56,14 +56,14 @@
     <form class="button-form" method=post action="{{url_for('back')}}">
       <button class="button-form-element" type="submit" name="submit" value="{{person.wemail}}">
         <div id="left-button" class="circle left-arrow">
-          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="">
+          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="left">
         </div>
       </button>
     </form>
     <form class="button-form" method=post action="{{url_for('next')}}">
       <button class="button-form-element" type="submit" name="submit" value="{{person.wemail}}">
         <div id="right-button" class="circle right-arrow">
-          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="">
+          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="right">
         </div>
       </button>
     </form>
