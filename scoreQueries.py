@@ -16,11 +16,16 @@ def matchScore(conn, wemail, wemail2):
     if wemail == wemail2:
         return 'Cannot match with self'
     
-    curs.execute(f'SELECT major, city, state, country, onCampus, personality, \
+    curs.execute(f'SELECT major, city, state, country, onCampus, \
                 favorites.itemType, favorites.name FROM userAccount INNER \
-                JOIN MBResults using (MBCode) INNER JOIN favorites USING \
+                JOIN favorites USING \
                 (wemail) INNER JOIN loveLanguages using (wemail) \
                 WHERE wemail = "{wemail}"')
+    # curs.execute(f'SELECT major, city, state, country, onCampus, \
+    #             favorites.itemType, favorites.name FROM userAccount INNER \
+    #             JOIN MBResults using (MBCode) INNER JOIN favorites USING \
+    #             (wemail) INNER JOIN loveLanguages using (wemail) \
+    #             WHERE wemail = "{wemail}"')
 
     firstInfo = curs.fetchall()
 
@@ -28,10 +33,14 @@ def matchScore(conn, wemail, wemail2):
         return 'No possible match here'
     firstPerson = firstInfo[0] # assumes firstInfo is a list of one dictionary
 
-    curs.execute(f'SELECT major, city, state, country, onCampus, personality \
-                FROM userAccount INNER JOIN MBResults using (MBCode) \
-                INNER JOIN favorites USING (wemail) INNER JOIN loveLanguages \
+    curs.execute(f'SELECT major, city, state, country, onCampus \
+                FROM userAccount INNER JOIN favorites USING (wemail) INNER JOIN loveLanguages \
                 using (wemail) WHERE wemail = "{wemail2}"')
+
+    # curs.execute(f'SELECT major, city, state, country, onCampus, personality \
+    #             FROM userAccount INNER JOIN MBResults using (MBCode) \
+    #             INNER JOIN favorites USING (wemail) INNER JOIN loveLanguages \
+    #             using (wemail) WHERE wemail = "{wemail2}"')
     
     secondInfo = curs.fetchall()
 
@@ -67,11 +76,11 @@ def matchScore(conn, wemail, wemail2):
             score += 1
     except KeyError:
         score += 0
-    try:
-        if secondPerson['personality'] == firstPerson['personality']:
-            score += 1
-    except KeyError:
-        score += 0
+    # try:
+    #     if secondPerson['personality'] == firstPerson['personality']:
+    #         score += 1
+    # except KeyError:
+    #     score += 0
 
     score += matchScore_LL(conn, wemail, wemail2) # add in score from love languages
     score += matchScore_favorites(conn,wemail,wemail2) # add in score from favorites

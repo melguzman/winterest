@@ -51,16 +51,16 @@ def find_person_LLs(conn, wemail):
     if len(LLInt) != 0:
         return LLInt
 
-def find_MB_info(conn, MBCode):
-    '''Takes a user's MBCode and uses it to generate their personality
-    information and role in society as per the Myers-Briggs test.'''
-    curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT personality, role FROM MBResults WHERE \
-                MBResults.MBCode = "{MBCode}"')
-    MBVals = curs.fetchall()
-    if len(MBVals) != 0:
-        return MBVals
-    return "No MB code input yet"
+# def find_MB_info(conn, MBCode):
+#     '''Takes a user's MBCode and uses it to generate their personality
+#     information and role in society as per the Myers-Briggs test.'''
+#     curs = dbi.dict_cursor(conn)
+#     curs.execute(f'SELECT personality, role FROM MBResults WHERE \
+#                 MBResults.MBCode = "{MBCode}"')
+#     MBVals = curs.fetchall()
+#     if len(MBVals) != 0:
+#         return MBVals
+#     return "No MB code input yet"
 
 def getBio(conn, userEmail):
     '''Returns a user's bio'''
@@ -160,24 +160,24 @@ def update_top3_lang(conn, wemail, language, langNum):
 
 ############ INSERT Myers-Briggs test results
 
-def insert_Myers_Briggs_table(conn,MBCode): #needs to be used first
-    '''Takes inputs from user's Myers-Briggs test results.
-    Inserts the user's code from the test results into the database.'''
+# def insert_Myers_Briggs_table(conn,MBCode): #needs to be used first
+#     '''Takes inputs from user's Myers-Briggs test results.
+#     Inserts the user's code from the test results into the database.'''
 
-    curs = dbi.dict_cursor(conn)
-    curs.execute(f'INSERT INTO MBResults (MBCode) \
-        VALUES ("{MBCode}")')
-    conn.commit()
+#     curs = dbi.dict_cursor(conn)
+#     curs.execute(f'INSERT INTO MBResults (MBCode) \
+#         VALUES ("{MBCode}")')
+#     conn.commit()
 
 
-def insert_Myers_Briggs(conn, wemail, MBCode): #then use function second
-    '''Takes inputs from user based off of their Myers-Briggs test results.
-    Inserts the user's code from the test results into the database.'''
+# def insert_Myers_Briggs(conn, wemail, MBCode): #then use function second
+#     '''Takes inputs from user based off of their Myers-Briggs test results.
+#     Inserts the user's code from the test results into the database.'''
 
-    curs = dbi.dict_cursor(conn)
-    curs.execute(f'UPDATE userAccount SET MBCode = "{MBCode}" \
-        where wemail = "{wemail}"')
-    conn.commit()
+#     curs = dbi.dict_cursor(conn)
+#     curs.execute(f'UPDATE userAccount SET MBCode = "{MBCode}" \
+#         where wemail = "{wemail}"')
+#     conn.commit()
 
 
 if __name__ == '__main__':

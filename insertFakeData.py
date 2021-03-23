@@ -29,18 +29,18 @@ def insertDataToTables(conn,filename):
         #insert data into respective tables for a fake user one at a time
         for row in csvreader:
             #insert data into MBResults
-            curs.execute(f'insert into MBResults(MBCode,personality,role) \
-            values("{row[fieldsDict["MBCode"]]}","{row[fieldsDict["personality"]]}",\
-            "{row[fieldsDict["role"]]}")')
-            conn.commit()
+            # curs.execute(f'insert into MBResults(MBCode,personality,role) \
+            # values("{row[fieldsDict["MBCode"]]}","{row[fieldsDict["personality"]]}",\
+            # "{row[fieldsDict["role"]]}")')
+            # conn.commit()
 
             #insert data into userAccount
-            curs.execute(f'insert into userAccount(wemail,password,fname,lname,major,year,\
-            country,state,city,onCampus,MBCode) values("{row[fieldsDict["wemail"]]}",\
-            "{row[fieldsDict["password"]]}","{row[fieldsDict["fname"]]}",\
+            curs.execute(f'insert into userAccount(wemail,fname,lname,major,year,\
+            country,state,city,onCampus) values("{row[fieldsDict["wemail"]]}",\
+            "{row[fieldsDict["fname"]]}",\
             "{row[fieldsDict["lname"]]}","{row[fieldsDict["major"]]}", "{row[fieldsDict["year"]]}",\
             "{row[fieldsDict["country"]]}","{row[fieldsDict["state"]]}", "{row[fieldsDict["city"]]}",\
-            "{row[fieldsDict["onCampus"]]}","{row[fieldsDict["MBCode"]]}")')
+            "{row[fieldsDict["onCampus"]]}")')
             conn.commit()
 
             #insert data into contact

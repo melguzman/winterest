@@ -11,6 +11,7 @@ import profileQueries
 import makeMatchesQueries as matches
 import insertFakeData
 import random
+import bcrypt
 import sys
 
 app.secret_key = 'your secret here'
@@ -29,22 +30,118 @@ app.config['MAX_CONTENT_LENGTH'] = 1*1024*1024 # 1 MB
 
 @app.route('/')
 def index():
-    wemail = request.cookies.get('wemail')
+    wemail = session.get('wemail')
     if not wemail:
-        print('no cookie set')
+        print('no session exist')
         if request.method == "GET":
             print('case 1: first visit, just render landing page')
             return render_template('landing.html')
     else:
         return redirect(url_for('home'))
 
-@app.route('/login/')
+@app.route('/login/', methods = ['GET', 'POST'])
 def login():
-    return render_template('login.html')
+    if request.method == 'GET':
+        return render_template('login.html')
+    else:
+        try:
+            wemail = request.form['wemail']
+            passwd = request.form['password']
+            conn = dbi.connect()
+            curs = dbi.dict_cursor(conn)
+            curs.execute('''SELECT hashed
+                        FROM userpass
+                        WHERE wemail = %s''',
+                        [wemail])
+            row = curs.fetchone()
+            if row is None:
+                # Same response as wrong password,
+                # so no information about what went wrong
+                flash('Login incorrect. Try again or join')
+                return redirect( url_for('login'))
+            hashed = row['hashed']
+            print('database has hashed: {} {}'.format(hashed,type(hashed)))
+            print('form supplied passwd: {} {}'.format(passwd,type(passwd)))
+            hashed2 = bcrypt.hashpw(passwd.encode('utf-8'),
+                                    hashed.encode('utf-8'))
+            hashed2_str = hashed2.decode('utf-8')
+            print('rehash is: {} {}'.format(hashed2_str,type(hashed2_str)))
+            if hashed2_str == hashed:
+                print('they match!')
+                flash('successfully logged in as '+username)
+                session['index'] = 0
+                session['wemail'] = email
+                return redirect( url_for('home') )
+            else:
+                flash('Login incorrect. Try again or join')
+                return redirect( url_for('index'))
+        except Exception as err:
+            flash('Login incorrect. Try again or join')
+            return redirect( url_for('login'))
 
-@app.route('/signup/')
+@app.route('/signup/', methods = ['GET', 'POST'])
 def signup():
-    return render_template('signup.html')
+    if request.method == 'GET':
+        return render_template('signup.html')
+    else:
+        try:
+            conn = dbi.connect()
+            curs = dbi.cursor(conn)
+
+            wemail = request.form['email']
+            passwd1 = request.form['password1']
+            passwd2 = request.form['password2']
+
+            # basic info
+            fname = request.form['fname']
+            lname = request.form['lname']
+            major = request.form['major']
+            year = request.form['year']
+            country = request.form['country']
+            state = request.form['state']
+            city = request.form['city']
+            onCampus = 'no'
+
+            # MBCode and default oncampus to 'no'
+            # highestMBCode = (curs.execute('''SELECT MAX(CAST(MBCode AS int)) AS code FROM MBResults''')) 
+            # print(highestMBCode, flush=True)
+            # MBCode = int(curs.fetchone()['code']) + 1
+
+            # insert MBCode
+            # curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
+            # conn.commit()
+
+            # insert user account
+            curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, major, year, onCampus) \
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''', [wemail, fname, lname, country, state, city, major, year, onCampus])
+            conn.commit()
+
+            if passwd1 != passwd2:
+                flash('Passwords do not match. Try again.')
+                return redirect( url_for('signup'))
+
+            hashed = bcrypt.hashpw(passwd1.encode('utf-8'),
+                                bcrypt.gensalt())
+            hashed_str = hashed.decode('utf-8')
+            print(passwd1, type(passwd1), hashed, hashed_str)
+            try:
+                curs.execute('''INSERT INTO userpass(wemail, hashed)
+                            VALUES(%s, %s)''',
+                            [wemail, hashed_str])
+                conn.commit()
+            
+            except Exception as err:
+                flash('That username is taken: {}'.format(repr(err)))
+                return redirect(url_for('signup'))
+
+            matches.insertScores(conn, wemail)
+            session['index'] = 0
+            session['wemail'] = wemail
+            return redirect(url_for('interests'))
+
+        except Exception as err:
+            flash('form submission error '+str(err))
+            return redirect( url_for('index') )
 
 @app.route('/pic/<wemail>')
 def pic(wemail):
@@ -64,7 +161,7 @@ def pic(wemail):
 def interests():
     conn = dbi.connect()
     curs = dbi.dict_cursor(conn)
-    email = request.cookies.get('wemail')
+    email = session.get('wemail')
     #interests
     if request.method == 'POST':
         book = request.form['book']
@@ -106,62 +203,13 @@ def interests():
     else:
         return render_template('interests.html')
 
-@app.route('/authenticate/<kind>', methods = ['GET', 'POST']) 
-def authenticate(kind):
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-
-        if kind == 'login':
-            conn = dbi.connect()
-            curs = dbi.dict_cursor(conn)
-            curs.execute('''SELECT * FROM userAccount WHERE wemail = %s AND password = %s''', [email, password])
-            if len(curs.fetchall()) == 1:
-                resp = make_response(redirect(url_for('home')))
-                resp.set_cookie('wemail', email)
-                return resp
-            else:
-                flash("Incorrect information. Try again?")
-                return render_template('landing.html')
-
-        elif kind == 'signup':
-            conn = dbi.connect()
-            curs = dbi.dict_cursor(conn)
-
-            #basic info
-            fname = request.form['fname']
-            lname = request.form['lname']
-            major = request.form['major']
-            year = request.form['year']
-            country = request.form['country']
-            state = request.form['state']
-            city = request.form['city']
-
-            #MBCode and default oncampus to 'no'
-            highestMBCode = (curs.execute('''SELECT MAX(CAST(MBCode AS int)) AS code FROM MBResults''')) 
-            print(highestMBCode, flush=True)
-            MBCode = int(curs.fetchone()['code']) + 1
-            onCampus = 'no'
-
-            #insert MBCode
-            curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
-            conn.commit()
-
-            #insert user account
-            curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
-            conn.commit()
-
-            matches.insertScores(conn, email)
-
-        #set wemail
-        session['index'] = 0
-        resp = make_response(redirect(url_for('interests')))
-        resp.set_cookie('wemail', email)
-        return resp
-
-    flash ("Error during authentication. Try again.") 
-    return redirect(url_for("landing.html"))
+@app.route('/logout/', methods = ["POST"])
+def logout():
+    flash('You successfully logged out. Come back again!')
+    resp = make_response(render_template('landing.html'))
+    session.pop('wemail', None)
+    session.pop('index', None)
+    return resp
 
 @app.route('/faq/')
 def faq():
@@ -200,21 +248,10 @@ emojis = {'album': '💿', 'song': '🎵', 'artist': '👩‍🎨', 'book': '�
 @app.route('/home/', methods=['GET','POST'])
 def home():
     # grab wemail from cookie
-    wemail = request.cookies.get('wemail')
+    wemail = session.get('wemail')
     if not wemail:
         flash('You are not logged in. Please log in or sign up!')
         return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        # User wants to logout
-        if "logout" in request.form: 
-                flash('You successfully logged out. Come back again!')
-                resp = make_response(
-                    render_template('landing.html'))
-                resp.set_cookie('wemail', '', expires=0)
-                session.pop('index', None)
-                # resp.set_cookie('index', '', expires=0)
-                return resp
 
     conn = dbi.connect()
 
@@ -253,7 +290,7 @@ def makeMatch():
     '''Triggered when user presses the "Match" button on the home page.
     Adds the match pairing to the website'''
     conn = dbi.connect()
-    userEmail = request.cookies.get('wemail')
+    userEmail = session.get('wemail')
     matchEmail = request.form.get('submit')
     matches.setMatched(conn, userEmail, matchEmail)
     return redirect(url_for('home'))
@@ -261,7 +298,7 @@ def makeMatch():
 @app.route('/matches/<wemail>', methods=['GET','POST'])
 def match(wemail):
     '''Redirects user to a page with matching interactions'''
-    userEmail = request.cookies.get('wemail')
+    userEmail = session.get('wemail')
     if not userEmail:
         flash('Session timed out. Log in again!')
         return redirect(url_for('index'))
@@ -280,7 +317,7 @@ def match(wemail):
 def next():
     '''Cycles to the next potential match with the 
     user presses the next button'''
-    userEmail = request.cookies.get('wemail')
+    userEmail = session.get('wemail')
     if not userEmail:
         flash('Session timed out. Log in again!')
         return redirect(url_for('index'))
@@ -299,7 +336,7 @@ def next():
 def back():
     '''Cycles to the previous potential match with the 
     user presses the back button'''
-    userEmail = request.cookies.get('wemail')
+    userEmail = session.get('wemail')
     if not userEmail:
         flash('Session timed out. Log in again!')
         return redirect(url_for('index'))

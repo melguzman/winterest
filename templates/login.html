@@ -15,14 +15,14 @@
     {% endwith %}
     <div class="main-content">
         <div class="signup-container">
-    <form method = 'POST' action={{ url_for('authenticate', kind = 'login') }}>
+    <form method = 'POST' action="{{ url_for('login') }}">
         <div class="textbox signup-textbox">
             <label for="email">Username</label>
             <input type="text" placeholder="Wellesley Username" name="email" required>
         </div>
     
         <div class="textbox signup-textbox">
-            <label for="password">Password</label>
+            <label for="password1">Password</label>
             <input type="password" placeholder="Enter Password" name="password" required>
         </div>
         <br>

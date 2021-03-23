@@ -6,7 +6,7 @@
     <div class="signup-container">
       <h2 class="action-title">Sign Up</h2>
       
-      <form method='POST' action="{{ url_for('authenticate', kind = 'signup') }}">
+      <form method='POST' action="{{ url_for('signup') }}">
         <div id="wellesley-email-box" class="textbox signup-textbox">
           <label for="wemail">Wellesley Email</label>
           <p class="match-subheader">Please omit (@wellesley.edu)</p>
@@ -32,7 +32,7 @@
           </div>
           <div class="textbox signup-textbox">
             <label for="state">State</label>
-            <input type="text" id="state" name="state" placeholder="State" required>
+            <input type="text" id="state" name="state" placeholder="State">
           </div>
         </div>
         <div class="textbox signup-textbox">
@@ -41,13 +41,13 @@
         </div>
 
         <div class="textbox signup-textbox">
-          <label for="password">Password</label>
-          <input type="password" placeholder="Enter Password" name="password" required>
+          <label for="password1">Password</label>
+          <input type="password" placeholder="Enter Password" name="password1" required>
         </div>
 
         <div class="textbox signup-textbox">
-          <label for="confirm_password">Confirm Password</label>
-          <input type="confirm_password" placeholder="Confirm Password" name="confirm_password" required>
+          <label for="password2">Confirm Password</label>
+          <input type="password" placeholder="Confirm Password" name="password2" required>
         </div>
 
         <br>

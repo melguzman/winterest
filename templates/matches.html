@@ -7,7 +7,7 @@
       <div id="user-circle" class="circle-img">
         <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
       </div>
-      <form method=post action="">
+      <form method=post action="{{url_for('logout')}}">
         <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
       </form>
     </div>

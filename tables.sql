@@ -1,5 +1,7 @@
 use wellesleymatch_db;
 
+drop table if exists MBResults;
+drop table if exists userpass;
 drop table if exists picfile;
 drop table if exists matches;
 drop table if exists matches_scored;
@@ -12,19 +14,9 @@ drop table if exists favorites;
 drop table if exists professionalInterests;
 drop table if exists contact;
 drop table if exists userAccount;
-drop table if exists MBResults;
-
-create table MBResults (
-    MBCode varchar(6) not null primary key,
-    personality enum('analysts', 'diplomats', 'sentinels', 'explorers'),
-    role varchar(15),
-    INDEX (role)
-)
-ENGINE = InnoDB;
  
 create table userAccount ( 
-    wemail char(8) not null primary key,
-    password varchar(50),
+    wemail varchar(20)  not null primary key,
     fname varchar(30),
     lname varchar(30),
     major varchar(50),
@@ -32,18 +24,25 @@ create table userAccount (
     country varchar(50),
     state varchar(2),
     city varchar(50),
-    onCampus enum("yes", "no"),
-    MBCode varchar(6),
-
-    foreign key (MBCode) references MBResults(MBCode)
-        on update restrict
-        on delete restrict
+    onCampus enum("yes", "no")
     )
 
 ENGINE = InnoDB;
 
+-- create table MBResults (
+--     wemail varchar(20) not null,
+--     MBCode varchar(6) not null,
+--     personality enum('analysts', 'diplomats', 'sentinels', 'explorers'),
+--     role varchar(15),
+--     INDEX (role),
+--     foreign key (wemail) references userAccount(wemail)
+--         on update restrict
+--         on delete restrict
+-- )
+-- ENGINE = InnoDB;
+
 create table contact (
-    wemail char(8) not null,
+    wemail varchar(20) not null,
     phoneNumber int unsigned not null primary key,
     handle varchar(50),
     url varchar(150),
@@ -57,7 +56,7 @@ create table contact (
 ENGINE = InnoDB;
 
 create table professionalInterests (
-    wemail char(8) not null,
+    wemail varchar(20) not null,
     industry varchar(50),
     dreamJob varchar(50),
     INDEX (industry),
@@ -69,7 +68,7 @@ create table professionalInterests (
 ENGINE = InnoDB;
 
 create table favorites (
-    wemail char(8) not null,
+    wemail varchar(20) not null,
     name varchar(50),
     itemType enum('album', 'song', 'artist', 'book', 'movie',
         'tvshow', 'color', 'emoji', 'food', 'restaurant', 'game'),
@@ -82,7 +81,7 @@ create table favorites (
 ENGINE = InnoDB;
 
 create table loveLanguages (
-    wemail char(8) not null,
+    wemail varchar(20) not null,
     langNum enum("1", "2", "3"),
     language enum('affirmation', 'service', 'gift', 'time', 'physical'),
     foreign key (wemail) references userAccount(wemail)
@@ -93,7 +92,7 @@ create table loveLanguages (
 ENGINE = InnoDB;
 
 create table bio (
-    wemail char(8) not null,
+    wemail varchar(20) not null,
     bio varchar(200),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
@@ -103,7 +102,7 @@ create table bio (
 ENGINE = InnoDB;
 
 create table firstMatch (
-    wemail char(8) not null,
+    wemail varchar(20) not null,
     matchID int not null primary key,
     wemailMatch varchar(50),
     INDEX (matchID),
@@ -115,7 +114,7 @@ create table firstMatch (
 ENGINE = InnoDB;
 
 create table icebreaker (
-    wemail char(8) not null,
+    wemail varchar(20) not null,
     icebreakerID int not null primary key,
     question varchar(50),
     answer varchar(70),
@@ -128,7 +127,7 @@ create table icebreaker (
 ENGINE = InnoDB;
 
 create table meeting (
-    wemail char(8) not null,
+    wemail varchar(20) not null,
     meetingID int not null primary key,
     time date,
     itemType varchar(30),
@@ -143,7 +142,7 @@ create table meeting (
 ENGINE = InnoDB;
 
 create table matches_scored (
-    wemail char(8), -- person who is logged in
+    wemail varchar(20), -- person who is logged in
     wemail2 char(8), -- wemail of second person, unmatched yet
     score int not null,
     isMatched char(3), -- value of yes/no depending on if this pair is matched or not
@@ -156,9 +155,21 @@ create table matches_scored (
 ENGINE = InnoDB;
 
 create table picfile (
-    wemail char(8),
+    wemail varchar(20) not null,
     filename varchar(50),
     foreign key (wemail) references userAccount(wemail) 
+        on delete cascade 
+        on update cascade
+)
+
+ENGINE = InnoDB;
+
+create table userpass(
+       wemail char(20) not null,
+       hashed char(60),
+       unique(wemail),
+       index(wemail),
+       foreign key (wemail) references userAccount(wemail) 
         on delete cascade 
         on update cascade
 )
