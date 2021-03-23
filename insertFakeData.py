@@ -35,37 +35,36 @@ def insertDataToTables(conn,filename):
             # conn.commit()
 
             #insert data into userAccount
-            curs.execute(f'insert into userAccount(wemail,fname,lname,major,year,\
-            country,state,city,onCampus) values("{row[fieldsDict["wemail"]]}",\
-            "{row[fieldsDict["fname"]]}",\
-            "{row[fieldsDict["lname"]]}","{row[fieldsDict["major"]]}", "{row[fieldsDict["year"]]}",\
-            "{row[fieldsDict["country"]]}","{row[fieldsDict["state"]]}", "{row[fieldsDict["city"]]}",\
-            "{row[fieldsDict["onCampus"]]}")')
+            curs.execute('''insert into userAccount(wemail,fname,lname,major,year,
+                country,state,city,onCampus) values(%s,%s, %s, %s, %s, %s, %s, %s, %s)''', 
+                [row[fieldsDict["wemail"]], row[fieldsDict["fname"]], row[fieldsDict["lname"]], 
+                row[fieldsDict["major"]], row[fieldsDict["year"]], row[fieldsDict["country"]], 
+                row[fieldsDict["state"]], row[fieldsDict["city"]], row[fieldsDict["onCampus"]]])
             conn.commit()
 
             #insert data into contact
-            curs.execute(f'insert into contact(wemail,phoneNumber,handle,url,platform) \
-            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["phoneNumber"]]}",\
-            "{row[fieldsDict["handle"]]}", "{row[fieldsDict["url"]]}", \
-            "{row[fieldsDict["platform"]]}")')
+            curs.execute('''insert into contact(wemail,phoneNumber,handle,url,platform) 
+                values(%s, %s, %s, %s, %s)''', [row[fieldsDict["wemail"]], 
+                row[fieldsDict["phoneNumber"]], row[fieldsDict["handle"]], row[fieldsDict["url"]], 
+                row[fieldsDict["platform"]]])
             conn.commit()
 
             #insert data into professionalInterests
-            curs.execute(f'insert into professionalInterests(wemail,industry,dreamJob) \
-            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["industry"]]}",\
-            "{row[fieldsDict["dreamJob"]]}")')
+            curs.execute('''insert into professionalInterests(wemail,industry,dreamJob) 
+                values(%s,%s,%s)''', [row[fieldsDict["wemail"]], row[fieldsDict["industry"]], 
+                row[fieldsDict["dreamJob"]]])
             conn.commit()
 
             #insert data into favorites
-            curs.execute(f'insert into favorites(wemail,name,itemType) \
-            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["name"]]}",\
-            "{row[fieldsDict["itemType"]]}")')
+            curs.execute('''insert into favorites(wemail,name,itemType) 
+                values(%s, %s, %s)''', [row[fieldsDict["wemail"]], row[fieldsDict["name"]], 
+                row[fieldsDict["itemType"]]])
             conn.commit()
 
             #insert data into loveLanguages
-            curs.execute(f'insert into loveLanguages(wemail,langNum,language) \
-            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["langNum"]]}",\
-            "{row[fieldsDict["language"]]}")')
+            curs.execute('''insert into loveLanguages(wemail,langNum,language) 
+                values(%s, %s, %s)''', [row[fieldsDict["wemail"]], row[fieldsDict["langNum"]], 
+                row[fieldsDict["language"]]])
             conn.commit()
 
 
@@ -75,4 +74,4 @@ if __name__ == '__main__':
     db_to_use = 'wellesleymatch_db' 
     dbi.use(db_to_use)
     conn = dbi.connect()
-    insertDataToTables(conn,filename)
+    #insertDataToTables(conn,filename)
