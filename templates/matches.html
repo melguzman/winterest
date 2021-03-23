@@ -44,9 +44,17 @@
       </div>
     </div>
   </div>
-  <form id="match-button-form2" method=post action="{{url_for('deleteMatch')}}">
-    <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
-  </form>
+  <div class="match-buttons">
+    {% if oneSDMatchStatus %} <!-- a one sided matching -->
+      <form id="match-button-form" method=post action="{{url_for('makeMatch')}}">
+        <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💖 Match</button>
+      </form>
+    {% else %} <!-- a two sided matching -->
+      <form id="match-button-form" method=post action="{{url_for('deleteMatch')}}">
+        <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
+      </form>
+    {% endif %}
+  </div>
 </section>
 
     <section id="match-actions">

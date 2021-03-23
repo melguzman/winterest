@@ -264,7 +264,10 @@ def home():
     index = session.get('index', 0) 
 
     # get a user's current matching
-    currentMatches = matches.getMatches(conn, wemail)
+    currentMatches = matches.getMatches(conn, wemail) #working perfect now
+    # get a user's one sided matchings
+    oneSidedMatching = matches.getOneSidedMatches(conn, wemail) #addeddddddddddddddddddddddddddd
+    #print(oneSidedMatching)
     # get list of potential matches emails (list of dictionaries) 
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
     # grab potential user via index (one place they are in the carosel)
@@ -285,8 +288,8 @@ def home():
     matchStatus = matches.matchExists(conn, wemail, matchEmail)
         
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
-        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio, currentUserInfo = currentUserInfo,
-        photo = photo, page_title="Home")
+        currentMatches = currentMatches, oneSidedMatches = oneSidedMatching, emojis = emojis, matchBio = matchBio, 
+        currentUserInfo = currentUserInfo, photo = photo, page_title="Home") #adddedddddddddddddddddd
 
 @app.route('/makeMatch/', methods=['POST'])
 def makeMatch():
@@ -295,8 +298,14 @@ def makeMatch():
     conn = dbi.connect()
     userEmail = session.get('wemail')
     matchEmail = request.form.get('submit')
-    matches.setMatched(conn, userEmail, matchEmail)
-    return redirect(url_for('home'))
+    #matches.setMatched(conn, userEmail, matchEmail)
+    #check if one sided match already exists
+    if matches.matchExists(conn, matchEmail, userEmail):
+        matches.setMatched(conn, userEmail, matchEmail) #updated both so two sided match
+    else:
+        matches.setOneSDMatch(conn, userEmail, matchEmail) #intially one sided
+
+    return redirect(url_for('home'))  #render template?
 
 @app.route('/deleteMatch/', methods=['POST'])
 def deleteMatch():
@@ -304,9 +313,8 @@ def deleteMatch():
     Gets rid of match pairing from the website'''
     conn = dbi.connect()
     userEmail = session.get('wemail')
-    print('user' + userEmail)
     matchEmail = request.form.get('submit')
-    print('elia' + matchEmail)
+    #design decision: if one side unmatches, completey unmatch
     matches.unMatch(conn, userEmail, matchEmail)
     return redirect(url_for('home'))
 
@@ -324,10 +332,15 @@ def match(wemail):
     completeInfo = favoritesInformation(info)
     bio = userInfo.getBio(conn, wemail)
     photo = userInfo.find_photo(conn, wemail)
+
+    #check if this person is a one sided match
+    oneSidedMatchStatus = (len(matches.matchExists(conn, wemail, userEmail)) > 0) \
+                        and (len(matches.matchExists(conn, userEmail, wemail)) == 0)
     
     return render_template('matches.html', person = completeInfo, 
-    emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo, 
-    photo = photo, page_title=completeInfo["fname"] + "'s Profile")
+        oneSDMatchStatus = oneSidedMatchStatus, emojis = emojis, personBio = bio, 
+        currentUserInfo = currentUserInfo, photo = photo, 
+        page_title=completeInfo["fname"] + "'s Profile") #addeddddddd
 
 @app.route('/next/', methods=['POST'])
 def next():
@@ -372,7 +385,7 @@ def back():
 def init_db():
     dbi.cache_cnf()
     # set this local variable to 'wmdb' or your personal or team db
-    db_to_use = 'wellesleymatch_db' 
+    db_to_use = 'mguzman2_db' 
     dbi.use(db_to_use)
     print('will connect to {}'.format(db_to_use))
 

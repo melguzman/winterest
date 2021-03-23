@@ -1,4 +1,4 @@
-use wellesleymatch_db;
+use mguzman2_db;
 
 drop table if exists MBResults;
 drop table if exists userpass;
