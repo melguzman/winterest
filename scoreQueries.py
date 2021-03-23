@@ -16,11 +16,11 @@ def matchScore(conn, wemail, wemail2):
     if wemail == wemail2:
         return 'Cannot match with self'
     
-    curs.execute(f'SELECT major, city, state, country, onCampus, \
-                favorites.itemType, favorites.name FROM userAccount INNER \
-                JOIN favorites USING \
-                (wemail) INNER JOIN loveLanguages using (wemail) \
-                WHERE wemail = "{wemail}"')
+    curs.execute('''SELECT major, city, state, country, onCampus, 
+                favorites.itemType, favorites.name FROM userAccount INNER 
+                JOIN favorites USING 
+                (wemail) INNER JOIN loveLanguages using (wemail) 
+                WHERE wemail = %s''', [wemail])
     # curs.execute(f'SELECT major, city, state, country, onCampus, \
     #             favorites.itemType, favorites.name FROM userAccount INNER \
     #             JOIN MBResults using (MBCode) INNER JOIN favorites USING \
@@ -33,9 +33,9 @@ def matchScore(conn, wemail, wemail2):
         return 'No possible match here'
     firstPerson = firstInfo[0] # assumes firstInfo is a list of one dictionary
 
-    curs.execute(f'SELECT major, city, state, country, onCampus \
-                FROM userAccount INNER JOIN favorites USING (wemail) INNER JOIN loveLanguages \
-                using (wemail) WHERE wemail = "{wemail2}"')
+    curs.execute('''SELECT major, city, state, country, onCampus 
+                FROM userAccount INNER JOIN favorites USING (wemail) INNER JOIN loveLanguages 
+                using (wemail) WHERE wemail = %s''', [wemail2])
 
     # curs.execute(f'SELECT major, city, state, country, onCampus, personality \
     #             FROM userAccount INNER JOIN MBResults using (MBCode) \
