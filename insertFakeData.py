@@ -67,6 +67,12 @@ def insertDataToTables(conn,csvFile):
                 row[fieldsDict["language"]]])
             conn.commit()
 
+            #insert data into picfile
+            curs.execute('''insert into picfile(wemail,filename) 
+                values(%s, %s)''', [row[fieldsDict["wemail"]], row[fieldsDict["filename"]]])
+            conn.commit()
+
+
 
 if __name__ == '__main__':
     dbi.cache_cnf()
