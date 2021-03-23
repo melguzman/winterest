@@ -71,7 +71,7 @@
       <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">👀 More Information</button>
       {% if matchStatus %}
               <!-- not yet implemented -->
-      <form id="match-button-form" method=post action="">
+      <form id="match-button-form" method=post action="{{url_for('deleteMatch')}}">
         <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
       </form>
       {% else %}
