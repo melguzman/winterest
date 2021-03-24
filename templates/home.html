@@ -82,7 +82,7 @@
     </div>
 </section>
 <section id="current-matches">
-  <h1 class="section-header">Current Matches</h1>
+  <h1 class="section-header">Your Current Matches</h1>
   {% for match in currentMatches %}
   <a class="match-link" href="{{url_for('match', wemail=match.wemail)}}">
     <div class="match-containers">
@@ -97,7 +97,7 @@
   </a>
   {% endfor %}
 
-  {% if matches|length <= 4 %}
+  {% if currentMatches|length == 0 %}
   <div class="more-container">
     <div class="matches-info">
       <h3>much empty.</h3>
@@ -106,6 +106,30 @@
   </div>
   {% endif %}
 
+  <h1 class="section-header">People Who Matched You</h1>
+  {% for oneSDMatch in oneSidedMatches %}
+  <a class="match-link" href="{{url_for('match', wemail= oneSDMatch.wemail)}}">
+    <div class="match-containers">
+      <div class="circle-img">
+        <p>{{oneSDMatch.fname[0]}}{{oneSDMatch.lname[0]}}</p>
+      </div>
+      <div class="matches-info">
+        <h3>{{oneSDMatch.fname}}</h3>
+        <p class="match-subheader">Class of {{oneSDMatch.year}}</p>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+
+  {% if oneSidedMatches|length == 0 %}
+  <div class="more-container">
+    <div class="matches-info">
+      <h3>much empty.</h3>
+      <p class="match-subheader">No one new has clicked to match yet!</p>
+    </div>
+  </div>
+  {% endif %}
+  
 </section>
 </div>
 {% endblock %}

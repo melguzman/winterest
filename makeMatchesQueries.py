@@ -104,15 +104,66 @@ def unMatch(conn, wemail, wemail2):
         = %s and wemail2 = %s''', [wemail2, wemail])
     conn.commit()
 
-def getMatches(conn, wemail):
-    '''Returns the information of the people the user has matched with,
-    given the user's wemail'''
+# def getMatches(conn, wemail):
+#     '''Returns the information of the people the user has matched with,
+#     given the user's wemail'''
+#     curs = dbi.dict_cursor(conn)
+#     curs.execute('''SELECT b.wemail, b.fname, b.lname, b.year 
+#     FROM userAccount as a INNER JOIN matches_scored m ON (m.wemail 
+#     = a.wemail) INNER JOIN userAccount as b ON (m.wemail2 = b.wemail) 
+#     WHERE m.isMatched = "yes" and m.wemail = %s''', [wemail]) 
+#     return curs.fetchall()
+def getMatches(conn, userEmail): 
+    '''Gets all of the user's matches only under a two sided match'''
     curs = dbi.dict_cursor(conn)
-    curs.execute('''SELECT b.wemail, b.fname, b.lname, b.year 
-    FROM userAccount as a INNER JOIN matches_scored m ON (m.wemail 
-    = a.wemail) INNER JOIN userAccount as b ON (m.wemail2 = b.wemail) 
-    WHERE m.isMatched = "yes" and m.wemail = %s''', [wemail]) 
-    return curs.fetchall()
+    curs.execute('''SELECT wemail, fname, lname, year FROM userAccount 
+        WHERE wemail <> %s''', [userEmail])
+    people = curs.fetchall()
+    
+    twoSidedMatching = []
+    for person in people: 
+        userSideMatching = matchExists(conn, userEmail, person['wemail'])
+        personSideMatching = matchExists(conn, person['wemail'], userEmail)
+        if (len(userSideMatching) > 0) and (len(personSideMatching) > 0):
+            twoSidedMatching.append(person)
+    return twoSidedMatching
+
+def getOneSidedMatches(conn, userEmail): 
+    '''Returns the information of all the people that clicked match with 
+    the user but the user had not clicked matched with yet (one sided match)'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''select wemail, fname, lname, year from userAccount 
+        where wemail in (select wemail from matches_scored where 
+        wemail2 = %s and isMatched = 'yes')''', [userEmail])
+    possibleOneSided = curs.fetchall()
+    #print('possibleOneSided')
+    #print(possibleOneSided)
+    twoSidedMatches = getMatches(conn, userEmail) 
+    #print('twoSidedMatches')
+    #print(twoSidedMatches)
+    oneSidedMatches = []
+    
+    #print(len(twoSidedMatches))
+    #if there are two sided matches, check that oneSidedMatches does not exist in that set
+    if len(twoSidedMatches) > 0: 
+        for oneSDMatch in possibleOneSided: #maybe better way, but works well
+            for twoSDMatch in twoSidedMatches:
+                if oneSDMatch != twoSDMatch:
+                    oneSidedMatches.append(oneSDMatch) #extract and return only one sided matches
+    else: #no two sided matches
+        return possibleOneSided #could be 0 or more
+
+    return oneSidedMatches #could be 0 or more
+
+def setOneSDMatch(conn, wemail, wemail2): #one sided
+    '''Takes current user and their matched person's info and updates
+    only user's matched status; wemail is the current user,
+    wemail2 is the matched person'''
+    curs = dbi.dict_cursor(conn)
+        # update matching status for user's row
+    curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
+        = %s and wemail2 = %s''', [wemail, wemail2])
+    conn.commit()
 
 def matchExists(conn, wemail, wemail2):
     '''Checks if a match exists between two people'''
@@ -130,5 +181,7 @@ if __name__ == '__main__':
     #print(generatePotentialMatches(conn, 'aEstrada'))
     #print(generatePotentialInfo(conn, 'aEstrada'))
     #setMatched(conn, 'aEstrada', 'gPortill')
-    #print(matchExists(conn, 'aEstrada', 'gPortill'))
+    #setMatched(conn, 'aEstrada', 'eRamos')
+    #print(matchExists(conn, 'aEstrada', 'eRamos'))
+    #print(getMatches(conn, 'mguzman2'))
     #curs = dbi.dict_cursor(conn)

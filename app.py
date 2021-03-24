@@ -264,13 +264,16 @@ def home():
 
     # get a user's current matching
     currentMatches = matches.getMatches(conn, wemail)
+    # get a user's one sided matchings
+    oneSidedMatching = matches.getOneSidedMatches(conn, wemail) #addeddddddddddddddddddddddddddd
+    #print(oneSidedMatching)
     # get list of potential matches emails (list of dictionaries) 
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
     # grab potential user via index (one place they are in the carosel)
     potentialMatch = potentialMatches[index]  # this is a dictionary!
     # add a favorites key with a list of interests as its value for each user
     completedMatches = favoritesInformation(potentialMatch)
-    print("Completed matches: " + str(completedMatches))
+    #print("Completed matches: " + str(completedMatches))
     # get that user's info as a list with one dictionary in it
     matchEmail = potentialMatch['wemail']
     # get potential user's bio
@@ -284,8 +287,9 @@ def home():
     matchStatus = matches.matchExists(conn, wemail, matchEmail)
         
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
-        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio, currentUserInfo = currentUserInfo,
-        photo = photo, page_title="Home")
+        currentMatches = currentMatches, oneSidedMatches = oneSidedMatching, emojis = emojis, 
+        matchBio = matchBio, currentUserInfo = currentUserInfo,
+        photo = photo, page_title="Home") #adddedddddddddddddddddd
 
 @app.route('/makeMatch/', methods=['POST'])
 def makeMatch():
@@ -294,7 +298,18 @@ def makeMatch():
     conn = dbi.connect()
     userEmail = session.get('wemail')
     matchEmail = request.form.get('submit')
-    matches.setMatched(conn, userEmail, matchEmail)
+    #matches.setMatched(conn, userEmail, matchEmail)
+    #return redirect(url_for('home'))
+    
+    #check if one sided match already exists
+    #print("Does one sided exist?")
+    #print(matches.matchExists(conn, matchEmail, userEmail))
+    if matches.matchExists(conn, matchEmail, userEmail): #works perfect
+        #print("worked")
+        matches.setMatched(conn, userEmail, matchEmail) #updated both so two sided match
+    else:
+        matches.setOneSDMatch(conn, userEmail, matchEmail) #intially one sided
+
     return redirect(url_for('home'))
 
 @app.route('/deleteMatch/', methods=['POST'])
@@ -303,9 +318,8 @@ def deleteMatch():
     Gets rid of match pairing from the website'''
     conn = dbi.connect()
     userEmail = session.get('wemail')
-    print('user' + userEmail)
     matchEmail = request.form.get('submit')
-    print('elia' + matchEmail)
+    #design decision: if one side unmatches, completey unmatch
     matches.unMatch(conn, userEmail, matchEmail)
     return redirect(url_for('home'))
 
@@ -323,10 +337,15 @@ def match(wemail):
     completeInfo = favoritesInformation(info)
     bio = userInfo.getBio(conn, wemail)
     photo = userInfo.find_photo(conn, wemail)
+
+    #check if this person is a one sided match
+    oneSidedMatchStatus = (len(matches.matchExists(conn, wemail, userEmail)) > 0) \
+                        and (len(matches.matchExists(conn, userEmail, wemail)) == 0)
     
     return render_template('matches.html', person = completeInfo, 
-    emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo, 
-    photo = photo, page_title=completeInfo["fname"] + "'s Profile")
+        oneSDMatchStatus = oneSidedMatchStatus, emojis = emojis, personBio = bio, 
+        currentUserInfo = currentUserInfo, photo = photo, 
+        page_title=completeInfo["fname"] + "'s Profile") #addeddddddddddddd
 
 @app.route('/next/', methods=['POST'])
 def next():
