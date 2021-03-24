@@ -151,8 +151,10 @@ def getOneSidedMatches(conn, userEmail):
             for twoSDMatch in twoSidedMatches:
                 if oneSDMatch != twoSDMatch:
                     oneSidedMatches.append(oneSDMatch) #extract and return only one sided matches
+    else: #no two sided matches
+        return possibleOneSided #could be 0 or more
 
-    return possibleOneSided #could be 0 or more
+    return oneSidedMatches #could be 0 or more
 
 def setOneSDMatch(conn, wemail, wemail2): #one sided
     '''Takes current user and their matched person's info and updates

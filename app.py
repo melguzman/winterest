@@ -274,7 +274,7 @@ def home():
     potentialMatch = potentialMatches[index]  # this is a dictionary!
     # add a favorites key with a list of interests as its value for each user
     completedMatches = favoritesInformation(potentialMatch)
-    print("Completed matches: " + str(completedMatches))
+    #print("Completed matches: " + str(completedMatches))
     # get that user's info as a list with one dictionary in it
     matchEmail = potentialMatch['wemail']
     # get potential user's bio
@@ -300,12 +300,15 @@ def makeMatch():
     matchEmail = request.form.get('submit')
     #matches.setMatched(conn, userEmail, matchEmail)
     #check if one sided match already exists
-    if matches.matchExists(conn, matchEmail, userEmail):
+    #print("Does one sided exist?")
+    #print(matches.matchExists(conn, matchEmail, userEmail))
+    if matches.matchExists(conn, matchEmail, userEmail): #works perfect
+        #print("worked")
         matches.setMatched(conn, userEmail, matchEmail) #updated both so two sided match
     else:
         matches.setOneSDMatch(conn, userEmail, matchEmail) #intially one sided
 
-    return redirect(url_for('home'))  #render template?
+    return redirect(url_for('home'))  #render template? oneSidedMatchings not updated?
 
 @app.route('/deleteMatch/', methods=['POST'])
 def deleteMatch():
