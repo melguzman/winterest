@@ -4,15 +4,6 @@
 
 <body>
     <h1>Login</h1>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <div id="messages">
-    {% for msg in messages %}
-        <p>{{msg}}</p>
-    {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
     <div class="main-content">
         <div class="signup-container">
     <form method = 'POST' action="{{ url_for('login') }}">
