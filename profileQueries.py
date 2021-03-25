@@ -6,6 +6,20 @@ import cs304dbi as dbi
 
 '''**************** Queries for getting info ****************'''
 
+def find_meeting(conn, meetingID):
+    '''Returns the meeting info associated with a given meetingID'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('SELECT * FROM meeting WHERE meetingID = %s', 
+    [meetingID])
+    return curs.fetchone()
+
+def find_all_meetings(conn, wemail):
+    '''Returns all meetings associated with a given wemail'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('SELECT * FROM meeting WHERE wemail = %s or wemail2 = %s', 
+    [wemail, wemail])
+    return curs.fetchall()
+
 def find_profile(conn, wemail):
     '''Returns the info associated with a given wemail'''
     curs = dbi.dict_cursor(conn)
@@ -142,6 +156,23 @@ def delete_contact(conn, wemail):
     phone = find_phoneNum(conn, wemail)
     if len(phone) != 0:
         curs.execute('''DELETE FROM contact WHERE wemail = %s''', [wemail])
+    conn.commit()
+
+############ INSERT, DELETE Meetings
+def insert_meeting(conn, wemail, wemail2, what, type,
+            location, time, date, notes): #got rid of password and MBCode
+    '''Creates a meeting using info'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''INSERT INTO meeting (meetingID, wemail, wemail2, what, 
+        type, location, time, date, notes) VALUES (null, %s, %s, %s, %s, 
+        %s, %s, %s, %s)''', 
+        [wemail, wemail2, what, type, location, time, date, notes])
+    conn.commit()
+
+def delete_meeting(conn, meetingID):
+    '''Deletes a meeting given the meetingID'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''DELETE FROM meeting WHERE meetingID = %s''', [meetingID])
     conn.commit()
 
 if __name__ == '__main__':

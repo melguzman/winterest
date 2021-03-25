@@ -27,19 +27,25 @@
       {% endif %}
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
-        <p class="match-subheader">Class of {{person.year}}</p>
+        <p class="action-subheader">Class of {{person.year}}</p>
         <div class="active">
           <p class="profile-bio">
             {{personBio.bio}}
           </p>
+          <h2 class="match-section-titles">Favorites</h2>
           <div class="profile-interests" data-state="closed">
             {% for favorite in person.favorites %}
             <div class="interest-box">
               <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
-              <p>My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+              <p>&emsp;My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
             </div>
             {% endfor %}
           </div>
+        </div>
+        <h2 class="match-section-titles">Contact</h2>
+        <div id="icebreaker-buttons">
+          <button class="gray-button" id="insta-button" type="button" name="button">Instagram</button>
+          <button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button>
         </div>
       </div>
     </div>
@@ -58,79 +64,143 @@
 </section>
 
     <section id="match-actions">
+      <div class="upcoming-meetings">
+        <h2 class="action-title">Upcoming meetings</h2>
+        <div id="all-meetings">
+          {% if meetings %}
+            {% for meeting in meetings %}
+            <div class="meeting-container">
+              <div class="meeting-time">
+                <p>{{meeting.date}} @ 
+                  {% if meeting.type == "Remote" %}
+                  {{meeting.type}}
+                  {% else %}
+                  {{meeting.location}}
+                  {% endif %}
+                </p>
+                <p>{{meeting.time}}</p>
+              </div>
+              <h2 class="meeting-title">{{meeting.what}}</h2>
+              <div class="meeting-options">
+                {% if meeting.type == "Remote" %}
+                <a href="{{meeting.location}}">
+                  <button id="zoom-meeting" name="zoom-meeting" value="{{meeting.meetingID}}">Zoom Link</button>
+                </a>
+                {% endif %}
+                <form action="{{url_for('deleteMeeting')}}" method="post">
+                  <button id="delete-meeting" type="submit" name="deleteMeeting" value="{{meeting.meetingID}}">Delete</button>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div id="no-meeting" class="meeting-container">
+            <p>No meetings scheduled yet 😔</p>
+          </div>
+          {% endif %}
+        </div>
+    </div>
+
       <div class="icebreaker-action">
-        <h2 class="action-title">Random Icebreaker</h2>
-        <p id="icebreaker"></p>
-        <div id="icebreaker-buttons">
-          <button class="gray-button" id="ice-shuffle-button" type="button" name="button">🔀 Shuffle</button>
-          <button class="blue-button" id="copy-button" type="button" name="button">Copy</button>
+        <div class="action-title-container">
+          <h2 class="action-title">Random Icebreaker</h2>
+          <img id="icebreaker-arrow" class="minimize" src="{{url_for('static', filename = 'arrow.png')}}" alt="Minimize Arrow">
+        </div>
+        <div id="icebreaker-container">
+          <p class="action-subheader">Wanna break the ice? Copy a random icebreaker
+            and DM your match.
+          </p>
+          <p id="icebreaker"></p>
+          <div id="icebreaker-buttons">
+            <button class="gray-button" id="ice-shuffle-button" type="button" name="button">🔀 Shuffle</button>
+            <button class="blue-button" id="copy-button" type="button" name="button">Copy</button>
+          </div>
         </div>
       </div>
+
       <div id="schedule-meeting">
-        <h2 class="action-title">Schedule meeting</h2>
-        <form method="post" action="#">
-						<fieldset class="r-pill">
-							<legend>
-								What
-							</legend>
-
-							<span class="r-pill__item">
-								<input type="radio" id="coffee" name="radios_2" checked>
-								<label for="coffee">Coffee Chat</label>
-							</span>
-
-							<span class="r-pill__item">
-								<input type="radio" id="study" name="radios_2">
-								<label for="study">Study Session</label>
-							</span>
-
-							<span class="r-pill__item">
-								<input type="radio" id="hangout" name="radios_2">
-								<label for="hangout">General Hangout</label>
-							</span>
-
-							<span class="r-pill__item">
-								<input type="radio" id="game" name="radios_2">
-								<label for="game">Game Night</label>
-							</span>
-
-              <span class="r-pill__item">
-								<input type="radio" id="food" name="radios_2">
-								<label for="food">Grab some food</label>
-							</span>
-						</fieldset>
-
-            <fieldset class="r-pill">
-							<legend>
-								Where
-							</legend>
-
-							<span class="r-pill__item">
-								<input type="radio" id="remote" name="radios_3" checked>
-								<label for="remote">Remote</label>
-							</span>
-
-							<span class="r-pill__item">
-								<input type="radio" id="inperson" name="radios_3">
-								<label for="inperson">In-Person</label>
-							</span>
-            </fieldset>
-
-            <div class="textbox">
-              <label for="avail">When</label>
-              <input type="text" id="avail" name="avail" placeholder="I’m available from...">
-            </div>
-
-            <div id="notes-textbox" class="textbox">
-              <label for="notes">Notes</label>
-              <input type="text" id="notes" name="notes" placeholder="Excited to chat with you!">
-            </div>
-
-            <button class="blue-button" id="schedule-button" type="submit" value="Submit Form" name="button">Schedule</button>
-					</form>
-      </div>
-      <div class="upcoming-meetings">
-          <h2 class="action-title">Upcoming meetings</h2>
+        <div class="action-title-container">
+          <h2 class="action-title">Schedule meeting</h2>
+          <img id="schedule-arrow" class="minimize" src="{{url_for('static', filename = 'arrow.png')}}" alt="Minimize Arrow">
+        </div>
+        <div id="schedule-meeting-container">
+          <p class="action-subheader">Once you've figured out a good time that works for
+            the both of you, go ahead and schedule a meeting!
+          </p>
+          <form method="post" action="{{url_for('scheduleMeeting', wemail=person.wemail)}}">
+              <fieldset class="r-pill">
+                <legend>
+                  What
+                </legend>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="coffee" name="schedule-what" value="Coffee Chat" checked>
+                  <label for="coffee">Coffee Chat</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="study" name="schedule-what" value="Study Session">
+                  <label for="study">Study Session</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="hangout" name="schedule-what" value="General Hangout">
+                  <label for="hangout">General Hangout</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="game" name="schedule-what" value="Game Night">
+                  <label for="game">Game Night</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="food" name="schedule-what" value="Grab food">
+                  <label for="food">Grab some food</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="other" name="schedule-what" value="Other">
+                  <label for="other">Other</label>
+                </span>
+              </fieldset>
+  
+              <fieldset id="where-pills" class="r-pill">
+                <legend>
+                  Where
+                </legend>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="remote" name="schedule-where" value="Remote" checked>
+                  <label for="remote">Remote</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="inperson" name="schedule-where" value="In-Person">
+                  <label for="inperson">In-Person</label>
+                </span>
+              </fieldset>
+  
+              <div id="notes-textbox" class="textbox">
+                <label id="location-label" for="schedule-link">Location</label>
+                <p id="location-subheader" class="action-subheader">Paste a video call link if remote, or a location
+                  (like "The Lulu") for in-person meetings.
+                </p>
+                <input type="text" id="schedule-location" name="schedule-location" placeholder="Location" maxlength="30" required>
+              </div>
+  
+              <div class="textbox">
+                <label for="schedule-when">When</label>
+                <input type="datetime-local" id="schedule-when" name="schedule-when" required>
+              </div>
+  
+              <div id="notes-textbox" class="textbox">
+                <label for="notes">Notes</label>
+                <input type="text" id="notes" name="notes" maxlength="100" placeholder="Excited to chat with you!">
+              </div>
+  
+              <button class="blue-button" id="schedule-button" type="submit" value="Submit Form" name="button">Schedule</button>
+            </form>
+        </div>
       </div>
     </section>
 </div>
@@ -173,7 +243,7 @@ function getIceBreaker() {
 function copyToClipboard(element) {
     var $temp = $("<input>");
     $("body").append($temp);
-    $temp.val($(element).text()).select();
+    $temp.val("Icebreaker from WINTEREST: " + $(element).text()).select();
     document.execCommand("copy");
     $temp.remove();
     alert("Copied!");
@@ -188,6 +258,35 @@ $("#ice-shuffle-button").on('click', function(event) {
 $("#copy-button").on('click', function(event) {
   copyToClipboard("#icebreaker");
 });
+
+
+$icebreakarrow = $("#icebreaker-arrow")
+$schedulearrow = $("#schedule-arrow")
+
+$icebreakarrow.on('click', function(event) {
+  $container = $("#icebreaker-container")
+  if ($container.css("display") == 'none') {
+      $container.css("display", "block");
+      $icebreakarrow.css("transform", "rotate(90deg)");
+    }
+    else {
+      $container.css("display", "none");
+      $icebreakarrow.css("transform", "rotate(-90deg)");
+    }
+});
+
+$schedulearrow.on('click', function(event) {
+  $container = $("#schedule-meeting-container")
+  if ($container.css("display") == 'none') {
+      $container.css("display", "block");
+      $schedulearrow.css("transform", "rotate(90deg)");
+    }
+    else {
+      $container.css("display", "none");
+      $schedulearrow.css("transform", "rotate(-90deg)");
+    }
+});
+
 
 </script>
 {% endblock %}

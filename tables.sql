@@ -1,5 +1,6 @@
 use wellesleymatch_db;
 
+drop table if exists meeting;
 drop table if exists MBResults;
 drop table if exists userpass;
 drop table if exists picfile;
@@ -126,21 +127,6 @@ create table icebreaker (
 
 ENGINE = InnoDB;
 
-create table meeting (
-    wemail varchar(20) not null,
-    meetingID int not null primary key,
-    time date,
-    itemType varchar(30),
-    wemailMatch varchar(50),
-    location varchar(30),
-    INDEX (meetingID),
-    foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
-)
-
-ENGINE = InnoDB;
-
 create table matches_scored (
     wemail varchar(20), -- person who is logged in
     wemail2 char(8), -- wemail of second person, unmatched yet
@@ -165,13 +151,31 @@ create table picfile (
 ENGINE = InnoDB;
 
 create table userpass(
-       wemail char(20) not null,
-       hashed char(60),
+       wemail varchar(20) not null,
+       hashed varchar(60),
        unique(wemail),
        index(wemail),
        foreign key (wemail) references userAccount(wemail) 
         on delete cascade 
         on update cascade
+)
+
+ENGINE = InnoDB;
+
+create table meeting(
+       meetingID int not null AUTO_INCREMENT,
+       wemail varchar(20) not null,
+       wemail2 varchar(20) not null,
+       what varchar(20),
+       type enum("Remote", "In-Person"),
+       location varchar(30),
+       time varchar(20),
+       date varchar(30),
+       notes varchar(100),
+       INDEX (meetingID),
+       foreign key (wemail) references userAccount(wemail) 
+        on delete restrict 
+        on update restrict
 )
 
 ENGINE = InnoDB;

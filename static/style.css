@@ -51,12 +51,12 @@ nav a {
   flex-direction: row;
   justify-content: center;
   margin: auto;
-  padding: 25px 250px;
+  margin-top: 40px;
 }
 
 .match-section {
   width: 440px;
-  margin-right: 65px;
+  margin-right: 36px;
 }
 
 .section-header {
@@ -67,18 +67,39 @@ nav a {
   color: #1B3966;
 }
 
-.match-name {
+.match-name, .match-section-titles {
   font-weight: bold;
   font-size: 24px;
   line-height: 29px;
   margin: 0px;
 }
 
-.match-subheader {
+#insta-button, #facebook-button {
+  margin: 0px;
+}
+
+.match-section-titles {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.match-subheader, .action-subheader {
   font-size: 14px;
   line-height: 17px;
   color: #696969;
   margin: 0px;
+}
+
+.action-subheader {
+  margin-top: 4px;
+}
+
+#location-label {
+  margin-bottom: 4px;
+}
+
+#location-subheader {
+  margin-bottom: 8px;
 }
 
 .match-photo {
@@ -270,14 +291,14 @@ button {
 #match-actions > div {
   background: #FFFFFF;
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
+  border-radius: 14px;
   margin-bottom: 24px;
   padding: 20px;
 }
 
 #icebreaker {
-  margin-top: 6px;
-  margin-bottom: 16px;
+  margin: 16px 0px;
+  font-size: 16px;
 }
 
 #icebreaker-buttons {
@@ -311,6 +332,10 @@ https://github.com/scottaohara/a11y_styled_form_controls/blob/main/src/assets/cs
   margin-top: 12px;
 }
 
+#where-pills {
+  margin-top: 0px;
+}
+
 /* radio groups need a legend */
 .r-pill legend, #avail label {
   font-weight: 500;
@@ -319,6 +344,7 @@ https://github.com/scottaohara/a11y_styled_form_controls/blob/main/src/assets/cs
   color: #000000;
   margin-top: 6px;
   margin-bottom: 8px;
+  padding-inline-start: 0px;
 }
 
 /*
@@ -417,6 +443,7 @@ https://github.com/scottaohara/a11y_styled_form_controls/blob/main/src/assets/cs
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 8px;
+  margin-top: 8px;
   width: 100%;
 }
 
@@ -540,6 +567,10 @@ form {
   /* height: 100px; */
 }
 
+#schedule-when {
+  font-family: 'Inter';
+}
+
 textarea {
   margin-top: 12px;
   resize: none;
@@ -569,3 +600,108 @@ textarea {
   padding: 10px 14px 0px 0px;
   font-family: 'Inter';
 }
+
+.action-title-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.minimize {
+  transform: rotate(-90deg);
+  width: 12px;
+  height: 100%;
+  opacity: 30%;
+  margin-right: 4px;
+}
+
+/* Meeting Box CSS */
+#all-meetings {
+  margin-top: 12px;
+}
+
+.meeting-container {
+  padding: 10px;
+  background-color: #4377C6;
+  color: #FFF;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.meeting-container:last-child {
+  margin-bottom: 0px;
+}
+
+.meeting-time{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.meeting-time p {
+  margin: 0px;
+}
+
+.meeting-title {
+  font-weight: bold;
+  font-size: 16px;
+  color: #FFFFFF;
+  margin: 0px;
+  margin-bottom: 16px;
+}
+
+.location-pill, .cancel-pill {
+  background: #2B3640;
+  border-radius: 100px;
+  padding: 6px 18px;
+  width: fit-content;
+  margin-right: 8px;
+}
+
+.cancel-pill {
+  background: #FFFFFF;
+  color: #4377C6;
+}
+
+.location-pill p, .cancel-pill p{
+  font-weight: bold;
+  font-size: 13px;
+  text-align: center;
+  margin: 0px;
+}
+
+.meeting-options {
+  display: flex;
+  align-items: center;
+}
+
+#delete-meeting, #zoom-meeting {
+  font-size: 13px;
+  border-radius: 100px;
+  padding: 6px 18px;
+  width: fit-content;
+  margin-right: 8px;
+  color: #4377C6;
+  background: white;
+  box-shadow: 0px 2px 4px rgb(0 0 0 / 5%);
+}
+
+#zoom-meeting {
+  background: #2B3640;
+  color: white;
+}
+
+#no-meeting {
+  background: #F4F4F4;
+  color: #000;
+  text-align: center;
+}
+
+#schedule-meeting-container {
+  display: none;
+}
+
+#icebreaker-container {
+  display: none;
+}
+

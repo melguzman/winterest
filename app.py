@@ -3,6 +3,7 @@ from flask import (Flask, render_template, make_response, url_for, request,
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
+from datetime import datetime
 import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
@@ -13,6 +14,7 @@ import insertFakeData
 import random
 import bcrypt
 import sys
+import time
 
 app.secret_key = 'your secret here'
 # replace that with a random key
@@ -173,6 +175,16 @@ def interests():
         bio = request.form['bio']
 
         #insert interests
+        # curs.execute('''INSERT INTO favorites (wemail, name, itemType) 
+        #                 VALUES (%s, %s, %s),
+        #                 VALUES (%s, %s, %s),
+        #                 VALUES (%s, %s, %s)
+        #             ''', [email, book, 'book', email, album, 'song', email, color, 'color'])
+        # conn.commit()
+        # curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
+        # conn.commit()
+
+        #insert interests
         curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, book, 'book'])
         conn.commit()
         curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, album, 'song'])
@@ -326,6 +338,7 @@ def deleteMatch():
 @app.route('/matches/<wemail>', methods=['GET','POST'])
 def match(wemail):
     '''Redirects user to a page with matching interactions'''
+    session['currentMatchee'] = wemail
     userEmail = session.get('wemail')
     if not userEmail:
         flash('Session timed out. Log in again!')
@@ -341,10 +354,13 @@ def match(wemail):
     #check if this person is a one sided match
     oneSidedMatchStatus = (len(matches.matchExists(conn, wemail, userEmail)) > 0) \
                         and (len(matches.matchExists(conn, userEmail, wemail)) == 0)
+
+    # Add any upcoming meetings
+    meetings = profileQueries.find_all_meetings(conn, wemail)
     
     return render_template('matches.html', person = completeInfo, 
         oneSDMatchStatus = oneSidedMatchStatus, emojis = emojis, personBio = bio, 
-        currentUserInfo = currentUserInfo, photo = photo, 
+        currentUserInfo = currentUserInfo, photo = photo, meetings = meetings,
         page_title=completeInfo["fname"] + "'s Profile") #addeddddddddddddd
 
 @app.route('/next/', methods=['POST'])
@@ -385,6 +401,53 @@ def back():
         session['index'] = index - 1
     return redirect(url_for('home'))
 
+@app.route('/scheduleMeeting/<wemail>', methods=['POST'])
+def scheduleMeeting(wemail):
+    userEmail = session.get('wemail')
+    matchEmail = wemail
+    what = request.form['schedule-what']
+    where = request.form['schedule-where']
+    location = request.form['schedule-location']
+    when = request.form['schedule-when']
+    notes = request.form['notes']
+
+    dateAndTime = when.split('T')
+    strippedDate = dateAndTime[0]
+    strippedTime = dateAndTime[1]
+    dateObject = datetime.strptime(strippedDate, "%Y-%m-%d")
+    formatedDate = formatDate(dateObject)
+    formatedTime = timeConvert(strippedTime)
+
+    conn = dbi.connect()
+    curs = dbi.cursor(conn)
+
+    # Insert information info table
+    profileQueries.insert_meeting(conn, userEmail, matchEmail, what, where,
+            location, formatedTime, formatedDate, notes)
+
+    meetings = profileQueries.find_all_meetings(conn, wemail)
+
+    # Example outputs: study in-person Clapp 2021-03-29T18:40 hi
+    return redirect(url_for('match', wemail=wemail, meetings=meetings))
+
+@app.route('/deleteMeeting/', methods=['POST'])
+def deleteMeeting():
+    conn = dbi.connect()
+    current = session.get('currentMatchee')
+    meetingID = request.form['deleteMeeting']
+    print(meetingID, current)
+    profileQueries.delete_meeting(conn, meetingID)
+    return redirect(url_for('match', wemail=current))
+
+def timeConvert(inputTime):
+    newTime = datetime.strptime(inputTime,'%H:%M').strftime('%I:%M %p')
+    return newTime + " " + time.tzname[0]
+
+def formatDate(date):
+    dayOfWeek = date.strftime("%A")
+    month = date.strftime("%B")
+    day = date.strftime("%d")
+    return "{}, {} {}".format(dayOfWeek, month, day)
 
 @app.before_first_request
 def init_db():

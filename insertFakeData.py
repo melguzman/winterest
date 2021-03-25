@@ -80,4 +80,4 @@ if __name__ == '__main__':
     db_to_use = 'wellesleymatch_db' 
     dbi.use(db_to_use)
     conn = dbi.connect()
-    #insertDataToTables(conn,csvFile)
+    insertDataToTables(conn,csvFile)
