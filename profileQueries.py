@@ -66,10 +66,12 @@ def insert_profile(conn, wemail, fname, lname, country,
     '''Takes new user's initial inputs and adds them into the table'''
     # assumption: user MUST input all categories 
     curs = dbi.dict_cursor(conn)
-    lock = Lock()
-    lock.acquire()
+    #lock = Lock()
+    #lock.acquire()
+    curs.execute('''lock tables userAccount read''')
     curs.execute('''SELECT * FROM userAccount WHERE wemail = %s''', [wemail])
     checkUser = curs.fetchall()
+    curs.execute('''unlock tables''')
     # if account for this user doesn't already exist, we will add them to
     # the userAccounts table
     if len(checkUser) == 0: 
@@ -135,8 +137,10 @@ def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
     Note: users can only insert one row of their contact information''' 
 
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables contact read''')
     curs.execute('''SELECT * FROM contact WHERE wemail = %s''', [wemail])
     checkContact = curs.fetchall()
+    curs.execute('''unlock tables''')
     # if contact for this user doesn't already exist, we will add their info to
     # the contact table
     if len(checkContact) == 0: 
@@ -181,16 +185,20 @@ def insert_meeting(conn, wemail, wemail2, what, type,
             location, time, date, notes): #got rid of password and MBCode
     '''Creates a meeting using info'''
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables meeting write''')
     curs.execute('''INSERT INTO meeting (meetingID, wemail, wemail2, what, 
         type, location, time, date, notes) VALUES (null, %s, %s, %s, %s, 
         %s, %s, %s, %s)''', 
         [wemail, wemail2, what, type, location, time, date, notes])
+    curs.execute('''unlock tables''')
     conn.commit()
 
 def delete_meeting(conn, meetingID):
     '''Deletes a meeting given the meetingID'''
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables meeting write''')
     curs.execute('''DELETE FROM meeting WHERE meetingID = %s''', [meetingID])
+    curs.execute('''unlock tables''')
     conn.commit()
 
 if __name__ == '__main__':

@@ -82,10 +82,11 @@ def insert_professionalInterests(conn, wemail, industry, dreamJob):
 
     # assumption: user MUST have an input for ALL categories 
     curs = dbi.dict_cursor(conn)
-
+    curs.execute('''lock tables professionalInterests read''')
     curs.execute('''SELECT wemail FROM professionalInterests WHERE 
         wemail = %s''', [wemail])
     checkInt = curs.fetchall()
+    curs.execute('''unlock tables''')
     # if list of professional interests by said wemail doesn't exist,
     # we will insert a new row into the table for this person
     if len(checkInt) == 0: 

@@ -13,8 +13,10 @@ def insertScores(conn, wemail):
     created, without the user having to recallibrate their matches manually,
     works given the current user's wemail.'''
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables userAccount read''')
     curs.execute('SELECT wemail from userAccount') # gives every person in database
     allUsers = curs.fetchall() # assuming allUsers is a list of dicts
+    curs.execute('''unlock tables''')
 
     # loop through every user and insert into their database
     for user in allUsers:
@@ -40,8 +42,10 @@ def updateScores(conn, wemail):
     '''Only used if the current user updates their profile,
     works given the current user's wemail. '''
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables userAccount read''')
     curs.execute('SELECT wemail from userAccount') # gives every person in database
     allUsers = curs.fetchall() # assuming allUsers is a list of dicts
+    curs.execute('''unlock tables''')
 
     # loop through every user and update their score with current user
     for user in allUsers:
