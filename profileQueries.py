@@ -1,7 +1,7 @@
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
-from threading import Lock
+from threading import Lock # threading & locking
 app = Flask(__name__)
 import cs304dbi as dbi 
 
@@ -73,12 +73,14 @@ def insert_profile(conn, wemail, fname, lname, country,
     # if account for this user doesn't already exist, we will add them to
     # the userAccounts table
     if len(checkUser) == 0: 
+        curs.execute('''lock tables userAccount write''')
         curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, 
             state, city, major, year, onCampus) VALUES (%s, %s, %s, %s, 
             %s, %s, %s, %s, %s)''', 
             [wemail, fname, lname, country, state, city, major, year, onCampus])
+        curs.execute('''unlock tables''')
     conn.commit()
-    lock.release()
+    #lock.release()
 
 def update_profile(conn, wemail, fname, lname, country,
             state, city, major, year, onCampus): #got rid of password
@@ -86,8 +88,9 @@ def update_profile(conn, wemail, fname, lname, country,
     profile accordingly'''
 
     curs = dbi.dict_cursor(conn)
-    lock = Lock()
-    lock.acquire()
+    #lock = Lock()
+    #lock.acquire()
+    curs.execute('''lock tables userAccount write''')
     #curs.execute('''UPDATE userAccount SET password = %s 
          #WHERE wemail = %s''', [password, wemail]) 
     curs.execute('''UPDATE userAccount SET fname = %s 
@@ -108,16 +111,19 @@ def update_profile(conn, wemail, fname, lname, country,
         WHERE wemail = %s''', [year, wemail])
     curs.execute('''UPDATE userAccount SET onCampus = %s
         WHERE wemail = %s''', [onCampus, wemail])
+    curs.execute('''unlock tables''')
 
     conn.commit()
-    lock.release()
+    #lock.release()
 
 def delete_profile(conn, wemail):
     '''Deletes a user profile given their ID'''
     curs = dbi.dict_cursor(conn)
     user = find_profile(conn, wemail)
     if len(user) != 0:
+        curs.execute('''lock tables userAccount write''')
         curs.execute('''DELETE FROM userAccount WHERE wemail = %s''', [wemail])
+        curs.execute('''unlock tables''')
 
     conn.commit()
 
@@ -134,9 +140,11 @@ def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
     # if contact for this user doesn't already exist, we will add their info to
     # the contact table
     if len(checkContact) == 0: 
+        curs.execute('''lock tables contact write''')
         curs.execute('''INSERT INTO contact (wemail, phoneNumber, 
             handle, url, platform) VALUES (%s, %s, %s, %s, %s)''', 
             [wemail, phoneNumber, handle, url, platform])
+        curs.execute('''unlock tables''')
     conn.commit()
 
 def update_contact(conn, wemail, phoneNumber, handle, url, platform): 
@@ -145,6 +153,7 @@ def update_contact(conn, wemail, phoneNumber, handle, url, platform):
 
     curs = dbi.dict_cursor(conn)
 
+    curs.execute('''lock tables contact write''')
     curs.execute('''UPDATE contact SET phoneNumber = %s
         WHERE wemail = %s''', [phoneNumber, wemail])
     curs.execute('''UPDATE contact SET handle = %s
@@ -153,6 +162,7 @@ def update_contact(conn, wemail, phoneNumber, handle, url, platform):
         WHERE wemail = %s''', [url, wemail])
     curs.execute('''UPDATE contact SET platform = %s
         WHERE wemail = %s''', [platform, wemail])
+    curs.execute('''unlock tables''')
 
     conn.commit()
 
@@ -161,7 +171,9 @@ def delete_contact(conn, wemail):
     curs = dbi.dict_cursor(conn)
     phone = find_phoneNum(conn, wemail)
     if len(phone) != 0:
+        curs.execute('''lock tables contact write''')
         curs.execute('''DELETE FROM contact WHERE wemail = %s''', [wemail])
+        curs.execute('''unlock tables''')
     conn.commit()
 
 ############ INSERT, DELETE Meetings
@@ -188,10 +200,11 @@ if __name__ == '__main__':
     #print(find_profile(conn, 'aEstrada'))
     #print(find_dem(conn, 'aEstrada'))
     #print(find_phoneNum(conn, 'aEstrada'))
-    #insert_profile(conn, 'mTuzman', 'Melissa', 'Tuzman', 'USA',
+    #insert_profile(conn, 'mTuzman', 'Melisa', 'Tuzman', 'USA',
             #'CA', 'Bellflower', 'Data Science', 2020, 'no')
-    #update_profile(conn, 'mTuzman', 'Melissa', 'Tuzman', 'USA',
+    #update_profile(conn, 'mTuzman', 'Melisa', 'Tuzman', 'USA',
             #'CA', 'Los Angeles', 'Data Science', 2020, 'no')
+    #delete_profile(conn, 'mTuzman')
     #insert_contact(conn, 'mTuzman', 703, 'somehandle11', 'someurlq', 'facebook')
     #update_contact(conn, 'mTuzman', 703, 'somehandle11', 'someurlq', 'instagram')
     #delete_contact(conn, 'mTuzman')

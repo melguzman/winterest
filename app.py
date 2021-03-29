@@ -1,6 +1,7 @@
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
+from threading import Lock # threading & locking
 app = Flask(__name__)
 
 from datetime import datetime
@@ -117,9 +118,10 @@ def signup():
             # conn.commit()
 
             # insert user account
-            curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, major, year, onCampus) \
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''', [wemail, fname, lname, country, state, city, major, year, onCampus])
-            conn.commit()
+            profileQueries.insert_profile(conn, wemail, fname, lname, country, state, city, major, year, onCampus)
+            # curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, major, year, onCampus) \
+            # VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''', [wemail, fname, lname, country, state, city, major, year, onCampus])
+            # conn.commit()
 
             if passwd1 != passwd2:
                 flash('Passwords do not match. Try again.')
@@ -130,9 +132,11 @@ def signup():
             hashed_str = hashed.decode('utf-8')
             print(passwd1, type(passwd1), hashed, hashed_str)
             try:
+                curs.execute('''lock tables userpass write''')
                 curs.execute('''INSERT INTO userpass(wemail, hashed)
                             VALUES(%s, %s)''',
                             [wemail, hashed_str])
+                curs.execute('''unlock tables''')
                 conn.commit()
             
             except Exception as err:
@@ -185,14 +189,17 @@ def interests():
         # conn.commit()
 
         #insert interests
-        curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, book, 'book'])
-        conn.commit()
-        curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, album, 'song'])
-        conn.commit()
-        curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, color, 'color'])
-        conn.commit()
-        curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
-        conn.commit()
+        userInfo.insert_favorites(conn, email, book, 'book')
+        userInfo.insert_favorites(conn, email, album, 'song')
+        userInfo.insert_favorites(conn, email, color, 'color')
+        # curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, book, 'book'])
+        # conn.commit()
+        # curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, album, 'song'])
+        # conn.commit()
+        # curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, color, 'color'])
+        # conn.commit()
+        # curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
+        # conn.commit()
 
         try:
             print("Rendering files")
@@ -204,10 +211,12 @@ def interests():
             f.save(pathname)
             conn = dbi.connect()
             curs = dbi.dict_cursor(conn)
+            curs.execute('''lock tables picfile write''')
             curs.execute(
                 '''insert into picfile(wemail,filename) values (%s,%s)
                     on duplicate key update filename = %s''',
                 [email, filename, filename])
+            curs.execute('''unlock tables''')
             conn.commit()
             flash('Upload successful')
             return redirect(url_for('home'))

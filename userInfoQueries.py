@@ -89,9 +89,11 @@ def insert_professionalInterests(conn, wemail, industry, dreamJob):
     # if list of professional interests by said wemail doesn't exist,
     # we will insert a new row into the table for this person
     if len(checkInt) == 0: 
+        curs.execute('''lock tables professionalInterests write''')
         curs.execute('''INSERT INTO professionalInterests (wemail, 
             industry, dreamJob) VALUES (%s, %s, %s)''', 
             [wemail, industry, dreamJob])
+        curs.execute('''unlock tables''')
         conn.commit()
 
 def update_professionalInterests(conn, wemail, industry, dreamJob):
@@ -99,10 +101,12 @@ def update_professionalInterests(conn, wemail, industry, dreamJob):
     updates them.'''
 
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables professionalInterests write''')
     curs.execute('''UPDATE professionalInterests SET industry = %s
                 WHERE wemail = %s''', [industry, wemail]) 
     curs.execute('''UPDATE professionalInterests SET dreamJob = %s
         WHERE wemail = %s''', [dreamJob, wemail]) 
+    curs.execute('''unlock tables''')
     conn.commit()
 
 ############ INSERT, UPDATE Favorite and Genres
@@ -113,8 +117,10 @@ def insert_favorites(conn, wemail, name, itemType):
 
     # assumption: user MUST have a favorite of each genre listed 
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables favorites write''')
     curs.execute('''INSERT INTO favorites (wemail, name, itemType) 
         VALUES (%s, %s, %s)''', [wemail, name, itemType])
+    curs.execute('''unlock tables''')
     conn.commit()
 
 def update_favorites(conn, wemail, name, itemType):
@@ -124,10 +130,12 @@ def update_favorites(conn, wemail, name, itemType):
 
     # update favorite and genres info 
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables favorites write''')
     curs.execute('''UPDATE favorites SET name = %s
         WHERE itemType = %s and wemail = %s''', [name, itemType, wemail]) 
     curs.execute('''UPDATE favorites SET itemType = %s
         WHERE name = %s and wemail = %s''', [itemType, name, wemail]) 
+    curs.execute('''unlock tables''')
     conn.commit()
     
 
@@ -141,8 +149,10 @@ def insert_top3_LL(conn, wemail, language, langNum):
 
     # assumption: user MUST have 3 LLs
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables loveLanguages write''')
     curs.execute('''INSERT INTO loveLanguages (wemail, language, langNum) 
         VALUES (%s, %s, %s)''', [wemail, language, langNum])
+    curs.execute('''unlock tables''')
     conn.commit()
 
 def update_top3_lang(conn, wemail, language, langNum):
@@ -153,9 +163,11 @@ def update_top3_lang(conn, wemail, language, langNum):
 
     # update love languages info 
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables loveLanguages write''')
     curs.execute('''UPDATE loveLanguages SET language = %s
         WHERE wemail = %s and langNum = %s''', [language, wemail, langNum])
     curs.execute('''commit''')
+    curs.execute('''unlock tables''')
     conn.commit()
 
 
@@ -189,12 +201,12 @@ if __name__ == '__main__':
     #print(find_person_LLs(conn, 'gPortillo'))
     #print(find_MB_info(conn, 2)) #aEstrada
     #print(getBio(conn, 'mPap'))
-    #insert_professionalInterests(conn, 'cat', 'Government', 'International Affairs')
-    #update_professionalInterests(conn, 'cat', 'Education', 'Teacher')
-    #insert_favorites(conn, 'aEstrada', 'Malo', 'album')
-    #update_favorites(conn, 'aEstrada', 'Azteca', 'album')
-    #insert_top3_LL(conn, 'mPap', 'service', '2')
-    #update_top3_lang(conn, 'mPap', 'affirmation', '1')
+    #insert_professionalInterests(conn, 'mTuzman', 'Government', 'International Affairs')
+    #update_professionalInterests(conn, 'mTuzman', 'Education', 'Teacher')
+    #insert_favorites(conn, 'mTuzman', 'Malo', 'album')
+    #update_favorites(conn, 'mTuzman', 'Azteca', 'album')
+    #insert_top3_LL(conn, 'mTuzman', 'gift', '1')
+    #update_top3_lang(conn, 'mTuzman', 'affirmation', '1')
 
     #insert_Myers_Briggs_table(conn,'1')
     #insert_Myers_Briggs(conn, 'mTuzman', '1')

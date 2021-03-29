@@ -2,7 +2,7 @@ from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
-
+from threading import Lock # threading & locking
 import cs304dbi as dbi
 import userInfoQueries
 import scoreQueries
@@ -24,12 +24,14 @@ def insertScores(conn, wemail):
             score = scoreQueries.matchScore(conn, emailID, wemail)
 
             # insert current user wemail to emailID row
+            curs.execute('''lock tables matches_scored write''')
             curs.execute('''INSERT INTO matches_scored (wemail, wemail2, score, 
             isMatched) VALUES (%s, %s, %s, "no")''', [wemail, emailID, score])
 
             # insert emailID to current user wemail row
             curs.execute('''INSERT INTO matches_scored (wemail, wemail2, score, 
             isMatched) VALUES (%s, %s, %s, "no")''', [emailID, wemail, score])
+            curs.execute('''unlock tables''')
             
     conn.commit()
             
@@ -48,12 +50,14 @@ def updateScores(conn, wemail):
             score = scoreQueries.matchScore(conn, emailID, wemail)
 
             # update current user wemail to emailID row
+            curs.execute('''lock tables matches_scored write''')
             curs.execute('''UPDATE matches_scored SET score = %s WHERE wemail 
                  = %s and wemail2 = %s''', [score, wemail, emailID])
 
             # update emailID to current user wemail row
             curs.execute('''UPDATE matches_scored SET score = %s WHERE wemail 
                  = %s and wemail2 = %s''', [score, emailID, wemail])
+            curs.execute('''unlock tables''')
 
     conn.commit()
 
@@ -78,9 +82,10 @@ def generatePotentialInfo(conn, wemail):
 
 def setMatched(conn, wemail, wemail2):
     '''Takes current user and their matched person's info and updates
-    both of their matched status accordingly; wemail is the current user,
-    wemail2 is the matched person'''
+    both of their matched status accordingly (two sided matching); wemail 
+    is the current user, wemail2 is the matched person'''
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables matches_scored write''')
         # update matching status for user's row
     curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
         = %s and wemail2 = %s''', [wemail, wemail2])
@@ -88,6 +93,7 @@ def setMatched(conn, wemail, wemail2):
         # update matching status for matched person's row
     curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
         = %s and wemail2 = %s''', [wemail2, wemail])
+    curs.execute('''unlock tables''')
     conn.commit()
 
 def unMatch(conn, wemail, wemail2):
@@ -95,6 +101,7 @@ def unMatch(conn, wemail, wemail2):
     both of their matched status to NO; wemail is the current user,
     wemail2 is the matched person'''
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables matches_scored write''')
         # update matching status for user's row
     curs.execute('''UPDATE matches_scored SET isMatched = "no" WHERE wemail 
         = %s and wemail2 = %s''', [wemail, wemail2])
@@ -102,6 +109,7 @@ def unMatch(conn, wemail, wemail2):
         # update matching status for old matched person's row
     curs.execute('''UPDATE matches_scored SET isMatched = "no" WHERE wemail 
         = %s and wemail2 = %s''', [wemail2, wemail])
+    curs.execute('''unlock tables''')
     conn.commit()
 
 # def getMatches(conn, wemail):
@@ -161,8 +169,10 @@ def setOneSDMatch(conn, wemail, wemail2): #one sided
     wemail2 is the matched person'''
     curs = dbi.dict_cursor(conn)
         # update matching status for user's row
+    curs.execute('''lock tables matches_scored write''')
     curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
         = %s and wemail2 = %s''', [wemail, wemail2])
+    curs.execute('''unlock tables''')
     conn.commit()
 
 def matchExists(conn, wemail, wemail2):
@@ -181,7 +191,9 @@ if __name__ == '__main__':
     #print(generatePotentialMatches(conn, 'aEstrada'))
     #print(generatePotentialInfo(conn, 'aEstrada'))
     #setMatched(conn, 'aEstrada', 'gPortill')
+    #unMatch(conn, 'aEstrada', 'gPortill')
     #setMatched(conn, 'aEstrada', 'eRamos')
+    #setOneSDMatch(conn,  'aEstrada', 'gPortill')
     #print(matchExists(conn, 'aEstrada', 'eRamos'))
     #print(getMatches(conn, 'mguzman2'))
     #curs = dbi.dict_cursor(conn)
