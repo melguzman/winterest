@@ -168,7 +168,7 @@ create table meeting(
        wemail2 varchar(20) not null,
        what varchar(20),
        type enum("Remote", "In-Person"),
-       location varchar(30),
+       location varchar(100),
        time varchar(20),
        date varchar(30),
        notes varchar(100),
