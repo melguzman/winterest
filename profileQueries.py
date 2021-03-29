@@ -1,8 +1,12 @@
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
+from threading import Lock # threading & locking
+
 app = Flask(__name__)
 import cs304dbi as dbi 
+
+lock = Lock()
 
 '''**************** Queries for getting info ****************'''
 
@@ -56,6 +60,16 @@ def find_phoneNum(conn, wemail):
         return phoneNum
     return "No phone number input yet"
 
+def find_scores(conn, wemail):
+    '''Checks if the user has scores associated with them'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT score FROM matches_scored WHERE 
+        wemail = %s''', [wemail])
+    score = curs.fetchall()
+    if score or score == 0: # accounts for all scores
+        return score
+    return False
+
 '''**************** Queries for changing tables ****************'''
 
 ############ INSERT, UPDATE User Profile
@@ -65,15 +79,22 @@ def insert_profile(conn, wemail, fname, lname, country,
     '''Takes new user's initial inputs and adds them into the table'''
     # assumption: user MUST input all categories 
     curs = dbi.dict_cursor(conn)
+    lock.acquire() 
+    # start a lock here so that we can insert the correct selected value
+
     curs.execute('''SELECT * FROM userAccount WHERE wemail = %s''', [wemail])
     checkUser = curs.fetchall()
+    if len(checkUser) > 0:
+        lock.release() # this user already exists!
+        return False
     # if account for this user doesn't already exist, we will add them to
     # the userAccounts table
-    if len(checkUser) == 0: 
+    else: 
         curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, 
             state, city, major, year, onCampus) VALUES (%s, %s, %s, %s, 
             %s, %s, %s, %s, %s)''', 
             [wemail, fname, lname, country, state, city, major, year, onCampus])
+    lock.release()
     conn.commit()
 
 def update_profile(conn, wemail, fname, lname, country,
@@ -82,7 +103,7 @@ def update_profile(conn, wemail, fname, lname, country,
     profile accordingly'''
 
     curs = dbi.dict_cursor(conn)
-
+    lock.acquire() # update everything, make it thread safe
     #curs.execute('''UPDATE userAccount SET password = %s 
          #WHERE wemail = %s''', [password, wemail]) 
     curs.execute('''UPDATE userAccount SET fname = %s 
@@ -103,16 +124,17 @@ def update_profile(conn, wemail, fname, lname, country,
         WHERE wemail = %s''', [year, wemail])
     curs.execute('''UPDATE userAccount SET onCampus = %s
         WHERE wemail = %s''', [onCampus, wemail])
-
+    lock.release()
     conn.commit()
 
 def delete_profile(conn, wemail):
     '''Deletes a user profile given their ID'''
     curs = dbi.dict_cursor(conn)
+    lock.acquire() # don't delete the wrong thing
     user = find_profile(conn, wemail)
     if len(user) != 0:
         curs.execute('''DELETE FROM userAccount WHERE wemail = %s''', [wemail])
-
+    lock.release()
     conn.commit()
 
 ############ INSERT, UPDATE User Profile
@@ -123,6 +145,7 @@ def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
     Note: users can only insert one row of their contact information''' 
 
     curs = dbi.dict_cursor(conn)
+    lock.acquire() # insert contact in while the table stays constant
     curs.execute('''SELECT * FROM contact WHERE wemail = %s''', [wemail])
     checkContact = curs.fetchall()
     # if contact for this user doesn't already exist, we will add their info to
@@ -131,6 +154,7 @@ def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
         curs.execute('''INSERT INTO contact (wemail, phoneNumber, 
             handle, url, platform) VALUES (%s, %s, %s, %s, %s)''', 
             [wemail, phoneNumber, handle, url, platform])
+    lock.release()
     conn.commit()
 
 def update_contact(conn, wemail, phoneNumber, handle, url, platform): 
@@ -138,7 +162,7 @@ def update_contact(conn, wemail, phoneNumber, handle, url, platform):
     profile accordingly'''
 
     curs = dbi.dict_cursor(conn)
-
+    lock.acquire() # keep things constant for updates
     curs.execute('''UPDATE contact SET phoneNumber = %s
         WHERE wemail = %s''', [phoneNumber, wemail])
     curs.execute('''UPDATE contact SET handle = %s
@@ -147,15 +171,17 @@ def update_contact(conn, wemail, phoneNumber, handle, url, platform):
         WHERE wemail = %s''', [url, wemail])
     curs.execute('''UPDATE contact SET platform = %s
         WHERE wemail = %s''', [platform, wemail])
-
+    lock.release()
     conn.commit()
 
 def delete_contact(conn, wemail):
     '''Deletes a user's contact information given their wemail'''
     curs = dbi.dict_cursor(conn)
+    lock.acquire() # delete the correct contact
     phone = find_phoneNum(conn, wemail)
     if len(phone) != 0:
         curs.execute('''DELETE FROM contact WHERE wemail = %s''', [wemail])
+    lock.release()
     conn.commit()
 
 ############ INSERT, DELETE Meetings
@@ -163,16 +189,23 @@ def insert_meeting(conn, wemail, wemail2, what, type,
             location, time, date, notes): #got rid of password and MBCode
     '''Creates a meeting using info'''
     curs = dbi.dict_cursor(conn)
+    lock.acquire() # insert meeting while keeping all else constant
     curs.execute('''INSERT INTO meeting (meetingID, wemail, wemail2, what, 
         type, location, time, date, notes) VALUES (null, %s, %s, %s, %s, 
         %s, %s, %s, %s)''', 
         [wemail, wemail2, what, type, location, time, date, notes])
+    lock.release()
     conn.commit()
 
 def delete_meeting(conn, meetingID):
     '''Deletes a meeting given the meetingID'''
     curs = dbi.dict_cursor(conn)
+    lock.acquire() # lock process to get rid of the meeting
+    if len(find_meeting(conn, meetingID)) == 0:
+        lock.release()
+        return False
     curs.execute('''DELETE FROM meeting WHERE meetingID = %s''', [meetingID])
+    lock.release()
     conn.commit()
 
 if __name__ == '__main__':
