@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
 from datetime import datetime
+from threading import Lock # threading & locking
 import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
@@ -15,9 +16,9 @@ import random
 import bcrypt
 import sys
 import time
-from threading import Lock # threading & locking
 
 
+lock = Lock()
 app.secret_key = 'your secret here'
 # replace that with a random key
 app.secret_key = ''.join([ random.choice(('ABCDEFGHIJKLMNOPQRSTUVXYZ' +
