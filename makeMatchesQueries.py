@@ -52,6 +52,8 @@ def updateScores(conn, wemail):
     '''Only used if the current user updates their profile,
     works given the current user's wemail. '''
     curs = dbi.dict_cursor(conn)
+    lock.acquire() # starts the update process, prohibits users from overlapping
+    # locking here allows us to make sure everyone is updated each time properly
     curs.execute('SELECT wemail from userAccount') # gives every person in database
     allUsers = curs.fetchall() # assuming allUsers is a list of dicts
 
@@ -96,12 +98,15 @@ def setMatched(conn, wemail, wemail2):
     wemail2 is the matched person'''
     curs = dbi.dict_cursor(conn)
         # update matching status for user's row
+    lock.acquire() # no overlap between match requests; 
+    # otherwise incorrect matches may occur
     curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
         = %s and wemail2 = %s''', [wemail, wemail2])
 
         # update matching status for matched person's row
     curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
         = %s and wemail2 = %s''', [wemail2, wemail])
+    lock.release()
     conn.commit()
 
 def unMatch(conn, wemail, wemail2):
@@ -109,6 +114,7 @@ def unMatch(conn, wemail, wemail2):
     both of their matched status to NO; wemail is the current user,
     wemail2 is the matched person'''
     curs = dbi.dict_cursor(conn)
+    lock.acquire() # set a lock so incorrect people aren't unmatched
         # update matching status for user's row
     curs.execute('''UPDATE matches_scored SET isMatched = "no" WHERE wemail 
         = %s and wemail2 = %s''', [wemail, wemail2])
@@ -116,6 +122,7 @@ def unMatch(conn, wemail, wemail2):
         # update matching status for old matched person's row
     curs.execute('''UPDATE matches_scored SET isMatched = "no" WHERE wemail 
         = %s and wemail2 = %s''', [wemail2, wemail])
+    lock.release()
     conn.commit()
 
 # def getMatches(conn, wemail):
@@ -134,30 +141,28 @@ def getMatches(conn, userEmail):
         WHERE wemail <> %s''', [userEmail])
     people = curs.fetchall()
     
+    lock.acquire() # make sure incoming requests don't mess up the loop
     twoSidedMatching = []
     for person in people: 
         userSideMatching = matchExists(conn, userEmail, person['wemail'])
         personSideMatching = matchExists(conn, person['wemail'], userEmail)
         if (len(userSideMatching) > 0) and (len(personSideMatching) > 0):
             twoSidedMatching.append(person)
+    lock.release()
     return twoSidedMatching
 
 def getOneSidedMatches(conn, userEmail): 
     '''Returns the information of all the people that clicked match with 
     the user but the user had not clicked matched with yet (one sided match)'''
     curs = dbi.dict_cursor(conn)
+    lock.acquire() # make sure values locked in from "before" world 
     curs.execute('''select wemail, fname, lname, year from userAccount 
         where wemail in (select wemail from matches_scored where 
         wemail2 = %s and isMatched = 'yes')''', [userEmail])
     possibleOneSided = curs.fetchall()
-    #print('possibleOneSided')
-    #print(possibleOneSided)
     twoSidedMatches = getMatches(conn, userEmail) 
-    #print('twoSidedMatches')
-    #print(twoSidedMatches)
     oneSidedMatches = []
     
-    #print(len(twoSidedMatches))
     #if there are two sided matches, check that oneSidedMatches does not exist in that set
     if len(twoSidedMatches) > 0: 
         for oneSDMatch in possibleOneSided: #maybe better way, but works well
@@ -165,8 +170,9 @@ def getOneSidedMatches(conn, userEmail):
                 if oneSDMatch != twoSDMatch:
                     oneSidedMatches.append(oneSDMatch) #extract and return only one sided matches
     else: #no two sided matches
+        lock.release()
         return possibleOneSided #could be 0 or more
-
+    lock.release()
     return oneSidedMatches #could be 0 or more
 
 def setOneSDMatch(conn, wemail, wemail2): #one sided
@@ -175,8 +181,10 @@ def setOneSDMatch(conn, wemail, wemail2): #one sided
     wemail2 is the matched person'''
     curs = dbi.dict_cursor(conn)
         # update matching status for user's row
+    lock.acquire() # careful not to set for the wrong incoming requests
     curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
         = %s and wemail2 = %s''', [wemail, wemail2])
+    lock.release()
     conn.commit()
 
 def matchExists(conn, wemail, wemail2):

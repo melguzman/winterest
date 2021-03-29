@@ -1,6 +1,7 @@
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
+from threading import Lock # threading & locking
 app = Flask(__name__)
 
 import cs304dbi as dbi
@@ -68,6 +69,8 @@ def getBio(conn, userEmail):
     curs.execute('''SELECT bio FROM bio WHERE wemail = %s''', [userEmail]) 
     return curs.fetchone()
 
+
+
 '''**************** Queries for changing tables ****************'''
 
 ############ INSERT, UPDATE Professional Interests
@@ -79,6 +82,7 @@ def insert_professionalInterests(conn, wemail, industry, dreamJob):
 
     # assumption: user MUST have an input for ALL categories 
     curs = dbi.dict_cursor(conn)
+
     curs.execute('''SELECT wemail FROM professionalInterests WHERE 
         wemail = %s''', [wemail])
     checkInt = curs.fetchall()
@@ -149,7 +153,6 @@ def update_top3_lang(conn, wemail, language, langNum):
 
     # update love languages info 
     curs = dbi.dict_cursor(conn)
-    curs.execute('''start transaction''')
     curs.execute('''UPDATE loveLanguages SET language = %s
         WHERE wemail = %s and langNum = %s''', [language, wemail, langNum])
     curs.execute('''commit''')
