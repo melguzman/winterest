@@ -130,7 +130,7 @@ ENGINE = InnoDB;
 create table matches_scored (
     wemail varchar(20), -- person who is logged in
     wemail2 char(8), -- wemail of second person, unmatched yet
-    score int not null,
+    score int,
     isMatched char(3), -- value of yes/no depending on if this pair is matched or not
     INDEX (wemail),
     foreign key (wemail) references userAccount(wemail)

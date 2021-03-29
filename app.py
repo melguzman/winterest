@@ -15,6 +15,8 @@ import random
 import bcrypt
 import sys
 import time
+from threading import Lock # threading & locking
+
 
 app.secret_key = 'your secret here'
 # replace that with a random key

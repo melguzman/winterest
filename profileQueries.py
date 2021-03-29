@@ -1,8 +1,11 @@
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
+from threading import Lock # threading & locking
+
 app = Flask(__name__)
 import cs304dbi as dbi 
+
 
 '''**************** Queries for getting info ****************'''
 
@@ -56,6 +59,16 @@ def find_phoneNum(conn, wemail):
         return phoneNum
     return "No phone number input yet"
 
+def find_scores(conn, wemail):
+    '''Checks if the user has scores associated with them'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT score FROM matches_scored WHERE 
+        wemail = %s''', [wemail])
+    score = curs.fetchall()
+    if score or score == 0: # accounts for all scores
+        return score
+    return False
+
 '''**************** Queries for changing tables ****************'''
 
 ############ INSERT, UPDATE User Profile
@@ -65,6 +78,7 @@ def insert_profile(conn, wemail, fname, lname, country,
     '''Takes new user's initial inputs and adds them into the table'''
     # assumption: user MUST input all categories 
     curs = dbi.dict_cursor(conn)
+    
     curs.execute('''SELECT * FROM userAccount WHERE wemail = %s''', [wemail])
     checkUser = curs.fetchall()
     # if account for this user doesn't already exist, we will add them to

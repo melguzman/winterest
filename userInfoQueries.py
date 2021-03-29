@@ -149,9 +149,10 @@ def update_top3_lang(conn, wemail, language, langNum):
 
     # update love languages info 
     curs = dbi.dict_cursor(conn)
-
+    curs.execute('''start transaction''')
     curs.execute('''UPDATE loveLanguages SET language = %s
-        WHERE wemail = %s and langNum = %s''', [language, wemail, langNum]) 
+        WHERE wemail = %s and langNum = %s''', [language, wemail, langNum])
+    curs.execute('''commit''')
     conn.commit()
 
 

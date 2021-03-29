@@ -1,11 +1,18 @@
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
+from threading import Lock # threading & locking
+
 app = Flask(__name__)
 
 import cs304dbi as dbi
 import userInfoQueries
 import scoreQueries
+import userInfoQueries
+import profileQueries
+
+'''Global Variables'''
+lock = Lock()
 
 def insertScores(conn, wemail):
     '''Inserts initial match scores into every person in the databases's 
@@ -13,6 +20,13 @@ def insertScores(conn, wemail):
     created, without the user having to recallibrate their matches manually,
     works given the current user's wemail.'''
     curs = dbi.dict_cursor(conn)
+    lock.acquire() # lock the system as we insert the user's scores
+    if profileQueries.find_scores(conn, wemail):
+        # in the case the user is already in the db and has scores, we do not need
+        # to do this
+        lock.release()
+        return False
+
     curs.execute('SELECT wemail from userAccount') # gives every person in database
     allUsers = curs.fetchall() # assuming allUsers is a list of dicts
 
@@ -30,9 +44,9 @@ def insertScores(conn, wemail):
             # insert emailID to current user wemail row
             curs.execute('''INSERT INTO matches_scored (wemail, wemail2, score, 
             isMatched) VALUES (%s, %s, %s, "no")''', [emailID, wemail, score])
-            
+    lock.release()
     conn.commit()
-            
+    return "User's initial scores have been added to the database"
 
 def updateScores(conn, wemail):
     '''Only used if the current user updates their profile,
