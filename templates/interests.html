@@ -30,13 +30,13 @@
           <p class="match-subheader">Introduce yourself! Let your personality or other
                 interests shine. <i>(Limit 200 characters)</i>
           </p>
-          <textarea type ="text" id="bio" name="bio" rows="3" cols="50" maxlength="200" placeholder="Tell us about yourself!"  required></textarea>
+          <textarea id="bio" name="bio" rows="3" cols="50" maxlength="200" placeholder="Tell us about yourself!"  required></textarea>
         </div>
 
         <div class = "textbox signup-textbox">
           <label for="pic">Picture</label>
           <p class="match-subheader"><i>File must be under 1MB</i></p>
-          <input id="pic-form" type="file" name="pic">
+          <input id="pic" type="file" name="pic">
         </div>
         <br>
 
@@ -45,7 +45,7 @@
         <div class="socials-flex">
           <div class = "textbox signup-textbox">
             <label for="contact-type1">Contact #1</label>
-            <select id="contact-type1" name="contact-type1" class="social-form" required>
+            <select id="contact-type1" name="contact-type1" class="social-form">
               <option value="Instagram">Instagram</option>
               <option value="Facebook">Facebook</option>
               <option value="Text">Text</option>
@@ -66,7 +66,7 @@
         <div class="socials-flex">
           <div class = "textbox signup-textbox">
             <label for="contact-type2">Contact #2</label>
-            <select name="contact-type2" class="social-form">
+            <select id="contact-type2" name="contact-type2" class="social-form">
               <option value="Facebook">Facebook</option>
               <option value="Instagram">Instagram</option>
               <option value="Text">Text</option>

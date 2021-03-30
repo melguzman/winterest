@@ -13,7 +13,6 @@
         <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
       </form>
     </div>
-    </a>
   </nav>
 {% endblock %}
 
@@ -22,12 +21,12 @@
 <section class="match-section">
   <h1 class="section-header">Find Friends</h1>
   <div class="match-photo">
-    <div class="one-match active" value="{{person.wemail}}">
+    <div class="one-match active">
       <!-- Will update once we learn about file upload -->
       {% if photo %}
-      <img id="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
       {% else %}
-      <img id="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
       {% endif %}
       <!-- <img id="match-image" src="{{url_for('static', filename = 'person.jpg')}}" alt=""> -->
       <div class="match-header">
@@ -66,7 +65,7 @@
             {% else %}
               <div class="interest-box">
                 <div class="interest-emoji">❓</div>
-                <p>Ask me for my interests!</strong></p>
+                <p>Ask me for my interests!</p>
               </div>
             {% endif %}
           </div>
@@ -90,16 +89,17 @@
     <div class="match-buttons">
       <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">👀 More Information</button>
       {% if matchStatus %}
-      <form id="match-button-form" method=post action="{{url_for('deleteMatch', location='home')}}">
-        <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
+      <form class="match-button-form" method=post action="{{url_for('deleteMatch')}}">
+        <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
       </form>
       {% else %}
-        <form id="match-button-form" method=post action="{{url_for('makeMatch', location='home')}}">
-          <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💖 Match</button>
+        <form class="match-button-form" method=post action="{{url_for('makeMatch', location='home')}}">
+          <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">💖 Match</button>
         </form>
       {% endif %}
       <button class="gray-button" id="shuffle-button" type="submit" name="submit" value="shuffle">🔀 Shuffle</button>
     </div>
+  </div>
 </section>
 <section id="current-matches">
   <h1 class="section-header">Your Current Matches</h1>
@@ -172,18 +172,18 @@
     }
 });
 
-  /* Toggles between match and unmatch */
-  $matchButton = $("#match-button");
-  $matchButton.on("click", function(event) {
-      value = $matchButton.attr('value');
-      if (value == 'match') {
-        // Do some match thingy
-        $button.text("💔 Unmatch");
-      }
-      else {
-        $button.text("❤️ Match");
-      }
-    });
+  // /* Toggles between match and unmatch */
+  // $matchButton = $("#match-button");
+  // $matchButton.on("click", function(event) {
+  //     value = $matchButton.attr('value');
+  //     if (value == 'match') {
+  //       // Do some match thingy
+  //       $button.text("💔 Unmatch");
+  //     }
+  //     else {
+  //       $button.text("❤️ Match");
+  //     }
+  //   });
     
     // carosel = 0;
     // matchSlides = $(".one-match")

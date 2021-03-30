@@ -13,7 +13,6 @@
         <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
       </form>
     </div>
-    </a>
   </nav>
 {% endblock %}
 
@@ -21,11 +20,11 @@
 <div class="main-content">
 <section class="match-section">
   <div class="match-photo">
-    <div class="one-match active" value="{{person.wemail}}">
+    <div class="one-match active">
       {% if photo %}
-      <img id="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
       {% else %}
-      <img id="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
       {% endif %}
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
@@ -69,24 +68,24 @@
           <div id="contact-buttons">
             {% for contact in contacts %}
               {% if contact.platform == 'text' %}
-                <button class="phone-box" id="phone-button" type="button" name="button">{{contact.phoneNumber}}</button>
+                <button class="phone-box" id="phone-button1" type="button" name="button">{{contact.phoneNumber}}</button>
               {% else %}
                 {% if contact.platform == 'instagram'%}
-                  <a href='{{contact.url}}' target='_blank'><button class="gray-button" id="insta-button" type="button" name="button">Instagram</button></a>
+                  <a href='{{contact.url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
                 {% else %}
-                  <a href="{{contact.url}}" target='_blank'><button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button></a>
+                  <a href="{{contact.url}}" target='_blank'><button class="blue-butto facebook-button" type="button" name="button">Facebook</button></a>
                 {% endif %}
               {% endif %}
             {% endfor %}
           </div>
           {% else %}
             {% if contacts[0].platform == 'text' %}
-              <button class="phone-box" id="phone-button" type="button" name="button">{{contacts[0].phoneNumber}}</button>
+              <button class="phone-box" id="phone-button2" type="button" name="button">{{contacts[0].phoneNumber}}</button>
             {% else %}
               {% if contacts[0].platform == 'instagram' %}
-                <a href='{{contacts[0].url}}' target='_blank'><button class="gray-button" id="insta-button" type="button" name="button">Instagram</button></a>
+                <a href='{{contacts[0].url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
               {% else %}
-                <a href="{{contacts[0].url}}" target='_blank'><button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button></a>
+                <a href="{{contacts[0].url}}" target='_blank'><button class="blue-button facebook-button" type="button" name="button">Facebook</button></a>
               {% endif %}
             {% endif %}
           {% endif %}
@@ -96,12 +95,12 @@
   <div class="match-buttons">
     <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">👀 More Information</button>
     {% if oneSDMatchStatus %} <!-- a one sided matching -->
-      <form id="match-button-form" method=post action="{{url_for('makeMatch', location='matches')}}">
-        <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💖 Match</button>
+      <form class="match-button-form" method=post action="{{url_for('makeMatch', location='matches')}}">
+        <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">💖 Match</button>
       </form>
     {% else %} <!-- a two sided matching -->
-      <form id="match-button-form" method=post action="{{url_for('deleteMatch', location='matches')}}">
-        <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
+      <form class="match-button-form" method=post action="{{url_for('deleteMatch')}}">
+        <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
       </form>
     {% endif %}
   </div>
@@ -224,8 +223,8 @@
                 </span>
               </fieldset>
   
-              <div id="notes-textbox" class="textbox">
-                <label id="location-label" for="schedule-link">Location</label>
+              <div class="textbox notes-textbox">
+                <label id="location-label" for="schedule-location">Location</label>
                 <p id="location-subheader" class="action-subheader">Paste a video call link if remote, or a location
                   (like "The Lulu") for in-person meetings.
                 </p>
@@ -238,7 +237,7 @@
                 <input type="datetime-local" id="schedule-when" name="schedule-when" required>
               </div>
   
-              <div id="notes-textbox" class="textbox">
+              <div class="textbox notes-textbox">
                 <label for="notes">Notes</label>
                 <input type="text" id="notes" name="notes" maxlength="100" placeholder="Excited to chat with you!">
               </div>

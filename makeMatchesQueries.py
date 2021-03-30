@@ -158,10 +158,9 @@ def getOneSidedMatches(conn, userEmail):
     #print(len(twoSidedMatches))
     #if there are two sided matches, check that oneSidedMatches does not exist in that set
     if len(twoSidedMatches) > 0: 
-        for oneSDMatch in possibleOneSided: #maybe better way, but works well
-            for twoSDMatch in twoSidedMatches:
-                if oneSDMatch != twoSDMatch:
-                    oneSidedMatches.append(oneSDMatch) #extract and return only one sided matches
+        for oneSDMatch in possibleOneSided:
+            if oneSDMatch not in twoSidedMatches:
+                oneSidedMatches.append(oneSDMatch)
     else: #no two sided matches
         return possibleOneSided #could be 0 or more
 

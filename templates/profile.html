@@ -13,7 +13,6 @@
         <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
       </form>
     </div>
-    </a>
   </nav>
 {% endblock %}
 
@@ -21,11 +20,11 @@
 <div class="main-content">
 <section class="match-section">
   <div class="match-photo">
-    <div class="one-match active" value="{{person.wemail}}">
+    <div class="one-match active">
       {% if photo %}
-      <img id="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
       {% else %}
-      <img id="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
       {% endif %}
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
@@ -69,24 +68,24 @@
           <div id="contact-buttons">
             {% for contact in contacts %}
               {% if contact.platform == 'text' %}
-                <button class="phone-box" id="phone-button" type="button" name="button">{{contact.phoneNumber}}</button>
+                <button class="phone-box" id="phone-button1" type="button" name="button">{{contact.phoneNumber}}</button>
               {% else %}
                 {% if contact.platform == 'instagram'%}
-                  <a href='{{contact.url}}' target='_blank'><button class="gray-button" id="insta-button" type="button" name="button">Instagram</button></a>
+                  <a href='{{contact.url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
                 {% else %}
-                  <a href="{{contact.url}}" target='_blank'><button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button></a>
+                  <a href="{{contact.url}}" target='_blank'><button class="blue-button facebook-button" type="button" name="button">Facebook</button></a>
                 {% endif %}
               {% endif %}
             {% endfor %}
           </div>
           {% else %}
             {% if contacts[0].platform == 'text' %}
-              <button class="phone-box" id="phone-button" type="button" name="button">{{contacts[0].phoneNumber}}</button>
+              <button class="phone-box" id="phone-button2" type="button" name="button">{{contacts[0].phoneNumber}}</button>
             {% else %}
               {% if contacts[0].platform == 'instagram' %}
-                <a href='{{contacts[0].url}}' target='_blank'><button class="gray-button" id="insta-button" type="button" name="button">Instagram</button></a>
+                <a href='{{contacts[0].url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
               {% else %}
-                <a href="{{contacts[0].url}}" target='_blank'><button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button></a>
+                <a href="{{contacts[0].url}}" target='_blank'><button class="blue-button facebook-button" type="button" name="button">Facebook</button></a>
               {% endif %}
             {% endif %}
           {% endif %}

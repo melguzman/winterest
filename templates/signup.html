@@ -8,7 +8,7 @@
       
       <form method='POST' action="{{ url_for('signup') }}">
         <div id="wellesley-email-box" class="textbox signup-textbox">
-          <label for="wemail">Wellesley Email</label>
+          <label for="email">Wellesley Email</label>
           <p class="match-subheader">Please omit (@wellesley.edu)</p>
           <input type="text" id="email" name="email" placeholder="Wellesley User" required>
         </div>
@@ -42,12 +42,12 @@
 
         <div class="textbox signup-textbox">
           <label for="password1">Password</label>
-          <input type="password" placeholder="Enter Password" name="password1" required>
+          <input id="password1" type="password" placeholder="Enter Password" name="password1" required>
         </div>
 
         <div class="textbox signup-textbox">
           <label for="password2">Confirm Password</label>
-          <input type="password" placeholder="Confirm Password" name="password2" required>
+          <input id="password2" type="password" placeholder="Confirm Password" name="password2" required>
         </div>
 
         <br>
