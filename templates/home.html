@@ -4,9 +4,11 @@
   <nav>
     <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
     <div id="profile-logout-container">
-      <div id="user-circle" class="circle-img">
-        <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
-      </div>
+      <a href="{{url_for('profile')}}">
+        <div id="user-circle" class="circle-img">
+          <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
+        </div>
+      </a>
       <form method=post action="{{url_for('logout')}}">
         <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
       </form>
@@ -30,11 +32,29 @@
       <!-- <img id="match-image" src="{{url_for('static', filename = 'person.jpg')}}" alt=""> -->
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
-        <p class="match-subheader">Class of {{person.year}}</p>
+        <p class="action-subheader">Class of {{person.year}} <br> {{person.major}} Major</p>
         <div id="more-profile">
           <p class="profile-bio">
             {{matchBio.bio}}
           </p>
+          <!-- <h2 class="match-section-titles">Location</h2> -->
+            <div>
+              <p class="match-location-info">📍{{person.city}},
+                {% if person.state %}
+                {{person.state}},
+                {% endif %}
+                {% if person.country %}
+                {{person.country}}
+                {% endif %}
+              </p>
+              <p class="match-campus-info">Currently
+                {% if person.onCampus == 'yes' %}
+                on campus. Hit me up 🤩
+                {% else %}
+                at home. Let's set up a Zoom meeting 💻
+                {% endif %}
+              </p>
+            </div>
           <div class="profile-interests" data-state="closed">
             {% if person.favorites %}
               {% for favorite in person.favorites %}
@@ -70,11 +90,11 @@
     <div class="match-buttons">
       <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">👀 More Information</button>
       {% if matchStatus %}
-      <form id="match-button-form" method=post action="{{url_for('deleteMatch')}}">
+      <form id="match-button-form" method=post action="{{url_for('deleteMatch', location='home')}}">
         <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
       </form>
       {% else %}
-        <form id="match-button-form" method=post action="{{url_for('makeMatch')}}">
+        <form id="match-button-form" method=post action="{{url_for('makeMatch', location='home')}}">
           <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💖 Match</button>
         </form>
       {% endif %}

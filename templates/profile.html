@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div id="profile-logout-container">
+        <a href="{{url_for('profile')}}">
+            <div id="user-circle" class="circle-img">
+              <p>{{person.fname[0]}}{{person.lname[0]}}</p>
+            </div>
+          </a>
+      <form method=post action="{{url_for('logout')}}">
+        <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
+      </form>
+    </div>
+    </a>
+  </nav>
+{% endblock %}
+
+{% block main_content %}
+<div class="main-content">
+<section class="match-section">
+  <div class="match-photo">
+    <div class="one-match active" value="{{person.wemail}}">
+      {% if photo %}
+      <img id="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
+      {% else %}
+      <img id="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
+      {% endif %}
+      <div class="match-header">
+        <h2 class="match-name">{{person.fname}}</h2>
+        <p class="action-subheader">Class of {{person.year}} <br> {{person.major}} Major</p>
+        <div class="active">
+          <p class="profile-bio">
+            {{personBio.bio}}
+          </p>
+          <div id="more-profile">
+            <h2 class="match-section-titles">Location</h2>
+            <div>
+              <p class="match-location-info">📍{{person.city}},
+                {% if person.state %}
+                {{person.state}},
+                {% endif %}
+                {% if person.country %}
+                {{person.country}}
+                {% endif %}
+              </p>
+              <p class="match-campus-info">Currently
+                {% if person.onCampus == 'yes' %}
+                on campus. Hit me up 🤩
+                {% else %}
+                at home. Let's set up a Zoom meeting 💻
+                {% endif %}
+              </p>
+            </div>
+            <h2 class="match-section-titles">Favorites</h2>
+            <div class="profile-interests" data-state="closed">
+              {% for favorite in person.favorites %}
+              <div class="interest-box">
+                <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
+                <p>&emsp;My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <h2 class="match-section-titles">Contact</h2>
+          {% if contacts|length == 2 %}
+          <div id="contact-buttons">
+            {% for contact in contacts %}
+              {% if contact.platform == 'text' %}
+                <button class="phone-box" id="phone-button" type="button" name="button">{{contact.phoneNumber}}</button>
+              {% else %}
+                {% if contact.platform == 'instagram'%}
+                  <a href='{{contact.url}}' target='_blank'><button class="gray-button" id="insta-button" type="button" name="button">Instagram</button></a>
+                {% else %}
+                  <a href="{{contact.url}}" target='_blank'><button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button></a>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+            {% if contacts[0].platform == 'text' %}
+              <button class="phone-box" id="phone-button" type="button" name="button">{{contacts[0].phoneNumber}}</button>
+            {% else %}
+              {% if contacts[0].platform == 'instagram' %}
+                <a href='{{contacts[0].url}}' target='_blank'><button class="gray-button" id="insta-button" type="button" name="button">Instagram</button></a>
+              {% else %}
+                <a href="{{contacts[0].url}}" target='_blank'><button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button></a>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="match-buttons">
+    <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">👀 More Information</button>
+  </div>
+</section>
+
+    <section id="match-actions">
+      <div class="upcoming-meetings">
+        <h2 class="action-title">Upcoming meetings</h2>
+        <div id="all-meetings">
+          {% if meetings %}
+            {% for meeting in meetings %}
+            <div class="meeting-container">
+              <div class="meeting-time">
+                <p>{{meeting.date}} @ 
+                  {% if meeting.type == "Remote" %}
+                  {{meeting.type}}
+                  {% else %}
+                  {{meeting.location}}
+                  {% endif %}
+                </p>
+                <p>{{meeting.time}}</p>
+              </div>
+              <h2 class="meeting-title">{{meeting.what}}</h2>
+              <div class="meeting-options">
+                {% if meeting.type == "Remote" %}
+                <a href="{{meeting.location}}">
+                  <button id="zoom-meeting" name="zoom-meeting" value="{{meeting.meetingID}}">Zoom Link</button>
+                </a>
+                {% endif %}
+                <form action="{{url_for('deleteMeeting')}}" method="post">
+                  <button id="delete-meeting" type="submit" name="deleteMeeting" value="{{meeting.meetingID}}">Delete</button>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div id="no-meeting" class="meeting-container">
+            <p>No meetings scheduled yet 😔</p>
+          </div>
+          {% endif %}
+        </div>
+        </div>
+    </section>
+
+
+</div>
+{% endblock %}
+
+{% block end_scripts %}
+<script>
+$("#more-info-button").on("click", function(event) {
+    $button = $("#more-info-button");
+    $profile = $("#more-profile");
+    if ($profile.css("display") == 'none') {
+      $profile.css("display", "block");
+      $button.text("✌️ Less Information");
+    }
+    else {
+      $profile.css("display", "none");
+      $button.text("👀 More Information");
+    }
+  });
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
+</script>
+{% endblock %}
+

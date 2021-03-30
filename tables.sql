@@ -44,11 +44,10 @@ ENGINE = InnoDB;
 
 create table contact (
     wemail varchar(20) not null,
-    phoneNumber int unsigned not null primary key,
+    phoneNumber varchar(20),
     handle varchar(50),
     url varchar(150),
     platform enum('facebook', 'instagram', 'whatsapp', 'text'),
-    INDEX (phoneNumber),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict

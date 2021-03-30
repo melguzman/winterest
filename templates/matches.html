@@ -4,9 +4,11 @@
   <nav>
     <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
     <div id="profile-logout-container">
-      <div id="user-circle" class="circle-img">
-        <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
-      </div>
+      <a href="{{url_for('profile')}}">
+        <div id="user-circle" class="circle-img">
+          <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
+        </div>
+      </a>
       <form method=post action="{{url_for('logout')}}">
         <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
       </form>
@@ -27,36 +29,78 @@
       {% endif %}
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
-        <p class="action-subheader">Class of {{person.year}}</p>
+        <p class="action-subheader">Class of {{person.year}} <br> {{person.major}} Major</p>
         <div class="active">
           <p class="profile-bio">
             {{personBio.bio}}
           </p>
-          <h2 class="match-section-titles">Favorites</h2>
-          <div class="profile-interests" data-state="closed">
-            {% for favorite in person.favorites %}
-            <div class="interest-box">
-              <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
-              <p>&emsp;My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+          <div id="more-profile">
+            <h2 class="match-section-titles">Location</h2>
+            <div>
+              <p class="match-location-info">📍{{person.city}},
+                {% if person.state %}
+                {{person.state}},
+                {% endif %}
+                {% if person.country %}
+                {{person.country}}
+                {% endif %}
+              </p>
+              <p class="match-campus-info">Currently
+                {% if person.onCampus == 'yes' %}
+                on campus. Hit me up 🤩
+                {% else %}
+                at home. Let's set up a Zoom meeting 💻
+                {% endif %}
+              </p>
             </div>
-            {% endfor %}
+            <h2 class="match-section-titles">Favorites</h2>
+            <div class="profile-interests" data-state="closed">
+              {% for favorite in person.favorites %}
+              <div class="interest-box">
+                <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
+                <p>&emsp;My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+              </div>
+              {% endfor %}
+            </div>
           </div>
         </div>
         <h2 class="match-section-titles">Contact</h2>
-        <div id="icebreaker-buttons">
-          <button class="gray-button" id="insta-button" type="button" name="button">Instagram</button>
-          <button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button>
-        </div>
+          {% if contacts|length == 2 %}
+          <div id="contact-buttons">
+            {% for contact in contacts %}
+              {% if contact.platform == 'text' %}
+                <button class="phone-box" id="phone-button" type="button" name="button">{{contact.phoneNumber}}</button>
+              {% else %}
+                {% if contact.platform == 'instagram'%}
+                  <a href='{{contact.url}}' target='_blank'><button class="gray-button" id="insta-button" type="button" name="button">Instagram</button></a>
+                {% else %}
+                  <a href="{{contact.url}}" target='_blank'><button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button></a>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+            {% if contacts[0].platform == 'text' %}
+              <button class="phone-box" id="phone-button" type="button" name="button">{{contacts[0].phoneNumber}}</button>
+            {% else %}
+              {% if contacts[0].platform == 'instagram' %}
+                <a href='{{contacts[0].url}}' target='_blank'><button class="gray-button" id="insta-button" type="button" name="button">Instagram</button></a>
+              {% else %}
+                <a href="{{contacts[0].url}}" target='_blank'><button class="blue-button" id="facebook-button" type="button" name="button">Facebook</button></a>
+              {% endif %}
+            {% endif %}
+          {% endif %}
       </div>
     </div>
   </div>
   <div class="match-buttons">
+    <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">👀 More Information</button>
     {% if oneSDMatchStatus %} <!-- a one sided matching -->
-      <form id="match-button-form" method=post action="{{url_for('makeMatch')}}">
+      <form id="match-button-form" method=post action="{{url_for('makeMatch', location='matches')}}">
         <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💖 Match</button>
       </form>
     {% else %} <!-- a two sided matching -->
-      <form id="match-button-form" method=post action="{{url_for('deleteMatch')}}">
+      <form id="match-button-form" method=post action="{{url_for('deleteMatch', location='matches')}}">
         <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
       </form>
     {% endif %}
@@ -189,7 +233,8 @@
               </div>
   
               <div class="textbox">
-                <label for="schedule-when">When</label>
+                <label id="when-label" for="schedule-when">When</label>
+                <p id="when-subheader" class="action-subheader">Note: Time is in EST.</p>
                 <input type="datetime-local" id="schedule-when" name="schedule-when" required>
               </div>
   

@@ -50,12 +50,15 @@ def find_phoneNum(conn, wemail):
     curs = dbi.dict_cursor(conn)
     curs.execute('''SELECT phoneNumber FROM contact WHERE 
         wemail = %s''', [wemail])
-    phoneNum = curs.fetchall()
-    # returns a string in the case where the person has not filled info out
-    # otherwise, returns the demographics
-    if len(phoneNum) != 0:
-        return phoneNum
-    return "No phone number input yet"
+    return curs.fetchall()
+
+def find_contacts(conn, wemail):
+    '''Returns user's available contact information as a
+    list of dictionaries'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT * FROM contact WHERE
+        wemail = %s''', [wemail])
+    return curs.fetchall()
 
 '''**************** Queries for changing tables ****************'''
 
@@ -137,18 +140,18 @@ def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
     Note: users can only insert one row of their contact information''' 
 
     curs = dbi.dict_cursor(conn)
-    curs.execute('''lock tables contact read''')
-    curs.execute('''SELECT * FROM contact WHERE wemail = %s''', [wemail])
-    checkContact = curs.fetchall()
-    curs.execute('''unlock tables''')
+    # curs.execute('''lock tables contact read''')
+    # curs.execute('''SELECT * FROM contact WHERE wemail = %s''', [wemail])
+    # checkContact = curs.fetchall()
+    # curs.execute('''unlock tables''')
     # if contact for this user doesn't already exist, we will add their info to
     # the contact table
-    if len(checkContact) == 0: 
-        curs.execute('''lock tables contact write''')
-        curs.execute('''INSERT INTO contact (wemail, phoneNumber, 
+    # if len(checkContact) == 0: 
+    curs.execute('''lock tables contact write''')
+    curs.execute('''INSERT INTO contact (wemail, phoneNumber, 
             handle, url, platform) VALUES (%s, %s, %s, %s, %s)''', 
             [wemail, phoneNumber, handle, url, platform])
-        curs.execute('''unlock tables''')
+    curs.execute('''unlock tables''')
     conn.commit()
 
 def update_contact(conn, wemail, phoneNumber, handle, url, platform): 

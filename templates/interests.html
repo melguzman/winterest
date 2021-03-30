@@ -38,6 +38,54 @@
           <p class="match-subheader"><i>File must be under 1MB</i></p>
           <input id="pic-form" type="file" name="pic">
         </div>
+        <br>
+
+        <h2 class="action-title">Contact</h2>
+        <p class="match-subheader">List platforms you want to use to communicate on (<i>add up to 2 options</i>)</p>
+        <div class="socials-flex">
+          <div class = "textbox signup-textbox">
+            <label for="contact-type1">Contact #1</label>
+            <select id="contact-type1" name="contact-type1" class="social-form" required>
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
+              <option value="Text">Text</option>
+            </select>
+          </div>
+  
+          <div class="textbox signup-textbox social-links">
+            <label for="social-url1">Link</label>
+            <input type ="url" id="social-url1" name="social-url1" placeholder="Social URL">
+          </div>
+
+          <div class="textbox signup-textbox phonenumber-form">
+            <label for="phonenumber1">Phone Number</label>
+            <input type ="tel" id="phonenumber1" name="phonenumber1" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+            placeholder="123-456-7890">
+          </div>
+        </div>
+        <div class="socials-flex">
+          <div class = "textbox signup-textbox">
+            <label for="contact-type2">Contact #2</label>
+            <select name="contact-type2" class="social-form">
+              <option value="Facebook">Facebook</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Text">Text</option>
+            </select>
+          </div>
+  
+          <div class="textbox signup-textbox social-links">
+            <label for="social-url2">Link</label>
+            <input type ="url" id="social-url2" name="social-url2" placeholder="Social URL">
+          </div>
+
+          <div class="textbox signup-textbox phonenumber-form">
+            <label for="phonenumber2">Phone Number</label>
+            <input type ="tel" id="phonenumber2" name="phonenumber2" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+            placeholder="123-456-7890">
+          </div>
+        </div>
+        <p id="format-message" class="match-subheader">* Please enter your phone number in this format: 123-456-7890</p>
+
 
         <br>
         <button type="submit">Sign up</button>
@@ -46,3 +94,26 @@
   </div>
 
   {% endblock %}
+
+{% block end_scripts %}
+<script>
+  $('select').change(function(){
+    value = $(this).val();
+    $form = $(this).closest('.socials-flex');
+    $socialform = $form.find('.social-links');
+    $phoneform = $form.find('.phonenumber-form');
+    $phoneformat = $('#format-message');
+
+    if (value == "Text") {
+      $socialform.css('display', 'none');
+      $phoneform.css('display', 'block');
+      $phoneformat.css('display', 'block');
+    }
+    else {
+      $phoneform.css('display', 'none');
+      $phoneformat.css('display', 'none');
+      $socialform.css('display', 'block');
+    }
+});
+</script>
+{% endblock %}

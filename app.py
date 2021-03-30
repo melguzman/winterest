@@ -106,7 +106,7 @@ def signup():
             country = request.form['country']
             state = request.form['state']
             city = request.form['city']
-            onCampus = 'no'
+            onCampus = request.form['onCampus']
 
             # MBCode and default oncampus to 'no'
             # highestMBCode = (curs.execute('''SELECT MAX(CAST(MBCode AS int)) AS code FROM MBResults''')) 
@@ -177,29 +177,34 @@ def interests():
         album = request.form['song']
         color = request.form['color']
         bio = request.form['bio']
-
-        #insert interests
-        # curs.execute('''INSERT INTO favorites (wemail, name, itemType) 
-        #                 VALUES (%s, %s, %s),
-        #                 VALUES (%s, %s, %s),
-        #                 VALUES (%s, %s, %s)
-        #             ''', [email, book, 'book', email, album, 'song', email, color, 'color'])
-        # conn.commit()
-        # curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
-        # conn.commit()
-
+        
         #insert interests
         userInfo.insert_favorites(conn, email, book, 'book')
         userInfo.insert_favorites(conn, email, album, 'song')
         userInfo.insert_favorites(conn, email, color, 'color')
-        # curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, book, 'book'])
-        # conn.commit()
-        # curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, album, 'song'])
-        # conn.commit()
-        # curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, color, 'color'])
-        # conn.commit()
-        # curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
-        # conn.commit()
+
+        #insert contact information
+        social1_type = request.form['contact-type1'] 
+        social2_type = request.form['contact-type2']
+        if (social1_type == 'Text'):
+            social1_value = request.form['phonenumber1']
+            profileQueries.insert_contact(conn, email, social1_value, None, None, social1_type)
+        else:
+            social1_value = request.form['social-url1']
+            profileQueries.insert_contact(conn, email, None, None, social1_value, social1_type)
+
+        # check if someone entered a second contact method
+        social2_social = request.form['social-url2']
+        social2_number = request.form['phonenumber2']
+        print(social2_social, social2_number)
+        print(social2_type)
+        if (social2_social != '') or (social2_number != ''):
+            if (social2_type == 'Text'):
+                print("text branch ran")
+                profileQueries.insert_contact(conn, email, social2_number, None, None, social2_type)
+            else:
+                print("social branch ran")
+                profileQueries.insert_contact(conn, email, None, None, social2_social, social2_type)
 
         try:
             print("Rendering files")
@@ -312,8 +317,8 @@ def home():
         matchBio = matchBio, currentUserInfo = currentUserInfo,
         photo = photo, page_title="Home") #adddedddddddddddddddddd
 
-@app.route('/makeMatch/', methods=['POST'])
-def makeMatch():
+@app.route('/makeMatch/<location>', methods=['POST'])
+def makeMatch(location):
     '''Triggered when user presses the "Match" button on the home page.
     Adds the match pairing to the website'''
     conn = dbi.connect()
@@ -331,10 +336,13 @@ def makeMatch():
     else:
         matches.setOneSDMatch(conn, userEmail, matchEmail) #intially one sided
 
-    return redirect(url_for('home'))
+    if location == "home":
+        return redirect(url_for('home'))
+    else:
+        return redirect(url_for('match', wemail=matchEmail))
 
-@app.route('/deleteMatch/', methods=['POST'])
-def deleteMatch():
+@app.route('/deleteMatch/<location>', methods=['POST'])
+def deleteMatch(location):
     '''Triggered when user presses the "unMatch" button on the home page.
     Gets rid of match pairing from the website'''
     conn = dbi.connect()
@@ -342,7 +350,10 @@ def deleteMatch():
     matchEmail = request.form.get('submit')
     #design decision: if one side unmatches, completey unmatch
     matches.unMatch(conn, userEmail, matchEmail)
-    return redirect(url_for('home'))
+    if location == "home":
+        return redirect(url_for('home'))
+    else:
+        return redirect(url_for('match', wemail=matchEmail))
 
 @app.route('/matches/<wemail>', methods=['GET','POST'])
 def match(wemail):
@@ -359,6 +370,7 @@ def match(wemail):
     completeInfo = favoritesInformation(info)
     bio = userInfo.getBio(conn, wemail)
     photo = userInfo.find_photo(conn, wemail)
+    contacts = profileQueries.find_contacts(conn, wemail)
 
     #check if this person is a one sided match
     oneSidedMatchStatus = (len(matches.matchExists(conn, wemail, userEmail)) > 0) \
@@ -369,8 +381,30 @@ def match(wemail):
     
     return render_template('matches.html', person = completeInfo, 
         oneSDMatchStatus = oneSidedMatchStatus, emojis = emojis, personBio = bio, 
-        currentUserInfo = currentUserInfo, photo = photo, meetings = meetings,
-        page_title=completeInfo["fname"] + "'s Profile") #addeddddddddddddd
+        currentUserInfo = currentUserInfo, photo = photo, meetings = meetings, 
+        contacts=contacts, page_title=completeInfo["fname"] + "'s Profile") #addeddddddddddddd
+
+@app.route('/profile/', methods=['GET','POST'])
+def profile():
+    '''Redirects user to a page with matching interactions'''
+    userEmail = session.get('wemail')
+    if not userEmail:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+
+    conn = dbi.connect()
+    info = profileQueries.find_profile(conn, userEmail)
+    completeInfo = favoritesInformation(info)
+    bio = userInfo.getBio(conn, userEmail)
+    photo = userInfo.find_photo(conn, userEmail)
+    contacts = profileQueries.find_contacts(conn, userEmail)
+    # Add any upcoming meetings
+    meetings = profileQueries.find_all_meetings(conn, userEmail)
+    
+    return render_template('profile.html', person = completeInfo, 
+        emojis = emojis, personBio = bio, photo = photo, meetings = meetings, 
+        contacts=contacts, page_title=info["fname"] + "'s Profile") #addeddddddddddddd
+
 
 @app.route('/next/', methods=['POST'])
 def next():

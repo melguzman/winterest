@@ -76,7 +76,14 @@ nav a {
 
 #insta-button, #facebook-button {
   margin: 0px;
+  width: 100%;
 }
+
+#phone-button {
+  margin: 0px;
+  width: 48%;
+}
+
 
 .match-section-titles {
   font-size: 16px;
@@ -90,15 +97,15 @@ nav a {
   margin: 0px;
 }
 
-.action-subheader {
+/* .action-subheader {
   margin-top: 4px;
-}
+} */
 
 #location-label {
   margin-bottom: 4px;
 }
 
-#location-subheader {
+#location-subheader, #when-subheader {
   margin-bottom: 8px;
 }
 
@@ -191,6 +198,12 @@ button {
 }
 
 .gray-button {
+  background-color: #F4F4F4;
+  color: #2D2D2D;
+}
+
+.phone-box {
+  pointer-events: none;
   background-color: #F4F4F4;
   color: #2D2D2D;
 }
@@ -301,16 +314,18 @@ button {
   font-size: 16px;
 }
 
-#icebreaker-buttons {
+#icebreaker-buttons, #contact-buttons {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
 }
 
-#icebreaker-buttons button{
+#contact-buttons a {
   width: 48%;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.0);
+}
 
+#icebreaker-buttons button, #contact-buttons button{
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.0);
 }
 
 .action-title {
@@ -705,3 +720,41 @@ textarea {
   display: none;
 }
 
+#when-label {
+  margin-bottom: 0px;
+}
+
+.social-form {
+  padding: 2px 12px;
+  height: 34px;
+  border: 1.5px solid #C6C7CA;
+  box-sizing: border-box;
+  border-radius: 4px;
+  font-family: 'Inter';
+}
+
+.match-location-info {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.match-campus-info {
+  margin-top: 0px
+}
+
+.socials-flex {
+  display: flex;
+}
+
+.social-links, .phonenumber-form {
+  width: 100%;
+  margin-left: 12px;
+}
+.phonenumber-form {
+  display: none;
+}
+
+#format-message {
+  padding-top: 8px;
+  display: none;
+}
