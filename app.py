@@ -183,6 +183,11 @@ def interests():
         userInfo.insert_favorites(conn, email, album, 'song')
         userInfo.insert_favorites(conn, email, color, 'color')
 
+        curs.execute('''lock tables bio write''')
+        curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
+        curs.execute('''unlock tables''')
+        conn.commit()
+
         #insert contact information
         social1_type = request.form['contact-type1'] 
         social2_type = request.form['contact-type2']
