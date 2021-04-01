@@ -3,6 +3,19 @@
 {% block nav %}
   <nav>
     <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div>
+      <form method="GET" action="/query/">
+        <p><label>search: <input type="text" required name="query"></label>
+        <label>kind
+                <select required name = "kind">
+                    <option value="">choose one</option>
+                    <option value="person">person name</option>
+                    <option value="email">wellesley email</option>
+                </select>
+        </label>
+        <input type="submit" value="search"></p>
+      </form> 
+    </div>
     <div id="profile-logout-container">
       <a href="{{url_for('profile')}}">
         <div id="user-circle" class="circle-img">

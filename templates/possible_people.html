@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div>
+      <form method="GET" action="/query/">
+        <p><label>search: <input type="text" required name="query"></label>
+        <label>kind
+                <select required name = "kind">
+                    <option value="">choose one</option>
+                    <option value="person">person name</option>
+                    <option value="email">wellesley email</option>
+                </select>
+        </label>
+        <input type="submit" value="search"></p>
+      </form> 
+    </div>
+    <div id="profile-logout-container">
+        <a href="{{url_for('profile')}}">
+            <div id="user-circle" class="circle-img">
+              <p>{{currentUser.fname[0]}}{{currentUser.lname[0]}}</p>
+            </div>
+          </a>
+      <form method=post action="{{url_for('logout')}}">
+        <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
+      </form>
+    </div>
+  </nav>
+{% endblock %}
+
+{% block main_content %}
+<div class="main-content">
+<section class="match-section">
+    <h1 class="section-header">People Found:</h1>
+    {% for person in peopleFound %}
+    <a class="match-link" href="{{url_for('searched_profile', wemail=person.wemail)}}">
+      <div class="match-containers">
+        <div class="circle-img">
+            {% if lname in person%}
+            <p>{{person.fname[0]}}{{person.lname[0]}}</p>
+            {% else %}
+            <p>{{person.fname[0]}}</p>
+            {% endif %}
+        </div>
+        <div class="matches-info">
+          <h3>{{person.fname}}</h3>
+          <p class="match-subheader">Class of {{person.year}}</p>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+</section>
+</div>
+{% endblock %}

@@ -33,6 +33,30 @@ def find_profile(conn, wemail):
         return person
     return "No user by that name yet"
 
+def find_profile_v2(conn, wemail):
+    '''Returns the info associated with a given wemail'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT * FROM userAccount WHERE wemail =
+         %s''', [wemail])
+    person = curs.fetchone()
+    # returns a string in the case where the person has not filled info out
+    # otherwise, returns the demographics
+    if person != None:
+        return person
+    return None
+
+def find_person(conn, name):
+    '''Gives all the people who match part of a given name'''
+    curs = dbi.dict_cursor(conn)
+    name = name.split()
+    if len(name) == 1: #just first name provided
+        curs.execute('''select fname, wemail, year from userAccount
+            where fname like %s''', ['%' + name[0] + '%']) 
+    else:
+        curs.execute('''select fname, lname, wemail, year from userAccount
+            where fname like %s and lname like %s''', ['%' + name[0] + '%', '%' + name[-1] + '%']) 
+    return curs.fetchall()
+
 def find_dem(conn, wemail):
     '''Returns a user's demographic information; singular row returned'''
     curs = dbi.dict_cursor(conn)

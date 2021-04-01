@@ -569,10 +569,69 @@ def edit():
         except Exception as err:
             flash('Upload failed {why}'.format(why=err))
             return redirect(url_for('edit'))
-        
-
             
 
+@app.route('/profile/<wemail>', methods=['GET','POST'])
+def searched_profile(wemail):
+    '''Displays the searched person'sprofile'''
+    userEmail = session.get('wemail')
+    if not userEmail:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+    conn = dbi.connect()
+
+    info = profileQueries.find_profile(conn, wemail)
+    completeInfo = favoritesInformation(info)
+    bio = userInfo.getBio(conn, wemail)
+    photo = userInfo.find_photo(conn, wemail)
+    contacts = profileQueries.find_contacts(conn, wemail)
+    # Add any upcoming meetings
+    matchStatus = matches.matchExists(conn, userEmail, wemail)
+    
+    return render_template('searched_profile.html', person = completeInfo, 
+        emojis = emojis, personBio = bio, photo = photo, matchStatus = matchStatus,
+        contacts=contacts, page_title=info["fname"] + "'s Profile") 
+
+@app.route('/query/')
+def query():
+    userEmail = session.get('wemail')
+    if not userEmail:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+    conn = dbi.connect()
+    currentUserInfo = profileQueries.find_profile(conn, userEmail)
+
+    name = request.args.get('query') 
+    type_search = request.args.get('kind')
+    
+    if type_search == 'person': 
+        people = profileQueries.find_person(conn, name)
+        print(people)
+        # case 1: one person found
+        if len(people) == 1:
+            email = people[0]['wemail']
+            return redirect(url_for('searched_profile', wemail=email))
+        # case 2: multiple similar people found
+        elif len(people) > 1:
+            return render_template( 
+                'possible_people.html',
+                currentUser = currentUserInfo,
+                peopleFound = people
+                )
+        # case 3: person not found
+        else:
+            flash("Person does not have a Winterest profile yet") 
+            return redirect(url_for('home'))
+    else: #searched by email
+        person = profileQueries.find_profile_v2(conn, name) #find profile by email
+        # case 1: did not find person with email
+        if person == None:
+            flash("Person does not have a Winterest profile yet") 
+            return redirect(url_for('home'))
+        # case 2: one person found by email, has to be perfectly written
+        else:
+            email = person['wemail']
+            return redirect(url_for('searched_profile', wemail=email))
 
 @app.route('/next/', methods=['POST'])
 def next():
