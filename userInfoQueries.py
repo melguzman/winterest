@@ -138,6 +138,18 @@ def update_favorites(conn, wemail, name, itemType):
         WHERE name = %s and wemail = %s''', [itemType, name, wemail]) 
     curs.execute('''unlock tables''')
     conn.commit()
+
+def update_bio(conn, wemail, bio):
+    '''Takes user's changed inputs for their bio
+    updates them.'''
+
+    # update favorite and genres info 
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables bio write''')
+    curs.execute('''UPDATE bio SET bio = %s
+        WHERE wemail = %s''', [bio, wemail]) 
+    curs.execute('''unlock tables''')
+    conn.commit()
     
 
 ############ INSERT, UPDATE Love languages

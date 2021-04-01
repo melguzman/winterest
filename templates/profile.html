@@ -93,7 +93,7 @@
     </div>
   </div>
   <div class="match-buttons">
-    <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">👀 More Information</button>
+    <button class="blue-button" id="more-info-button" type="button" name="button" value="more">👀 More Information</button>
   </div>
 </section>
 
@@ -134,7 +134,14 @@
           {% endif %}
         </div>
         </div>
+        <div id="edit-profile">
+          <h2 class="action-title">Edit Profile</h2>
+          <form action="{{url_for('edit')}}">
+            <button class="blue-button" type="submit" name="edit">Edit</button>
+          </form>
+        </div>
     </section>
+
 
 
 </div>

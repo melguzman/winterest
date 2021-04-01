@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div id="profile-logout-container">
+        <a href="{{url_for('profile')}}">
+            <div id="user-circle" class="circle-img">
+              <p>{{person.fname[0]}}{{person.lname[0]}}</p>
+            </div>
+          </a>
+      <form method=post action="{{url_for('logout')}}">
+        <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
+      </form>
+    </div>
+  </nav>
+{% endblock %}
+
+{% block main_content %}
+
+<div class="main-content">
+  <form method='POST' enctype="multipart/form-data" action="{{ url_for('edit') }}">
+    <div id="signup-container">
+      <h2 class="action-title">Edit Profile</h2>
+        <div class="twocol-flex">
+          <div class="textbox signup-textbox">
+            <label for="fname">First Name</label>
+            <input type="text" id="fname" name="fname" value={{person.fname}} required>
+          </div>
+
+          <div class="textbox signup-textbox">
+            <label for="lname">Last Name</label>
+            <input type="text" id="lname" name="lname" value={{person.lname}} required>
+          </div>
+        </div>
+
+        <div class="twocol-flex">
+          <div class="textbox signup-textbox">
+            <label for="city">City</label>
+            <input type="text" id="city" name="city" value={{person.city}} required>
+          </div>
+          <div class="textbox signup-textbox">
+            <label for="state">State</label>
+            <input type="text" id="state" name="state" value={{person.state}}>
+          </div>
+        </div>
+        <div class="textbox signup-textbox">
+          <label for="country">Country</label>
+          <input type="text" id="country" name="country" value={{person.country}} required>
+        </div>
+
+        <br>
+        <h2 class="action-title">School Information</h2>
+
+        <fieldset class="r-pill">
+          <legend>
+            Current Location
+          </legend>
+        {% if person.onCampus == 'no' %}
+          <span class="r-pill__item">
+            <input type="radio" id="home" name="onCampus" value="no" checked>
+            <label for="home">At Home</label>
+          </span>
+
+          <span class="r-pill__item">
+            <input type="radio" id="campus" name="onCampus" value="yes">
+            <label for="campus">On Campus</label>
+          </span>
+        {% else %}
+        <span class="r-pill__item">
+            <input type="radio" id="home" name="onCampus" value="no">
+            <label for="home">At Home</label>
+          </span>
+
+          <span class="r-pill__item">
+            <input type="radio" id="campus" name="onCampus" value="yes" checked>
+            <label for="campus">On Campus</label>
+          </span>
+        {% endif %}
+
+        </fieldset>
+
+        <div class="twocol-flex">
+          <div class="textbox signup-textbox">
+            <label for="major">Major(s)</label>
+            <input type="text" id="major" name="major" value={{person.major}} required>
+          </div>
+
+          <div class="textbox signup-textbox">
+            <label for="year">Year</label>
+            <input type="text" id="year" name="year" value={{person.year}} required>
+          </div>
+        </div>
+        <br>
+        <button id="continue-button" type="button">Continue</button>
+    </div>
+
+    <!-- Interests Form -->
+      <div id="interests-container">      
+        <br>
+        <h2 class="action-title">Favorites</h2>
+        <!-- <p>Choose your favorites!</p> -->
+        <div class = "textbox signup-textbox">
+          <label for="book">Book</label>
+          <input type ="text" id="book" name="book" value="{{favorites.book}}" required>
+        </div>
+
+          <div class = "textbox signup-textbox">
+            <label for="color">Color</label>
+            <input type ="text" id="color" name="color" value="{{favorites.color}}" required>
+            <!-- <label for="color">Color:</label>
+            <input type ="color" id="color" name="color" required> -->
+          </div>
+
+          <div class = "textbox signup-textbox">
+              <label for="song">Song</label>
+              <input type ="text" id="song" name="song" value="{{favorites.song}}" required>
+          </div>
+
+        <div id="bio-textbox" class = "textbox signup-textbox">
+          <label for="bio">Bio</label>
+          <p class="match-subheader">Introduce yourself! Let your personality or other
+                interests shine. <i>(Limit 200 characters)</i>
+          </p>
+          <textarea id="bio" name="bio" rows="3" cols="50" maxlength="200" required>{{personBio.bio}}</textarea>
+        </div>
+
+        <div class = "textbox signup-textbox">
+          <label for="pic">Picture</label>
+          <p class="match-subheader"><i>File must be under 1MB</i></p>
+          <input id="pic" type="file" name="pic">
+        </div>
+        <br>
+
+        <h2 class="action-title">Contact</h2>
+        <p class="match-subheader">List platforms you want to use to communicate on (<i>add up to 2 options</i>)</p>
+            <div class="socials-flex">
+            <div class = "textbox signup-textbox">
+                <label for="contact-type1">Contact #1</label>
+                <select id="contact-type1" name="contact-type1" class="social-form">
+                <option {% if contacts[0].platform == 'instagram' %} selected='selected' {% endif %} value="Instagram">Instagram</option>
+                <option {% if contacts[0].platform == 'facebook' %} selected='selected' {% endif %} value="Facebook">Facebook</option>
+                <option {% if contacts[0].platform == 'text' %} selected='selected' {% endif %} value="Text">Text</option>
+                </select>
+            </div>
+            
+            <div class="textbox signup-textbox social-links">
+                <label for="social-url1">Link</label>
+                <input type ="url" id="social-url1" name="social-url1" 
+                {% if contacts[0].platform != 'text' %} value="{{contacts[0].url}}" {% else %} placeholder="Social URL" {% endif %}>
+            </div>
+            <div class="textbox signup-textbox phonenumber-form">
+                <label for="phonenumber1">Phone Number</label>
+                <input type ="tel" id="phonenumber1" name="phonenumber1" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+                {% if contacts[0].platform == 'text' %} value="{{contacts[0].phoneNumber}}" {% else %} placeholder="123-456-7890" {% endif %}>
+            </div>
+        </div>
+        {% if contacts|length == 2 %}
+            <div class="socials-flex">
+            <div class = "textbox signup-textbox">
+                <label for="contact-type2">Contact #2</label>
+                <select id="contact-type2" name="contact-type2" class="social-form">
+                <option {% if contacts[1].platform == 'facebook' %} selected='selected' {% endif %} value="Facebook">Facebook</option>
+                <option {% if contacts[1].platform == 'instagram' %} selected='selected' {% endif %} value="Instagram">Instagram</option>
+                <option {% if contacts[1].platform == 'text' %} selected='selected' {% endif %} value="Text">Text</option>
+                </select>
+            </div>
+    
+            <div class="textbox signup-textbox social-links">
+                <label for="social-url2">Link</label>
+                <input type ="url" id="social-url2" name="social-url2" 
+                {% if contacts[1].platform != 'text' %} value="{{contacts[1].url}}" {% else %} placeholder="Social URL" {% endif %}>
+            </div>
+
+            <div class="textbox signup-textbox phonenumber-form">
+                <label for="phonenumber2">Phone Number</label>
+                <input type ="tel" id="phonenumber2" name="phonenumber2" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+                {% if contacts[1].platform == 'text' %} value="{{contacts[1].phoneNumber}}" {% else %} placeholder="123-456-7890" {% endif %}>
+            </div>
+            </div>
+        {% else %}
+        <div class="socials-flex">
+            <div class = "textbox signup-textbox">
+              <label for="contact-type2">Contact #2</label>
+              <select id="contact-type2" name="contact-type2" class="social-form">
+                <option value="Facebook">Facebook</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Text">Text</option>
+              </select>
+            </div>
+    
+            <div class="textbox signup-textbox social-links">
+              <label for="social-url2">Link</label>
+              <input type ="url" id="social-url2" name="social-url2" placeholder="Social URL">
+            </div>
+  
+            <div class="textbox signup-textbox phonenumber-form">
+              <label for="phonenumber2">Phone Number</label>
+              <input type ="tel" id="phonenumber2" name="phonenumber2" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+              placeholder="123-456-7890">
+            </div>
+          </div>
+        {% endif %}
+        <p id="format-message" class="match-subheader">* Please enter your phone number in this format: 123-456-7890</p>
+
+
+        <br>
+        <div class="two-col-buttons">
+            <button id="back-button" class="gray-button" type="button">Back</button>
+            <button class="blue-button" type="submit">Update</button>
+          </div>
+      </div>
+  </form>
+</div>
+
+  {% endblock %}
+
+  {% block end_scripts %}
+<script>
+  $('select').change(function(){
+    value = $(this).val();
+    $form = $(this).closest('.socials-flex');
+    $socialform = $form.find('.social-links');
+    $phoneform = $form.find('.phonenumber-form');
+    $phoneformat = $('#format-message');
+
+    if (value == "Text") {
+      $socialform.css('display', 'none');
+      $phoneform.css('display', 'block');
+      $phoneformat.css('display', 'block');
+    }
+    else {
+      $phoneform.css('display', 'none');
+      $phoneformat.css('display', 'none');
+      $socialform.css('display', 'block');
+    }
+});
+
+$('#continue-button').on('click', function() {
+  $('#signup-container').css('display', 'none');
+  $('#interests-container').css('display', 'block');
+});
+
+$('#back-button').on('click', function() {
+  $('#signup-container').css('display', 'block');
+  $('#interests-container').css('display', 'none');
+});
+
+</script>
+{% endblock %}

@@ -173,6 +173,34 @@ def update_contact(conn, wemail, phoneNumber, handle, url, platform):
 
     conn.commit()
 
+def update_social(conn, wemail, url, platform): 
+    '''Takes user's changed inputs for their contacts and updates the
+    profile accordingly'''
+
+    curs = dbi.dict_cursor(conn)
+
+    curs.execute('''lock tables contact write''')
+    curs.execute('''UPDATE contact SET url = %s
+        WHERE wemail = %s and platform = %s''', [url, wemail, platform])
+    curs.execute('''unlock tables''')
+
+    conn.commit()
+
+def update_phone(conn, wemail, phoneNumber): 
+    '''Takes user's changed inputs for their contacts and updates the
+    profile accordingly'''
+
+    curs = dbi.dict_cursor(conn)
+
+    curs.execute('''lock tables contact write''')
+    curs.execute('''UPDATE contact SET phoneNumber = %s
+        WHERE wemail = %s''', [phoneNumber, wemail])
+    curs.execute('''unlock tables''')
+
+    conn.commit()
+
+
+
 def delete_contact(conn, wemail):
     '''Deletes a user's contact information given their wemail'''
     curs = dbi.dict_cursor(conn)

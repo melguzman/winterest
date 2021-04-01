@@ -198,13 +198,14 @@ button {
 }
 
 .gray-button {
-  background-color: #F4F4F4;
+  background-color: #eaeaea;
   color: #2D2D2D;
+  box-shadow: 0px 2px 10px rgb(0 0 0 / 5%);
 }
 
 .phone-box {
   pointer-events: none;
-  background-color: #F4F4F4;
+  background-color: #eaeaea;
   color: #2D2D2D;
 }
 
@@ -522,7 +523,7 @@ form {
   margin-bottom: 8px;
 }
 
-.signup-container {
+#signup-container, .landing-container, #interests-container {
   background-color: #FFF;
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
   border-radius: 14px;
@@ -530,6 +531,12 @@ form {
   padding: 24px;
   margin-bottom: 10px;
 }
+
+#interests-container {
+  display: none;
+}
+
+
 
 .match-button-form {
   width: 100%;
@@ -752,8 +759,18 @@ textarea {
   width: 100%;
   margin-left: 12px;
 }
+
 .phonenumber-form {
   display: none;
+}
+
+.two-col-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.two-col-buttons button {
+  width: 48%;
 }
 
 #format-message {

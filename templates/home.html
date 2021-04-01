@@ -87,7 +87,7 @@
       </button>
     </form>
     <div class="match-buttons">
-      <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">👀 More Information</button>
+      <button class="blue-button" id="more-info-button" type="button" name="submit" value="more">👀 More Information</button>
       {% if matchStatus %}
       <form class="match-button-form" method=post action="{{url_for('deleteMatch')}}">
         <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>

@@ -7,7 +7,6 @@ drop table if exists picfile;
 drop table if exists matches;
 drop table if exists matches_scored;
 drop table if exists meeting;
-drop table if exists icebreaker;
 drop table if exists firstMatch;
 drop table if exists bio;
 drop table if exists loveLanguages;
@@ -29,18 +28,6 @@ create table userAccount (
     )
 
 ENGINE = InnoDB;
-
--- create table MBResults (
---     wemail varchar(20) not null,
---     MBCode varchar(6) not null,
---     personality enum('analysts', 'diplomats', 'sentinels', 'explorers'),
---     role varchar(15),
---     INDEX (role),
---     foreign key (wemail) references userAccount(wemail)
---         on update restrict
---         on delete restrict
--- )
--- ENGINE = InnoDB;
 
 create table contact (
     wemail varchar(20) not null,
@@ -106,19 +93,6 @@ create table firstMatch (
     matchID int not null primary key,
     wemailMatch varchar(50),
     INDEX (matchID),
-    foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
-)
-
-ENGINE = InnoDB;
-
-create table icebreaker (
-    wemail varchar(20) not null,
-    icebreakerID int not null primary key,
-    question varchar(50),
-    answer varchar(70),
-    INDEX (icebreakerID),
     foreign key (wemail) references userAccount(wemail)
         on update restrict
         on delete restrict

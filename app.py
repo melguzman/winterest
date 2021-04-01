@@ -76,6 +76,7 @@ def login():
             else:
                 flash('Login incorrect. Try again or sign up')
                 return redirect( url_for('index'))
+
         except Exception as err:
             print("Exception: " + str(err))
             flash('Login incorrect. Try again or sign up')
@@ -141,11 +142,71 @@ def signup():
             session['index'] = 0
             # Add a session for the email so we can remember the user
             session['wemail'] = wemail
-            return redirect(url_for('interests'))
+            
+            # INTERESTS SECTION
+            book = request.form['book']
+            album = request.form['song']
+            color = request.form['color']
+            bio = request.form['bio']
+            
+            #insert interests
+            userInfo.insert_favorites(conn, wemail, book, 'book')
+            userInfo.insert_favorites(conn, wemail, album, 'song')
+            userInfo.insert_favorites(conn, wemail, color, 'color')
 
+            #insert user's bio
+            curs.execute('''lock tables bio write''')
+            curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [wemail, bio])
+            curs.execute('''unlock tables''')
+            conn.commit()
+
+            #insert contact information
+            social1_type = request.form['contact-type1'] 
+            social2_type = request.form['contact-type2']
+            if (social1_type == 'Text'): 
+                social1_value = request.form['phonenumber1']
+                profileQueries.insert_contact(conn, wemail, social1_value, None, None, social1_type)
+            else: # for Instagram/Faceobok, which hold links
+                # Two cases were necessary since the inputs held different values
+                social1_value = request.form['social-url1']
+                profileQueries.insert_contact(conn, wemail, None, None, social1_value, social1_type)
+
+            # check if someone entered a second contact method
+            social2_social = request.form['social-url2']
+            social2_number = request.form['phonenumber2']
+            if (social2_social != '') or (social2_number != ''):
+                if (social2_type == 'Text'):
+                    profileQueries.insert_contact(conn, wemail, social2_number, None, None, social2_type)
+                else:
+                    profileQueries.insert_contact(conn, wemail, None, None, social2_social, social2_type)
+
+            try:
+                # Uploading the image
+                f = request.files['pic']
+                user_filename = f.filename
+                ext = user_filename.split('.')[-1]
+                filename = secure_filename('{}.{}'.format(wemail,ext))
+                pathname = os.path.join(app.config['UPLOADS'],filename)
+                f.save(pathname)
+                conn = dbi.connect()
+                curs = dbi.dict_cursor(conn)
+                curs.execute('''lock tables picfile write''')
+                curs.execute(
+                    '''insert into picfile(wemail,filename) values (%s,%s)
+                        on duplicate key update filename = %s''',
+                    [wemail, filename, filename])
+                curs.execute('''unlock tables''')
+                conn.commit()
+                flash('Signup successful!')
+                return redirect(url_for('home'))
+
+            except Exception as err:
+                flash('Upload failed {why}'.format(why=err))
+                return redirect(url_for('signup'))
+            
         except Exception as err:
             flash('form submission error '+str(err))
-            return redirect( url_for('index') )
+            return redirect( url_for('signup') )
 
 @app.route('/pic/<wemail>')
 def pic(wemail):
@@ -258,6 +319,17 @@ def favoritesInformation(personDict):
     favs = userInfo.find_favorites(conn, email) # Get list of dictionaries for each fav.
     personDict['favorites'] = favs # Add key value pair to the dictionary
     return personDict
+
+def formatFavorites(favDict):
+    '''Takes a list of dictionaries with a person's favorites and
+    returns a dictionary with the favorite type as the key, and the
+    corresponding name as the value. '''
+    newDict = {}
+    for oneDict in favDict:
+        itemType = oneDict['itemType']
+        name = oneDict['name']
+        newDict[itemType] = name
+    return newDict
 
 # Emojis dictionary that associates a 'favorite' with an emoji. This will
 # be important in the Beta version, when interests can be customized
@@ -394,7 +466,112 @@ def profile():
     
     return render_template('profile.html', person = completeInfo, 
         emojis = emojis, personBio = bio, photo = photo, meetings = meetings, 
-        contacts=contacts, page_title=info["fname"] + "'s Profile") #addeddddddddddddd
+        contacts=contacts, page_title=info["fname"] + "'s Profile")
+
+@app.route('/edit/', methods=['GET','POST'])
+def edit():
+    '''Displays the current user's profile'''
+    userEmail = session.get('wemail')
+    if not userEmail:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+    
+    if request.method == 'GET':
+        conn = dbi.connect()
+        info = profileQueries.find_profile(conn, userEmail)
+        completeInfo = favoritesInformation(info)
+        favorites = formatFavorites(completeInfo['favorites'])
+        bio = userInfo.getBio(conn, userEmail)
+        photo = userInfo.find_photo(conn, userEmail)
+        contacts = profileQueries.find_contacts(conn, userEmail)
+        return render_template('edit.html', person = completeInfo, 
+            favorites = favorites,
+            personBio = bio, contacts=contacts, page_title='Edit Profile') 
+    else:
+        conn = dbi.connect()
+        curs = dbi.cursor(conn)
+            
+        # grab email and passwords
+        wemail = session.get('wemail')
+        fname = request.form['fname']
+        lname = request.form['lname']
+        major = request.form['major']
+        year = request.form['year']
+        country = request.form['country']
+        state = request.form['state']
+        city = request.form['city']
+        onCampus = request.form['onCampus']
+
+        profileQueries.update_profile(conn, wemail, fname, lname, country, state, city, major, year, onCampus)
+
+        #interests
+        book = request.form['book']
+        album = request.form['song']
+        color = request.form['color']
+        bio = request.form['bio']
+
+        #update interests
+        userInfo.update_favorites(conn, wemail, book, 'book')
+        userInfo.update_favorites(conn, wemail, album, 'song')
+        userInfo.update_favorites(conn, wemail, color, 'color')
+        userInfo.update_bio(conn, wemail, bio)
+
+        #update contact information
+        social1_type = request.form['contact-type1'] 
+        social2_type = request.form['contact-type2']
+        print(social1_type)
+        print(social2_type)
+        if (social1_type == 'Text'): 
+            social1_value = request.form['phonenumber1']
+            profileQueries.update_phone(conn, wemail, social1_value, social1_type)
+        else: # for Instagram/Faceobok, which hold links
+            # Two cases were necessary since the inputs held different values
+            social1_value = request.form['social-url1']
+            print(social1_value)
+            print(social1_type)
+            profileQueries.update_social(conn, wemail, social1_value, social1_type)
+
+        # check if someone entered a second contact method
+        social2_social = request.form['social-url2']
+        social2_number = request.form['phonenumber2']
+        if (social2_social != '') or (social2_number != ''):
+            if (social2_type == 'Text'):
+                profileQueries.update_phone(conn, wemail, social2_number)
+            else:
+                profileQueries.update_social(conn, wemail, social2_social, social2_type)
+
+        print("File test: ")
+        print(request.files['pic'])
+        try:
+             # Uploading the image
+            if request.files['pic'].filename == '':
+                print("No file was input")
+                return redirect(url_for('edit'))
+            else:
+                f = request.files['pic']
+                user_filename = f.filename
+                ext = user_filename.split('.')[-1]
+                filename = secure_filename('{}.{}'.format(wemail,ext))
+                pathname = os.path.join(app.config['UPLOADS'],filename)
+                f.save(pathname)
+                conn = dbi.connect()
+                curs = dbi.dict_cursor(conn)
+                curs.execute('''lock tables picfile write''')
+                curs.execute(
+                        '''insert into picfile(wemail,filename) values (%s,%s)
+                            on duplicate key update filename = %s''',
+                        [wemail, filename, filename])
+                curs.execute('''unlock tables''')
+                conn.commit()
+                flash('Update successful!')
+                return redirect(url_for('edit'))
+
+        except Exception as err:
+            flash('Upload failed {why}'.format(why=err))
+            return redirect(url_for('edit'))
+        
+
+            
 
 
 @app.route('/next/', methods=['POST'])
