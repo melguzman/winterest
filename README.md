@@ -1,6 +1,6 @@
 # Wintrest: Networking during a Pandemic
 
-### Creators: Julie Lely, Shreya Kochar, Melissa Guzman, Silvia Zeamer
+### Creators: Julie Lely, Shreya Kochar, and Melissa Guzman
 
 Our project is a social media platform for Wellesley students and alumni to network. It is a mixture of Tinder and Linkedin, where users are matched on the basis of what’s important to them - interests, values, personalities, and demographic traits like being first gen, low income, or of a minority ethnic group. Our aim is to create a way for the Wellesley community to create and maintain meaningful relationships in order to intentionally overcome the isolation produced by digital-first communication and continue to provide valuable connections across existing groups going into the future.
 
@@ -10,7 +10,7 @@ On a global level, the coronavirus pandemic has rendered many of the ways we hav
 
 ## Entity Relation Diagram of Key Components
 
-![Image of ERD](https://github.com/melguzman/wintrest/blob/main/WintrestERD.png)
+![Image of ERD](https://github.com/melguzman/wintrest/blob/main/WinterestERD.png)
 
 # Files Explained
 ## Queries Files
