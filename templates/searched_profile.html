@@ -107,49 +107,17 @@
   </div>
   <div class="match-buttons">
     <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">👀 More Information</button>
+    {% if matchStatus %}
+    <form class="match-button-form" method=post action="{{url_for('deleteMatch')}}">
+      <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">💔 Unmatch</button>
+    </form>
+    {% else %}
+      <form class="match-button-form" method=post action="{{url_for('makeMatch', location='home')}}">
+        <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">💖 Match</button>
+      </form>
+    {% endif %}
   </div>
 </section>
-
-    <section id="match-actions">
-      <div class="upcoming-meetings">
-        <h2 class="action-title">Upcoming meetings</h2>
-        <div id="all-meetings">
-          {% if meetings %}
-            {% for meeting in meetings %}
-            <div class="meeting-container">
-              <div class="meeting-time">
-                <p>{{meeting.date}} @ 
-                  {% if meeting.type == "Remote" %}
-                  {{meeting.type}}
-                  {% else %}
-                  {{meeting.location}}
-                  {% endif %}
-                </p>
-                <p>{{meeting.time}}</p>
-              </div>
-              <h2 class="meeting-title">{{meeting.what}}</h2>
-              <div class="meeting-options">
-                {% if meeting.type == "Remote" %}
-                <a href="{{meeting.location}}">
-                  <button id="zoom-meeting" name="zoom-meeting" value="{{meeting.meetingID}}">Zoom Link</button>
-                </a>
-                {% endif %}
-                <form action="{{url_for('deleteMeeting')}}" method="post">
-                  <button id="delete-meeting" type="submit" name="deleteMeeting" value="{{meeting.meetingID}}">Delete</button>
-                </form>
-              </div>
-            </div>
-            {% endfor %}
-          {% else %}
-          <div id="no-meeting" class="meeting-container">
-            <p>No meetings scheduled yet 😔</p>
-          </div>
-          {% endif %}
-        </div>
-        </div>
-    </section>
-
-
 </div>
 {% endblock %}
 
