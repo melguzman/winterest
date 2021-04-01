@@ -52,24 +52,11 @@ def find_person_LLs(conn, wemail):
     if len(LLInt) != 0:
         return LLInt
 
-# def find_MB_info(conn, MBCode):
-#     '''Takes a user's MBCode and uses it to generate their personality
-#     information and role in society as per the Myers-Briggs test.'''
-#     curs = dbi.dict_cursor(conn)
-#     curs.execute(f'SELECT personality, role FROM MBResults WHERE \
-#                 MBResults.MBCode = "{MBCode}"')
-#     MBVals = curs.fetchall()
-#     if len(MBVals) != 0:
-#         return MBVals
-#     return "No MB code input yet"
-
 def getBio(conn, userEmail):
     '''Returns a user's bio'''
     curs = dbi.dict_cursor(conn)
     curs.execute('''SELECT bio FROM bio WHERE wemail = %s''', [userEmail]) 
     return curs.fetchone()
-
-
 
 '''**************** Queries for changing tables ****************'''
 
@@ -118,10 +105,8 @@ def insert_favorites(conn, wemail, name, itemType):
 
     # assumption: user MUST have a favorite of each genre listed 
     curs = dbi.dict_cursor(conn)
-    curs.execute('''lock tables favorites write''')
     curs.execute('''INSERT INTO favorites (wemail, name, itemType) 
         VALUES (%s, %s, %s)''', [wemail, name, itemType])
-    curs.execute('''unlock tables''')
     conn.commit()
 
 def update_favorites(conn, wemail, name, itemType):
@@ -145,10 +130,8 @@ def update_bio(conn, wemail, bio):
 
     # update favorite and genres info 
     curs = dbi.dict_cursor(conn)
-    curs.execute('''lock tables bio write''')
     curs.execute('''UPDATE bio SET bio = %s
         WHERE wemail = %s''', [bio, wemail]) 
-    curs.execute('''unlock tables''')
     conn.commit()
     
 
@@ -162,10 +145,8 @@ def insert_top3_LL(conn, wemail, language, langNum):
 
     # assumption: user MUST have 3 LLs
     curs = dbi.dict_cursor(conn)
-    curs.execute('''lock tables loveLanguages write''')
     curs.execute('''INSERT INTO loveLanguages (wemail, language, langNum) 
         VALUES (%s, %s, %s)''', [wemail, language, langNum])
-    curs.execute('''unlock tables''')
     conn.commit()
 
 def update_top3_lang(conn, wemail, language, langNum):
@@ -176,34 +157,10 @@ def update_top3_lang(conn, wemail, language, langNum):
 
     # update love languages info 
     curs = dbi.dict_cursor(conn)
-    curs.execute('''lock tables loveLanguages write''')
     curs.execute('''UPDATE loveLanguages SET language = %s
         WHERE wemail = %s and langNum = %s''', [language, wemail, langNum])
     curs.execute('''commit''')
-    curs.execute('''unlock tables''')
     conn.commit()
-
-
-############ INSERT Myers-Briggs test results
-
-# def insert_Myers_Briggs_table(conn,MBCode): #needs to be used first
-#     '''Takes inputs from user's Myers-Briggs test results.
-#     Inserts the user's code from the test results into the database.'''
-
-#     curs = dbi.dict_cursor(conn)
-#     curs.execute(f'INSERT INTO MBResults (MBCode) \
-#         VALUES ("{MBCode}")')
-#     conn.commit()
-
-
-# def insert_Myers_Briggs(conn, wemail, MBCode): #then use function second
-#     '''Takes inputs from user based off of their Myers-Briggs test results.
-#     Inserts the user's code from the test results into the database.'''
-
-#     curs = dbi.dict_cursor(conn)
-#     curs.execute(f'UPDATE userAccount SET MBCode = "{MBCode}" \
-#         where wemail = "{wemail}"')
-#     conn.commit()
 
 
 if __name__ == '__main__':

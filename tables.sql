@@ -1,6 +1,5 @@
 use wellesleymatch_db;
 
-drop table if exists contact;
 drop table if exists meeting;
 drop table if exists userpass;
 drop table if exists picfile;
@@ -11,6 +10,7 @@ drop table if exists firstMatch;
 drop table if exists bio;
 drop table if exists loveLanguages;
 drop table if exists favorites;
+drop table if exists contact;
 drop table if exists userAccount;
  
 create table userAccount ( 
@@ -33,7 +33,7 @@ create table contact (
     phoneNumber varchar(20),
     url varchar(150),
     platform enum('facebook', 'instagram', 'whatsapp', 'text'),
-    primary key (contactID)
+    primary key (contactID),
     foreign key (wemail) references userAccount(wemail)
         on update cascade
         on delete cascade

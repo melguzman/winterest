@@ -116,15 +116,6 @@ def unMatch(conn, wemail, wemail2):
     curs.execute('''unlock tables''')
     conn.commit()
 
-# def getMatches(conn, wemail):
-#     '''Returns the information of the people the user has matched with,
-#     given the user's wemail'''
-#     curs = dbi.dict_cursor(conn)
-#     curs.execute('''SELECT b.wemail, b.fname, b.lname, b.year 
-#     FROM userAccount as a INNER JOIN matches_scored m ON (m.wemail 
-#     = a.wemail) INNER JOIN userAccount as b ON (m.wemail2 = b.wemail) 
-#     WHERE m.isMatched = "yes" and m.wemail = %s''', [wemail]) 
-#     return curs.fetchall()
 def getMatches(conn, userEmail): 
     '''Gets all of the user's matches only under a two sided match'''
     curs = dbi.dict_cursor(conn)
@@ -148,14 +139,9 @@ def getOneSidedMatches(conn, userEmail):
         where wemail in (select wemail from matches_scored where 
         wemail2 = %s and isMatched = 'yes')''', [userEmail])
     possibleOneSided = curs.fetchall()
-    #print('possibleOneSided')
-    #print(possibleOneSided)
     twoSidedMatches = getMatches(conn, userEmail) 
-    #print('twoSidedMatches')
-    #print(twoSidedMatches)
     oneSidedMatches = []
-    
-    #print(len(twoSidedMatches))
+  
     #if there are two sided matches, check that oneSidedMatches does not exist in that set
     if len(twoSidedMatches) > 0: 
         for oneSDMatch in possibleOneSided:
@@ -172,10 +158,8 @@ def setOneSDMatch(conn, wemail, wemail2): #one sided
     wemail2 is the matched person'''
     curs = dbi.dict_cursor(conn)
         # update matching status for user's row
-    curs.execute('''lock tables matches_scored write''')
     curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
         = %s and wemail2 = %s''', [wemail, wemail2])
-    curs.execute('''unlock tables''')
     conn.commit()
 
 def matchExists(conn, wemail, wemail2):

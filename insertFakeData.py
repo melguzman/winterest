@@ -28,11 +28,6 @@ def insertDataToTables(conn,csvFile):
 
         #insert data into respective tables for a fake user one at a time
         for row in csvreader:
-            #insert data into MBResults
-            # curs.execute(f'insert into MBResults(MBCode,personality,role) \
-            # values("{row[fieldsDict["MBCode"]]}","{row[fieldsDict["personality"]]}",\
-            # "{row[fieldsDict["role"]]}")')
-            # conn.commit()
 
             #insert data into userAccount
             curs.execute('''insert into userAccount(wemail,fname,lname,major,year,
@@ -50,10 +45,10 @@ def insertDataToTables(conn,csvFile):
             conn.commit()
 
             #insert data into professionalInterests
-            curs.execute('''insert into professionalInterests(wemail,industry,dreamJob) 
-                values(%s,%s,%s)''', [row[fieldsDict["wemail"]], row[fieldsDict["industry"]], 
-                row[fieldsDict["dreamJob"]]])
-            conn.commit()
+            # curs.execute('''insert into professionalInterests(wemail,industry,dreamJob) 
+            #     values(%s,%s,%s)''', [row[fieldsDict["wemail"]], row[fieldsDict["industry"]], 
+            #     row[fieldsDict["dreamJob"]]])
+            # conn.commit()
 
             #insert data into favorites
             curs.execute('''insert into favorites(wemail,name,itemType) 
