@@ -118,12 +118,12 @@ def signup():
                                 bcrypt.gensalt())
             hashed_str = hashed.decode('utf-8')
             try:
+                # insert user account if passwords match AND username is not taken
+                profileQueries.insert_profile(conn, wemail, fname, lname, country, state, city, major, year, onCampus)
                 curs.execute('''INSERT INTO userpass(wemail, hashed)
                             VALUES(%s, %s)''',
                             [wemail, hashed_str])
                 conn.commit()
-                # insert user account if passwords match AND username is not taken
-                profileQueries.insert_profile(conn, wemail, fname, lname, country, state, city, major, year, onCampus)
 
             
             # In the case the username is taken
