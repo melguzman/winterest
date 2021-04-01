@@ -108,26 +108,23 @@ def signup():
             city = request.form['city']
             onCampus = request.form['onCampus']
 
-            # insert user account
-            profileQueries.insert_profile(conn, wemail, fname, lname, country, state, city, major, year, onCampus)
-
             # check if the passwords match and if so, 
             # continue to add them to the user pass table
             if passwd1 != passwd2:
                 flash('Passwords do not match. Try again.')
-                return redirect( url_for('signup'))
+                return redirect(url_for('signup'))
 
             hashed = bcrypt.hashpw(passwd1.encode('utf-8'),
                                 bcrypt.gensalt())
             hashed_str = hashed.decode('utf-8')
-            print(passwd1, type(passwd1), hashed, hashed_str)
             try:
-                curs.execute('''lock tables userpass write''')
                 curs.execute('''INSERT INTO userpass(wemail, hashed)
                             VALUES(%s, %s)''',
                             [wemail, hashed_str])
-                curs.execute('''unlock tables''')
                 conn.commit()
+                # insert user account if passwords match AND username is not taken
+                profileQueries.insert_profile(conn, wemail, fname, lname, country, state, city, major, year, onCampus)
+
             
             # In the case the username is taken
             except Exception as err:
@@ -155,9 +152,7 @@ def signup():
             userInfo.insert_favorites(conn, wemail, color, 'color')
 
             #insert user's bio
-            curs.execute('''lock tables bio write''')
             curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [wemail, bio])
-            curs.execute('''unlock tables''')
             conn.commit()
 
             #insert contact information
@@ -167,7 +162,7 @@ def signup():
                 social1_value = request.form['phonenumber1']
                 profileQueries.insert_contact(conn, wemail, social1_value, None, social1_type)
             else: # for Instagram/Faceobok, which hold links
-                # Two cases were necessary since the inputs held different values
+                # Two cases were necessary since the inputs hold different values
                 social1_value = request.form['social-url1']
                 profileQueries.insert_contact(conn, wemail, None, social1_value, social1_type)
 
@@ -190,19 +185,18 @@ def signup():
                 f.save(pathname)
                 conn = dbi.connect()
                 curs = dbi.dict_cursor(conn)
-                curs.execute('''lock tables picfile write''')
                 curs.execute(
                     '''insert into picfile(wemail,filename) values (%s,%s)
                         on duplicate key update filename = %s''',
                     [wemail, filename, filename])
-                curs.execute('''unlock tables''')
                 conn.commit()
                 flash('Signup successful!')
                 return redirect(url_for('home'))
 
             except Exception as err:
-                flash('Upload failed {why}'.format(why=err))
-                return redirect(url_for('signup'))
+                flash('Upload failed {why}. You can update your picture \
+                on your profile page'.format(why=err))
+                return redirect(url_for('home'))
             
         except Exception as err:
             flash('form submission error '+str(err))
@@ -482,12 +476,10 @@ def edit():
                 f.save(pathname)
                 conn = dbi.connect()
                 curs = dbi.dict_cursor(conn)
-                curs.execute('''lock tables picfile write''')
                 curs.execute(
                         '''insert into picfile(wemail,filename) values (%s,%s)
                             on duplicate key update filename = %s''',
                         [wemail, filename, filename])
-                curs.execute('''unlock tables''')
                 conn.commit()
                 flash('Update successful!')
                 return redirect(url_for('edit'))
