@@ -3,9 +3,7 @@ use wellesleymatch_db;
 drop table if exists meeting;
 drop table if exists userpass;
 drop table if exists picfile;
-drop table if exists matches;
 drop table if exists matches_scored;
-drop table if exists meeting;
 drop table if exists firstMatch;
 drop table if exists bio;
 drop table if exists loveLanguages;
@@ -116,8 +114,8 @@ create table userpass(
        unique(wemail),
        index(wemail),
        foreign key (wemail) references userAccount(wemail) 
-        on delete cascade 
-        on update cascade
+        on delete restrict 
+        on update restrict 
 )
 
 ENGINE = InnoDB;
