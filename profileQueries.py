@@ -158,7 +158,7 @@ def delete_profile(conn, wemail):
 
 ############ INSERT, UPDATE User Profile
 
-def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
+def insert_contact(conn, wemail, phoneNumber, url, platform):
     '''Takes new user's contact information (phone number and info
     about most used social medial platform) so others can reach out
     Note: users can only insert one row of their contact information''' 
@@ -173,12 +173,12 @@ def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
     # if len(checkContact) == 0: 
     curs.execute('''lock tables contact write''')
     curs.execute('''INSERT INTO contact (wemail, phoneNumber, 
-            handle, url, platform) VALUES (%s, %s, %s, %s, %s)''', 
-            [wemail, phoneNumber, handle, url, platform])
+            url, platform) VALUES (%s, %s, %s, %s)''', 
+            [wemail, phoneNumber, url, platform])
     curs.execute('''unlock tables''')
     conn.commit()
 
-def update_contact(conn, wemail, phoneNumber, handle, url, platform): 
+def update_contact(conn, wemail, phoneNumber, url, platform): 
     '''Takes user's changed inputs for their contacts and updates the
     profile accordingly'''
 
@@ -187,8 +187,6 @@ def update_contact(conn, wemail, phoneNumber, handle, url, platform):
     curs.execute('''lock tables contact write''')
     curs.execute('''UPDATE contact SET phoneNumber = %s
         WHERE wemail = %s''', [phoneNumber, wemail])
-    curs.execute('''UPDATE contact SET handle = %s
-        WHERE wemail = %s''', [handle, wemail])
     curs.execute('''UPDATE contact SET url = %s
         WHERE wemail = %s''', [url, wemail])
     curs.execute('''UPDATE contact SET platform = %s
@@ -207,7 +205,6 @@ def update_social(conn, wemail, url, platform):
     curs.execute('''UPDATE contact SET url = %s
         WHERE wemail = %s and platform = %s''', [url, wemail, platform])
     curs.execute('''unlock tables''')
-
     conn.commit()
 
 def update_phone(conn, wemail, phoneNumber): 
@@ -222,8 +219,6 @@ def update_phone(conn, wemail, phoneNumber):
     curs.execute('''unlock tables''')
 
     conn.commit()
-
-
 
 def delete_contact(conn, wemail):
     '''Deletes a user's contact information given their wemail'''

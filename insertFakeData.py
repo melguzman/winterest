@@ -43,9 +43,9 @@ def insertDataToTables(conn,csvFile):
             conn.commit()
 
             #insert data into contact
-            curs.execute('''insert into contact(wemail,phoneNumber,handle,url,platform) 
-                values(%s, %s, %s, %s, %s)''', [row[fieldsDict["wemail"]], 
-                row[fieldsDict["phoneNumber"]], row[fieldsDict["handle"]], row[fieldsDict["url"]], 
+            curs.execute('''insert into contact(wemail,phoneNumber,url,platform) 
+                values(%s, %s, %s, %s)''', [row[fieldsDict["wemail"]], 
+                row[fieldsDict["phoneNumber"]], row[fieldsDict["url"]], 
                 row[fieldsDict["platform"]]])
             conn.commit()
 

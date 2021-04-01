@@ -165,20 +165,20 @@ def signup():
             social2_type = request.form['contact-type2']
             if (social1_type == 'Text'): 
                 social1_value = request.form['phonenumber1']
-                profileQueries.insert_contact(conn, wemail, social1_value, None, None, social1_type)
+                profileQueries.insert_contact(conn, wemail, social1_value, None, social1_type)
             else: # for Instagram/Faceobok, which hold links
                 # Two cases were necessary since the inputs held different values
                 social1_value = request.form['social-url1']
-                profileQueries.insert_contact(conn, wemail, None, None, social1_value, social1_type)
+                profileQueries.insert_contact(conn, wemail, None, social1_value, social1_type)
 
             # check if someone entered a second contact method
             social2_social = request.form['social-url2']
             social2_number = request.form['phonenumber2']
             if (social2_social != '') or (social2_number != ''):
                 if (social2_type == 'Text'):
-                    profileQueries.insert_contact(conn, wemail, social2_number, None, None, social2_type)
+                    profileQueries.insert_contact(conn, wemail, social2_number, None, social2_type)
                 else:
-                    profileQueries.insert_contact(conn, wemail, None, None, social2_social, social2_type)
+                    profileQueries.insert_contact(conn, wemail, None, social2_social, social2_type)
 
             try:
                 # Uploading the image
@@ -222,80 +222,6 @@ def pic(wemail):
         return redirect(url_for('home'))
     row = curs.fetchone()
     return send_from_directory(app.config['UPLOADS'],row['filename'])
-
-
-@app.route('/interests/', methods = ['GET', 'POST']) 
-def interests():
-    '''Interests is the second half of the onboarding process.
-    Users are asked for the interests (favorites) and contact
-    information. We will be making the favorites customizable 
-    for the beta version'''
-    conn = dbi.connect()
-    curs = dbi.dict_cursor(conn)
-    email = session.get('wemail')
-    #interests
-    if request.method == 'POST':
-        book = request.form['book']
-        album = request.form['song']
-        color = request.form['color']
-        bio = request.form['bio']
-        
-        #insert interests
-        userInfo.insert_favorites(conn, email, book, 'book')
-        userInfo.insert_favorites(conn, email, album, 'song')
-        userInfo.insert_favorites(conn, email, color, 'color')
-
-        #insert user's bio
-        curs.execute('''lock tables bio write''')
-        curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
-        curs.execute('''unlock tables''')
-        conn.commit()
-
-        #insert contact information
-        social1_type = request.form['contact-type1'] 
-        social2_type = request.form['contact-type2']
-        if (social1_type == 'Text'): 
-            social1_value = request.form['phonenumber1']
-            profileQueries.insert_contact(conn, email, social1_value, None, None, social1_type)
-        else: # for Instagram/Faceobok, which hold links
-            # Two cases were necessary since the inputs held different values
-            social1_value = request.form['social-url1']
-            profileQueries.insert_contact(conn, email, None, None, social1_value, social1_type)
-
-        # check if someone entered a second contact method
-        social2_social = request.form['social-url2']
-        social2_number = request.form['phonenumber2']
-        if (social2_social != '') or (social2_number != ''):
-            if (social2_type == 'Text'):
-                profileQueries.insert_contact(conn, email, social2_number, None, None, social2_type)
-            else:
-                profileQueries.insert_contact(conn, email, None, None, social2_social, social2_type)
-
-        try:
-            # Uploading the image
-            f = request.files['pic']
-            user_filename = f.filename
-            ext = user_filename.split('.')[-1]
-            filename = secure_filename('{}.{}'.format(email,ext))
-            pathname = os.path.join(app.config['UPLOADS'],filename)
-            f.save(pathname)
-            conn = dbi.connect()
-            curs = dbi.dict_cursor(conn)
-            curs.execute('''lock tables picfile write''')
-            curs.execute(
-                '''insert into picfile(wemail,filename) values (%s,%s)
-                    on duplicate key update filename = %s''',
-                [email, filename, filename])
-            curs.execute('''unlock tables''')
-            conn.commit()
-            flash('Upload successful')
-            return redirect(url_for('home'))
-
-        except Exception as err:
-            flash('Upload failed {why}'.format(why=err))
-            return redirect(url_for('interests'))
-    else:
-        return render_template('interests.html', page_title="Signup")
 
 @app.route('/logout/', methods = ["POST"])
 def logout():

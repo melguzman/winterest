@@ -1,6 +1,6 @@
-wemail,password,fname,lname,major,year,country,state,city,onCampus,phoneNumber,handle,url,platform,industry,dreamJob,name,itemType,langNum,language,filename
-aEstrada,fake,Ana,Estrada,Biology,2023,US,MA,Wellesley,no,340,someHandle5,someURL5,facebook,Health,Doctor,Blue,color,1,affirmation,aEstrada.jpg
-gPortill,fake2,Guadalupe,Portillo,Math,2022,US,TX,Dallas,no,830,someHandle4,someURL4,instagram,Education,Teacher,Blue,color,1,service,gPortillo.jpg
-mPap,fake3,Marisy,Pap,Environmental Science,2021,US,TX,El Paso,yes,898,someHandle1,someURL1,whatsapp,Public Policy,Lawyer,Rico Nasty,artist,1,gift,mPap.jpg
-eRamos,fake4,Elia,Ramos,Music,2022,US,CA,Los Angeles,no,786,someHandle2,someURL2,whatsapp,Music,Musician,Rico Nasty,artist,1,service,eRamos.jpg
-aJohnson,fake5,Abel,Johnson,Sociology,2021,US,AZ,Phoenix,yes,871,someHandle3,someURL3,text,Public Policy,Lawyer,Avengers:Endgame,movie,1,physical,aJohnson.jpg
+wemail,password,fname,lname,major,year,country,state,city,onCampus,phoneNumber,url,platform,industry,dreamJob,name,itemType,langNum,language,filename
+aEstrada,fake,Ana,Estrada,Biology,2023,US,MA,Wellesley,no,340,someURL5,facebook,Health,Doctor,Blue,color,1,affirmation,aEstrada.jpg
+gPortill,fake2,Guadalupe,Portillo,Math,2022,US,TX,Dallas,no,830,someURL4,instagram,Education,Teacher,Blue,color,1,service,gPortillo.jpg
+mPap,fake3,Marisy,Pap,Environmental Science,2021,US,TX,El Paso,yes,898,someURL1,whatsapp,Public Policy,Lawyer,Rico Nasty,artist,1,gift,mPap.jpg
+eRamos,fake4,Elia,Ramos,Music,2022,US,CA,Los Angeles,no,786,someURL2,whatsapp,Music,Musician,Rico Nasty,artist,1,service,eRamos.jpg
+aJohnson,fake5,Abel,Johnson,Sociology,2021,US,AZ,Phoenix,yes,871,someURL3,text,Public Policy,Lawyer,Avengers:Endgame,movie,1,physical,aJohnson.jpg

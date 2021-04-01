@@ -1,7 +1,7 @@
 use wellesleymatch_db;
 
+drop table if exists contact;
 drop table if exists meeting;
-drop table if exists MBResults;
 drop table if exists userpass;
 drop table if exists picfile;
 drop table if exists matches;
@@ -11,12 +11,10 @@ drop table if exists firstMatch;
 drop table if exists bio;
 drop table if exists loveLanguages;
 drop table if exists favorites;
-drop table if exists professionalInterests;
-drop table if exists contact;
 drop table if exists userAccount;
  
 create table userAccount ( 
-    wemail varchar(20)  not null primary key,
+    wemail varchar(20) not null primary key,
     fname varchar(30),
     lname varchar(30),
     major varchar(50),
@@ -25,31 +23,20 @@ create table userAccount (
     state varchar(2),
     city varchar(50),
     onCampus enum("yes", "no")
-    )
-
-ENGINE = InnoDB;
-
-create table contact (
-    wemail varchar(20) not null,
-    phoneNumber varchar(20),
-    handle varchar(50),
-    url varchar(150),
-    platform enum('facebook', 'instagram', 'whatsapp', 'text'),
-    foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
 )
 
 ENGINE = InnoDB;
 
-create table professionalInterests (
+create table contact (
+    contactID int not null AUTO_INCREMENT,
     wemail varchar(20) not null,
-    industry varchar(50),
-    dreamJob varchar(50),
-    INDEX (industry),
+    phoneNumber varchar(20),
+    url varchar(150),
+    platform enum('facebook', 'instagram', 'whatsapp', 'text'),
+    primary key (contactID)
     foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
+        on update cascade
+        on delete cascade
 )
 
 ENGINE = InnoDB;
@@ -61,8 +48,8 @@ create table favorites (
         'tvshow', 'color', 'emoji', 'food', 'restaurant', 'game'),
     INDEX (itemType),
     foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
+        on update cascade
+        on delete cascade
 )
 
 ENGINE = InnoDB;
@@ -72,8 +59,8 @@ create table loveLanguages (
     langNum enum("1", "2", "3"),
     language enum('affirmation', 'service', 'gift', 'time', 'physical'),
     foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
+        on update cascade
+        on delete cascade
 )
 
 ENGINE = InnoDB;
@@ -82,8 +69,8 @@ create table bio (
     wemail varchar(20) not null,
     bio varchar(200),
     foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
+        on update cascade
+        on delete cascade
 )
 
 ENGINE = InnoDB;
@@ -94,8 +81,8 @@ create table firstMatch (
     wemailMatch varchar(50),
     INDEX (matchID),
     foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
+        on update cascade
+        on delete cascade
 )
 
 ENGINE = InnoDB;
@@ -107,8 +94,8 @@ create table matches_scored (
     isMatched char(3), -- value of yes/no depending on if this pair is matched or not
     INDEX (wemail),
     foreign key (wemail) references userAccount(wemail)
-        on update restrict
-        on delete restrict
+        on update cascade
+        on delete cascade
 )
 
 ENGINE = InnoDB;
@@ -147,8 +134,8 @@ create table meeting(
        notes varchar(100),
        INDEX (meetingID),
        foreign key (wemail) references userAccount(wemail) 
-        on delete restrict 
-        on update restrict
+        on delete cascade 
+        on update cascade
 )
 
 ENGINE = InnoDB;
