@@ -1,8 +1,10 @@
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
+from threading import Lock # threading & locking
 app = Flask(__name__)
 
+from datetime import datetime
 import cs304dbi as dbi # figure out which dbi to use
 # import cs304dbi_sqlite3 as dbi
 
@@ -11,7 +13,9 @@ import profileQueries
 import makeMatchesQueries as matches
 import insertFakeData
 import random
+import bcrypt
 import sys
+import time
 
 app.secret_key = 'your secret here'
 # replace that with a random key
@@ -29,25 +33,181 @@ app.config['MAX_CONTENT_LENGTH'] = 1*1024*1024 # 1 MB
 
 @app.route('/')
 def index():
-    wemail = request.cookies.get('wemail')
+    wemail = session.get('wemail')
     if not wemail:
-        print('no cookie set')
+        print('no session exist')
         if request.method == "GET":
             print('case 1: first visit, just render landing page')
-            return render_template('landing.html')
+            return render_template('landing.html', page_title="Landing")
     else:
         return redirect(url_for('home'))
 
-@app.route('/login/')
+@app.route('/login/', methods = ['GET', 'POST'])
 def login():
-    return render_template('login.html')
+    '''Routing function for when peole log in'''
+    if request.method == 'GET':
+        return render_template('login.html', page_title="Login")
+    else:
+        try:
+            wemail = request.form['email']
+            passwd = request.form['password']
+            conn = dbi.connect()
+            curs = dbi.dict_cursor(conn)
+            curs.execute('''SELECT *
+                        FROM userpass
+                        WHERE wemail = %s''',
+                        [wemail])
+            row = curs.fetchone()
+            if row is None:
+                # Same response as wrong password,
+                # so no information about what went wrong
+                print("Row is none")
+                flash('Login incorrect. Try again or sign up')
+                return redirect( url_for('login'))
+            hashed = row['hashed']
+            hashed2 = bcrypt.hashpw(passwd.encode('utf-8'),
+                                    hashed.encode('utf-8'))
+            hashed2_str = hashed2.decode('utf-8')
+            if hashed2_str == hashed:
+                flash('successfully logged in as '+ wemail)
+                session['index'] = 0
+                session['wemail'] = wemail
+                return redirect(url_for('home'))
+            else:
+                flash('Login incorrect. Try again or sign up')
+                return redirect( url_for('index'))
 
-@app.route('/signup/')
+        except Exception as err:
+            print("Exception: " + str(err))
+            flash('Login incorrect. Try again or sign up')
+            return redirect( url_for('login'))
+
+@app.route('/signup/', methods = ['GET', 'POST'])
 def signup():
-    return render_template('signup.html')
+    '''Routing function for when people sign up. 
+    This is the first page of the onboarding process'''
+    if request.method == 'GET':
+        return render_template('signup.html', page_title="Signup")
+    else:
+        try:
+            conn = dbi.connect()
+            curs = dbi.cursor(conn)
+            
+            # grab email and passwords
+            wemail = request.form['email']
+            passwd1 = request.form['password1']
+            passwd2 = request.form['password2']
+
+            # basic info
+            fname = request.form['fname']
+            lname = request.form['lname']
+            major = request.form['major']
+            year = request.form['year']
+            country = request.form['country']
+            state = request.form['state']
+            city = request.form['city']
+            onCampus = request.form['onCampus']
+            pronouns = request.form['pronouns']
+
+            # check if the passwords match and if so, 
+            # continue to add them to the user pass table
+            if passwd1 != passwd2:
+                flash('Passwords do not match. Try again.')
+                return redirect(url_for('signup'))
+
+            hashed = bcrypt.hashpw(passwd1.encode('utf-8'),
+                                bcrypt.gensalt())
+            hashed_str = hashed.decode('utf-8')
+            try:
+                # insert user account if passwords match AND username is not taken
+                profileQueries.insert_profile(conn, wemail, fname, lname, 
+                    country, state, city, major, year, onCampus, pronouns)
+                curs.execute('''INSERT INTO userpass(wemail, hashed)
+                            VALUES(%s, %s)''',
+                            [wemail, hashed_str])
+                conn.commit()
+
+            
+            # In the case the username is taken
+            except Exception as err:
+                flash('That username is taken: {}'.format(repr(err)))
+                return redirect(url_for('signup'))
+
+            # Generate a list of potential matches for the user (ordered)
+            matches.insertScores(conn, wemail)
+
+            # Add a session 'index' that keeps track of their scroll position
+            # for the carousel
+            session['index'] = 0
+            # Add a session for the email so we can remember the user
+            session['wemail'] = wemail
+            
+            # INTERESTS SECTION
+            book = request.form['book']
+            album = request.form['song']
+            color = request.form['color']
+            bio = request.form['bio']
+            
+            #insert interests
+            userInfo.insert_favorites(conn, wemail, book, 'book')
+            userInfo.insert_favorites(conn, wemail, album, 'song')
+            userInfo.insert_favorites(conn, wemail, color, 'color')
+
+            #insert user's bio
+            curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [wemail, bio])
+            conn.commit()
+
+            #insert contact information
+            social1_type = request.form['contact-type1'] 
+            social2_type = request.form['contact-type2']
+            if (social1_type == 'Text'): 
+                social1_value = request.form['phonenumber1']
+                profileQueries.insert_contact(conn, wemail, social1_value, None, social1_type)
+            else: # for Instagram/Faceobok, which hold links
+                # Two cases were necessary since the inputs hold different values
+                social1_value = request.form['social-url1']
+                profileQueries.insert_contact(conn, wemail, None, social1_value, social1_type)
+
+            # check if someone entered a second contact method
+            social2_social = request.form['social-url2']
+            social2_number = request.form['phonenumber2']
+            if (social2_social != '') or (social2_number != ''):
+                if (social2_type == 'Text'):
+                    profileQueries.insert_contact(conn, wemail, social2_number, None, social2_type)
+                else:
+                    profileQueries.insert_contact(conn, wemail, None, social2_social, social2_type)
+
+            try:
+                # Uploading the image
+                f = request.files['pic']
+                user_filename = f.filename
+                ext = user_filename.split('.')[-1]
+                filename = secure_filename('{}.{}'.format(wemail,ext))
+                pathname = os.path.join(app.config['UPLOADS'],filename)
+                f.save(pathname)
+                conn = dbi.connect()
+                curs = dbi.dict_cursor(conn)
+                curs.execute(
+                    '''insert into picfile(wemail,filename) values (%s,%s)
+                        on duplicate key update filename = %s''',
+                    [wemail, filename, filename])
+                conn.commit()
+                flash('Signup successful!')
+                return redirect(url_for('home'))
+
+            except Exception as err:
+                flash('Upload failed {why}. You can update your picture \
+                on your profile page'.format(why=err))
+                return redirect(url_for('home'))
+            
+        except Exception as err:
+            flash('form submission error '+str(err))
+            return redirect( url_for('signup') )
 
 @app.route('/pic/<wemail>')
 def pic(wemail):
+    '''Loads images, which are used on all pages (home,
+    matches, and user profile'''
     conn = dbi.connect()
     curs = dbi.dict_cursor(conn)
     numrows = curs.execute(
@@ -59,162 +219,56 @@ def pic(wemail):
     row = curs.fetchone()
     return send_from_directory(app.config['UPLOADS'],row['filename'])
 
-
-@app.route('/interests/', methods = ['GET', 'POST']) 
-def interests():
-    conn = dbi.connect()
-    curs = dbi.dict_cursor(conn)
-    email = request.cookies.get('wemail')
-    #interests
-    if request.method == 'POST':
-        book = request.form['book']
-        album = request.form['song']
-        color = request.form['color']
-        bio = request.form['bio']
-
-        #insert interests
-        curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, book, 'book'])
-        conn.commit()
-        curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, album, 'song'])
-        conn.commit()
-        curs.execute('''INSERT INTO favorites (wemail, name, itemType) VALUES (%s, %s, %s)''', [email, color, 'color'])
-        conn.commit()
-        curs.execute('''INSERT INTO bio (wemail, bio) VALUES (%s, %s)''', [email, bio])
-        conn.commit()
-
-        try:
-            print("Rendering files")
-            f = request.files['pic']
-            user_filename = f.filename
-            ext = user_filename.split('.')[-1]
-            filename = secure_filename('{}.{}'.format(email,ext))
-            pathname = os.path.join(app.config['UPLOADS'],filename)
-            f.save(pathname)
-            conn = dbi.connect()
-            curs = dbi.dict_cursor(conn)
-            curs.execute(
-                '''insert into picfile(wemail,filename) values (%s,%s)
-                    on duplicate key update filename = %s''',
-                [email, filename, filename])
-            conn.commit()
-            flash('Upload successful')
-            return redirect(url_for('home'))
-
-        except Exception as err:
-            flash('Upload failed {why}'.format(why=err))
-            return redirect(url_for('interests'))
-    else:
-        return render_template('interests.html')
-
-@app.route('/authenticate/<kind>', methods = ['GET', 'POST']) 
-def authenticate(kind):
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-
-        if kind == 'login':
-            conn = dbi.connect()
-            curs = dbi.dict_cursor(conn)
-            curs.execute('''SELECT * FROM userAccount WHERE wemail = %s AND password = %s''', [email, password])
-            if len(curs.fetchall()) == 1:
-                resp = make_response(redirect(url_for('home')))
-                resp.set_cookie('wemail', email)
-                return resp
-            else:
-                flash("Incorrect information. Try again?")
-                return render_template('landing.html')
-
-        elif kind == 'signup':
-            conn = dbi.connect()
-            curs = dbi.dict_cursor(conn)
-
-            #basic info
-            fname = request.form['fname']
-            lname = request.form['lname']
-            major = request.form['major']
-            year = request.form['year']
-            country = request.form['country']
-            state = request.form['state']
-            city = request.form['city']
-
-            #MBCode and default oncampus to 'no'
-            highestMBCode = (curs.execute('''SELECT MAX(CAST(MBCode AS int)) AS code FROM MBResults''')) 
-            print(highestMBCode, flush=True)
-            MBCode = int(curs.fetchone()['code']) + 1
-            onCampus = 'no'
-
-            #insert MBCode
-            curs.execute('''INSERT INTO MBResults (MBCode) VALUES (%s)''', [MBCode])
-            conn.commit()
-
-            #insert user account
-            curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, state, city, MBCode, major, year, onCampus, password) \
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', [email, fname, lname, country, state, city, MBCode, major, year, onCampus, password])
-            conn.commit()
-
-            matches.insertScores(conn, email)
-
-        #set wemail
-        session['index'] = 0
-        resp = make_response(redirect(url_for('interests')))
-        resp.set_cookie('wemail', email)
-        return resp
-
-    flash ("Error during authentication. Try again.") 
-    return redirect(url_for("landing.html"))
+@app.route('/logout/', methods = ["POST"])
+def logout():
+    '''Logout option when the user chooses to log out'''
+    flash('You successfully logged out. Come back again!')
+    resp = make_response(render_template('landing.html', page_title="Landing"))
+    session.pop('wemail', None)
+    session.pop('index', None)
+    return resp
 
 @app.route('/faq/')
 def faq():
+    '''Routes to the FAQ page, which contains information about Winterest'''
     return render_template('faq.html', page_title = 'Winterest FAQ')
-
-@app.route('/demographics/', methods = ["GET", "POST"])
-def demographics():
-    if request.method == 'GET':
-        return render_template('demographics.html', title ='Fill out your demographics:')
-    else:
-        try:
-            username = request.form['username'] # throws error if there's trouble
-            flash('form submission successful')
-            return render_template('greet.html',
-                                   title='Welcome '+username,
-                                   name=username)
-
-        except Exception as err:
-            flash('form submission error'+str(err))
-            return redirect( url_for('index') )
 
 def favoritesInformation(personDict):
     '''Takes a dictionary and adds a favorite key and favorite info in 
     a form of a list of dictionaries as the value'''
     conn = dbi.connect()
-    temp = personDict
     email = personDict['wemail']
     favs = userInfo.find_favorites(conn, email) # Get list of dictionaries for each fav.
-    temp['favorites'] = favs # Add key value pair to the dictionary
-    return temp
+    personDict['favorites'] = favs # Add key value pair to the dictionary
+    return personDict
 
+def formatFavorites(favDict):
+    '''Takes a list of dictionaries with a person's favorites and
+    returns a dictionary with the favorite type as the key, and the
+    corresponding name as the value. '''
+    newDict = {}
+    for oneDict in favDict:
+        itemType = oneDict['itemType']
+        name = oneDict['name']
+        newDict[itemType] = name
+    return newDict
+
+# Emojis dictionary that associates a 'favorite' with an emoji. This will
+# be important in the Beta version, when interests can be customized
 emojis = {'album': 'üíø', 'song': 'üéµ', 'artist': 'üë©‚Äçüé®', 'book': 'üìò', 
     'movie': 'üé¨', 'color': 'üé®', 'emoji': 'üòú', 'food': 'üçî', 'restaurant': 'üçï',
     'game': 'üëæ'}
 
 @app.route('/home/', methods=['GET','POST'])
 def home():
+    '''This is the home page of the website that houses matching
+    interactions. This page allows users to display potential matches
+    and their current matches'''
     # grab wemail from cookie
-    wemail = request.cookies.get('wemail')
+    wemail = session.get('wemail')
     if not wemail:
         flash('You are not logged in. Please log in or sign up!')
         return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        # User wants to logout
-        if "logout" in request.form: 
-                flash('You successfully logged out. Come back again!')
-                resp = make_response(
-                    render_template('landing.html'))
-                resp.set_cookie('wemail', '', expires=0)
-                session.pop('index', None)
-                # resp.set_cookie('index', '', expires=0)
-                return resp
 
     conn = dbi.connect()
 
@@ -225,13 +279,14 @@ def home():
 
     # get a user's current matching
     currentMatches = matches.getMatches(conn, wemail)
+    # get a user's one sided matchings
+    oneSidedMatching = matches.getOneSidedMatches(conn, wemail) #addeddddddddddddddddddddddddddd
     # get list of potential matches emails (list of dictionaries) 
     potentialMatches = matches.generatePotentialInfo(conn, wemail)
     # grab potential user via index (one place they are in the carosel)
     potentialMatch = potentialMatches[index]  # this is a dictionary!
     # add a favorites key with a list of interests as its value for each user
     completedMatches = favoritesInformation(potentialMatch)
-    print("Completed matches: " + str(completedMatches))
     # get that user's info as a list with one dictionary in it
     matchEmail = potentialMatch['wemail']
     # get potential user's bio
@@ -245,42 +300,266 @@ def home():
     matchStatus = matches.matchExists(conn, wemail, matchEmail)
         
     return render_template('home.html', person = completedMatches, matchStatus = matchStatus,
-        currentMatches = currentMatches, emojis = emojis, matchBio = matchBio, currentUserInfo = currentUserInfo,
-        photo = photo)
+        currentMatches = currentMatches, oneSidedMatches = oneSidedMatching, emojis = emojis, 
+        matchBio = matchBio, currentUserInfo = currentUserInfo,
+        photo = photo, page_title="Home") #adddedddddddddddddddddd
 
-@app.route('/makeMatch/', methods=['POST'])
-def makeMatch():
+@app.route('/makeMatch/<location>', methods=['POST'])
+def makeMatch(location):
     '''Triggered when user presses the "Match" button on the home page.
     Adds the match pairing to the website'''
     conn = dbi.connect()
-    userEmail = request.cookies.get('wemail')
+    userEmail = session.get('wemail')
     matchEmail = request.form.get('submit')
-    matches.setMatched(conn, userEmail, matchEmail)
+    #return redirect(url_for('home'))
+    
+    #check if one sided match already exists
+    if matches.matchExists(conn, matchEmail, userEmail): #works perfect
+        #print("worked")
+        matches.setMatched(conn, userEmail, matchEmail) #updated both so two sided match
+    else:
+        matches.setOneSDMatch(conn, userEmail, matchEmail) #intially one sided
+
+    if location == "home":
+        return redirect(url_for('home'))
+    else:
+        return redirect(url_for('match', wemail=matchEmail))
+
+@app.route('/deleteMatch/', methods=['POST'])
+def deleteMatch():
+    '''Triggered when user presses the "unMatch" button on the home page.
+    Gets rid of match pairing from the website'''
+    conn = dbi.connect()
+    userEmail = session.get('wemail')
+    matchEmail = request.form.get('submit')
+    #design decision: if one side unmatches, completey unmatch
+    matches.unMatch(conn, userEmail, matchEmail)
     return redirect(url_for('home'))
 
 @app.route('/matches/<wemail>', methods=['GET','POST'])
 def match(wemail):
     '''Redirects user to a page with matching interactions'''
-    userEmail = request.cookies.get('wemail')
+    session['currentMatchee'] = wemail
+    userEmail = session.get('wemail')
     if not userEmail:
         flash('Session timed out. Log in again!')
         return redirect(url_for('index'))
 
+    # grabbing basic info and photos for the match page
     conn = dbi.connect()
     currentUserInfo = profileQueries.find_profile(conn, userEmail)
     info = profileQueries.find_profile(conn, wemail)
     completeInfo = favoritesInformation(info)
     bio = userInfo.getBio(conn, wemail)
     photo = userInfo.find_photo(conn, wemail)
+    contacts = profileQueries.find_contacts(conn, wemail)
+
+    #check if this person is a one sided match,
+    #would know if a one sided match exists if not symmetric in matches_scored table
+    oneSidedMatchStatus = (len(matches.matchExists(conn, wemail, userEmail)) > 0) \
+                        and (len(matches.matchExists(conn, userEmail, wemail)) == 0)
+
+    # Add any upcoming meetings
+    meetings = profileQueries.find_all_meetings(conn, wemail)
     
     return render_template('matches.html', person = completeInfo, 
-    emojis = emojis, personBio = bio, currentUserInfo = currentUserInfo, photo = photo)
+        oneSDMatchStatus = oneSidedMatchStatus, emojis = emojis, personBio = bio, 
+        currentUserInfo = currentUserInfo, photo = photo, meetings = meetings, 
+        contacts=contacts, page_title=completeInfo["fname"] + "'s Profile")
+
+@app.route('/profile/', methods=['GET','POST'])
+def profile():
+    '''Displays the current user's profile'''
+    userEmail = session.get('wemail')
+    if not userEmail:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+
+    conn = dbi.connect()
+    info = profileQueries.find_profile(conn, userEmail)
+    completeInfo = favoritesInformation(info)
+    bio = userInfo.getBio(conn, userEmail)
+    photo = userInfo.find_photo(conn, userEmail)
+    contacts = profileQueries.find_contacts(conn, userEmail)
+    # Add any upcoming meetings
+    meetings = profileQueries.find_all_meetings(conn, userEmail)
+    
+    return render_template('profile.html', person = completeInfo, 
+        emojis = emojis, personBio = bio, photo = photo, meetings = meetings, 
+        contacts=contacts, page_title=info["fname"] + "'s Profile")
+
+@app.route('/edit/', methods=['GET','POST'])
+def edit():
+    '''Displays the current user's profile'''
+    userEmail = session.get('wemail')
+    if not userEmail:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+    
+    if request.method == 'GET':
+        conn = dbi.connect()
+        info = profileQueries.find_profile(conn, userEmail)
+        completeInfo = favoritesInformation(info)
+        print(completeInfo)
+        favorites = formatFavorites(completeInfo['favorites'])
+        bio = userInfo.getBio(conn, userEmail)
+        photo = userInfo.find_photo(conn, userEmail)
+        contacts = profileQueries.find_contacts(conn, userEmail)
+        return render_template('edit.html', person = completeInfo, 
+            favorites = favorites,
+            personBio = bio, contacts=contacts, page_title='Edit Profile') 
+    else:
+        conn = dbi.connect()
+        curs = dbi.cursor(conn)
+            
+        # grab email and passwords
+        wemail = session.get('wemail')
+        fname = request.form['fname']
+        lname = request.form['lname']
+        major = request.form['major']
+        year = request.form['year']
+        country = request.form['country']
+        state = request.form['state']
+        city = request.form['city']
+        onCampus = request.form['onCampus']
+        pronouns = request.form['pronouns']
+
+        profileQueries.update_profile(conn, wemail, fname, lname, 
+            country, state, city, major, year, onCampus, pronouns)
+
+        #interests
+        book = request.form['book']
+        album = request.form['song']
+        color = request.form['color']
+        bio = request.form['bio']
+
+        #update interests
+        userInfo.update_favorites(conn, wemail, book, 'book')
+        userInfo.update_favorites(conn, wemail, album, 'song')
+        userInfo.update_favorites(conn, wemail, color, 'color')
+        userInfo.update_bio(conn, wemail, bio)
+
+        #update contact information
+        social1_type = request.form['contact-type1'] 
+        social2_type = request.form['contact-type2']
+        print(social1_type)
+        print(social2_type)
+        if (social1_type == 'Text'): 
+            social1_value = request.form['phonenumber1']
+            profileQueries.update_phone(conn, wemail, social1_value, social1_type)
+        else: # for Instagram/Facebook, which hold links
+            # Two cases were necessary since the inputs held different values
+            social1_value = request.form['social-url1']
+            print(social1_value)
+            print(social1_type)
+            profileQueries.update_social(conn, wemail, social1_value, social1_type)
+
+        # check if someone entered a second contact method
+        social2_social = request.form['social-url2']
+        social2_number = request.form['phonenumber2']
+        if (social2_social != '') or (social2_number != ''):
+            if (social2_type == 'Text'):
+                profileQueries.update_phone(conn, wemail, social2_number)
+            else:
+                profileQueries.update_social(conn, wemail, social2_social, social2_type)
+
+        print("File test: ")
+        print(request.files['pic'])
+        try:
+             # Uploading the image
+            if request.files['pic'].filename == '':
+                print("No file was input")
+                return redirect(url_for('edit'))
+            else:
+                f = request.files['pic']
+                user_filename = f.filename
+                ext = user_filename.split('.')[-1]
+                filename = secure_filename('{}.{}'.format(wemail,ext))
+                pathname = os.path.join(app.config['UPLOADS'],filename)
+                f.save(pathname)
+                conn = dbi.connect()
+                curs = dbi.dict_cursor(conn)
+                curs.execute(
+                        '''insert into picfile(wemail,filename) values (%s,%s)
+                            on duplicate key update filename = %s''',
+                        [wemail, filename, filename])
+                conn.commit()
+                flash('Update successful!')
+                return redirect(url_for('edit'))
+
+        except Exception as err:
+            flash('Upload failed {why}'.format(why=err))
+            return redirect(url_for('edit'))
+            
+
+@app.route('/profile/<wemail>', methods=['GET','POST'])
+def searched_profile(wemail):
+    '''Displays the searched person'sprofile'''
+    userEmail = session.get('wemail')
+    if not userEmail:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+    conn = dbi.connect()
+
+    info = profileQueries.find_profile(conn, wemail)
+    completeInfo = favoritesInformation(info)
+    bio = userInfo.getBio(conn, wemail)
+    photo = userInfo.find_photo(conn, wemail)
+    contacts = profileQueries.find_contacts(conn, wemail)
+    # Add any upcoming meetings
+    matchStatus = matches.matchExists(conn, userEmail, wemail)
+    
+    return render_template('searched_profile.html', person = completeInfo, 
+        emojis = emojis, personBio = bio, photo = photo, matchStatus = matchStatus,
+        contacts=contacts, page_title=info["fname"] + "'s Profile") 
+
+@app.route('/query/')
+def query():
+    '''Redircts/renders to different pages depending on search bar input'''
+    userEmail = session.get('wemail')
+    if not userEmail:
+        flash('Session timed out. Log in again!')
+        return redirect(url_for('index'))
+    conn = dbi.connect()
+    currentUserInfo = profileQueries.find_profile(conn, userEmail)
+
+    name = request.args.get('query') 
+    type_search = request.args.get('kind')
+    
+    if type_search == 'person': 
+        people = profileQueries.find_person(conn, name)
+        print(people)
+        # case 1: one person found
+        if len(people) == 1:
+            email = people[0]['wemail']
+            return redirect(url_for('searched_profile', wemail=email))
+        # case 2: multiple similar people found
+        elif len(people) > 1:
+            return render_template( 
+                'possible_people.html',
+                currentUser = currentUserInfo,
+                peopleFound = people
+                )
+        # case 3: person not found
+        else:
+            flash("Person does not have a Winterest profile yet") 
+            return redirect(url_for('home'))
+    else: #searched by email
+        person = profileQueries.find_profile_v2(conn, name) #find profile by email
+        # case 1: did not find person with email
+        if person == None:
+            flash("Person does not have a Winterest profile yet") 
+            return redirect(url_for('home'))
+        # case 2: one person found by email, has to be perfectly written
+        else:
+            email = person['wemail']
+            return redirect(url_for('searched_profile', wemail=email))
 
 @app.route('/next/', methods=['POST'])
 def next():
     '''Cycles to the next potential match with the 
     user presses the next button'''
-    userEmail = request.cookies.get('wemail')
+    userEmail = session.get('wemail')
     if not userEmail:
         flash('Session timed out. Log in again!')
         return redirect(url_for('index'))
@@ -299,7 +578,7 @@ def next():
 def back():
     '''Cycles to the previous potential match with the 
     user presses the back button'''
-    userEmail = request.cookies.get('wemail')
+    userEmail = session.get('wemail')
     if not userEmail:
         flash('Session timed out. Log in again!')
         return redirect(url_for('index'))
@@ -314,6 +593,60 @@ def back():
         session['index'] = index - 1
     return redirect(url_for('home'))
 
+@app.route('/scheduleMeeting/<wemail>', methods=['POST'])
+def scheduleMeeting(wemail):
+    '''Schedules a meeting with two users (triggered when users
+    press schedule'''
+    # Grab meeting logistics from the schedule form
+    userEmail = session.get('wemail')
+    matchEmail = wemail
+    what = request.form['schedule-what']
+    where = request.form['schedule-where']
+    location = request.form['schedule-location']
+    when = request.form['schedule-when']
+    notes = request.form['notes']
+
+    # Extract information from the time input
+    dateAndTime = when.split('T')
+    strippedDate = dateAndTime[0]
+    strippedTime = dateAndTime[1]
+    dateObject = datetime.strptime(strippedDate, "%Y-%m-%d")
+    formatedDate = formatDate(dateObject)
+    formatedTime = timeConvert(strippedTime)
+
+    conn = dbi.connect()
+    curs = dbi.cursor(conn)
+
+    # Insert information info table
+    profileQueries.insert_meeting(conn, userEmail, matchEmail, what, where,
+            location, formatedTime, formatedDate, notes)
+
+    meetings = profileQueries.find_all_meetings(conn, wemail)
+
+    # Example outputs: study in-person Clapp 2021-03-29T18:40 hi
+    return redirect(url_for('match', wemail=wemail, meetings=meetings))
+
+@app.route('/deleteMeeting/', methods=['POST'])
+def deleteMeeting():
+    '''Deletes a meeting between two people'''
+    conn = dbi.connect()
+    current = session.get('currentMatchee')
+    meetingID = request.form['deleteMeeting']
+    print(meetingID, current)
+    profileQueries.delete_meeting(conn, meetingID)
+    return redirect(url_for('match', wemail=current))
+
+def timeConvert(inputTime):
+    '''Formats the time into this format: 7:00pm EST'''
+    newTime = datetime.strptime(inputTime,'%H:%M').strftime('%I:%M %p')
+    return newTime + " " + time.tzname[0]
+
+def formatDate(date):
+    '''Formats the date into this format: Thursday, May 23'''
+    dayOfWeek = date.strftime("%A")
+    month = date.strftime("%B")
+    day = date.strftime("%d")
+    return "{}, {} {}".format(dayOfWeek, month, day)
 
 @app.before_first_request
 def init_db():
@@ -333,89 +666,152 @@ if __name__ == '__main__':
         port = os.getuid()
     app.debug = True
     app.run('0.0.0.0',port)
+use wellesleymatch_db;
+
+drop table if exists meeting;
+drop table if exists userpass;
+drop table if exists picfile;
+drop table if exists matches_scored;
+drop table if exists firstMatch;
+drop table if exists bio;
+drop table if exists loveLanguages;
+drop table if exists favorites;
+drop table if exists contact;
+drop table if exists userAccount;
+ 
+create table userAccount ( 
+    wemail varchar(20) not null primary key,
+    fname varchar(30),
+    lname varchar(30),
+    major varchar(50),
+    year int unsigned,
+    country varchar(50),
+    state varchar(2),
+    city varchar(50),
+    onCampus enum("yes", "no"),
+    pronouns varchar(10)
+)
+
+ENGINE = InnoDB;
+
+create table contact (
+    contactID int not null AUTO_INCREMENT,
+    wemail varchar(20) not null,
+    phoneNumber varchar(20),
+    url varchar(150),
+    platform enum('facebook', 'instagram', 'whatsapp', 'text'),
+    primary key (contactID),
+    foreign key (wemail) references userAccount(wemail)
+        on update cascade
+        on delete cascade
+)
+
+ENGINE = InnoDB;
+
+create table favorites (
+    wemail varchar(20) not null,
+    name varchar(50),
+    itemType enum('album', 'song', 'artist', 'book', 'movie',
+        'tvshow', 'color', 'emoji', 'food', 'restaurant', 'game'),
+    INDEX (itemType),
+    foreign key (wemail) references userAccount(wemail)
+        on update cascade
+        on delete cascade
+)
+
+ENGINE = InnoDB;
+
+create table loveLanguages (
+    wemail varchar(20) not null,
+    langNum enum("1", "2", "3"),
+    language enum('affirmation', 'service', 'gift', 'time', 'physical'),
+    foreign key (wemail) references userAccount(wemail)
+        on update cascade
+        on delete cascade
+)
+
+ENGINE = InnoDB;
+
+create table bio (
+    wemail varchar(20) not null,
+    bio varchar(200),
+    foreign key (wemail) references userAccount(wemail)
+        on update cascade
+        on delete cascade
+)
+
+ENGINE = InnoDB;
+
+create table firstMatch (
+    wemail varchar(20) not null,
+    matchID int not null primary key,
+    wemailMatch varchar(50),
+    INDEX (matchID),
+    foreign key (wemail) references userAccount(wemail)
+        on update cascade
+        on delete cascade
+)
+
+ENGINE = InnoDB;
+
+create table matches_scored (
+    wemail varchar(20), -- person who is logged in
+    wemail2 char(8), -- wemail of second person, unmatched yet
+    score int,
+    isMatched char(3), -- value of yes/no depending on if this pair is matched or not
+    INDEX (wemail),
+    foreign key (wemail) references userAccount(wemail)
+        on update cascade
+        on delete cascade
+)
+
+ENGINE = InnoDB;
+
+create table picfile (
+    wemail varchar(20) not null,
+    filename varchar(50),
+    foreign key (wemail) references userAccount(wemail) 
+        on delete cascade 
+        on update cascade
+)
+
+ENGINE = InnoDB;
+
+create table userpass(
+       wemail varchar(20) not null,
+       hashed varchar(60),
+       unique(wemail),
+       index(wemail),
+       foreign key (wemail) references userAccount(wemail) 
+        on delete restrict 
+        on update restrict 
+)
+
+ENGINE = InnoDB;
+
+create table meeting(
+       meetingID int not null AUTO_INCREMENT,
+       wemail varchar(20) not null,
+       wemail2 varchar(20) not null,
+       what varchar(20),
+       type enum("Remote", "In-Person"),
+       location varchar(100),
+       time varchar(20),
+       date varchar(30),
+       notes varchar(100),
+       INDEX (meetingID),
+       foreign key (wemail) references userAccount(wemail) 
+        on delete cascade 
+        on update cascade
+)
+
+ENGINE = InnoDB;
+
 from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
-
-import cs304dbi as dbi
-import csv 
-
-def insertDataToTables(conn,filename):
-    '''Extracts data on fake users and inserts their information to tables
-    in database'''
-    curs = dbi.dict_cursor(conn)
-    fields = [] 
-    rows = []
-    fieldsDict = {}
-    # reading csv file 
-    with open(filename, 'r') as csvfile: 
-        # creating a csv reader object 
-        csvreader = csv.reader(csvfile) 
-      
-        # getting field names from first row 
-        fields = next(csvreader) 
-        index = 0
-        for field in fields:
-            #print(field)
-            fieldsDict[field] = index
-            index += 1
-
-        #insert data into respective tables for a fake user one at a time
-        for row in csvreader:
-            #insert data into MBResults
-            curs.execute(f'insert into MBResults(MBCode,personality,role) \
-            values("{row[fieldsDict["MBCode"]]}","{row[fieldsDict["personality"]]}",\
-            "{row[fieldsDict["role"]]}")')
-            conn.commit()
-
-            #insert data into userAccount
-            curs.execute(f'insert into userAccount(wemail,password,fname,lname,major,year,\
-            country,state,city,onCampus,MBCode) values("{row[fieldsDict["wemail"]]}",\
-            "{row[fieldsDict["password"]]}","{row[fieldsDict["fname"]]}",\
-            "{row[fieldsDict["lname"]]}","{row[fieldsDict["major"]]}", "{row[fieldsDict["year"]]}",\
-            "{row[fieldsDict["country"]]}","{row[fieldsDict["state"]]}", "{row[fieldsDict["city"]]}",\
-            "{row[fieldsDict["onCampus"]]}","{row[fieldsDict["MBCode"]]}")')
-            conn.commit()
-
-            #insert data into contact
-            curs.execute(f'insert into contact(wemail,phoneNumber,handle,url,platform) \
-            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["phoneNumber"]]}",\
-            "{row[fieldsDict["handle"]]}", "{row[fieldsDict["url"]]}", \
-            "{row[fieldsDict["platform"]]}")')
-            conn.commit()
-
-            #insert data into professionalInterests
-            curs.execute(f'insert into professionalInterests(wemail,industry,dreamJob) \
-            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["industry"]]}",\
-            "{row[fieldsDict["dreamJob"]]}")')
-            conn.commit()
-
-            #insert data into favorites
-            curs.execute(f'insert into favorites(wemail,name,itemType) \
-            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["name"]]}",\
-            "{row[fieldsDict["itemType"]]}")')
-            conn.commit()
-
-            #insert data into loveLanguages
-            curs.execute(f'insert into loveLanguages(wemail,langNum,language) \
-            values("{row[fieldsDict["wemail"]]}","{row[fieldsDict["langNum"]]}",\
-            "{row[fieldsDict["language"]]}")')
-            conn.commit()
-
-
-if __name__ == '__main__':
-    dbi.cache_cnf()
-    filename = "users.csv"
-    db_to_use = 'wellesleymatch_db' 
-    dbi.use(db_to_use)
-    conn = dbi.connect()
-    insertDataToTables(conn,filename)
-from flask import (Flask, render_template, make_response, url_for, request,
-                   redirect, flash, session, send_from_directory, jsonify)
-from werkzeug.utils import secure_filename
-app = Flask(__name__)
-
+from threading import Lock # threading & locking
 import cs304dbi as dbi
 import userInfoQueries
 import scoreQueries
@@ -426,8 +822,10 @@ def insertScores(conn, wemail):
     created, without the user having to recallibrate their matches manually,
     works given the current user's wemail.'''
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables userAccount read''')
     curs.execute('SELECT wemail from userAccount') # gives every person in database
     allUsers = curs.fetchall() # assuming allUsers is a list of dicts
+    curs.execute('''unlock tables''')
 
     # loop through every user and insert into their database
     for user in allUsers:
@@ -437,12 +835,14 @@ def insertScores(conn, wemail):
             score = scoreQueries.matchScore(conn, emailID, wemail)
 
             # insert current user wemail to emailID row
-            curs.execute(f'INSERT INTO matches_scored (wemail, wemail2, score, \
-            isMatched) VALUES ("{wemail}", "{emailID}", "{score}", "no")')
+            curs.execute('''lock tables matches_scored write''')
+            curs.execute('''INSERT INTO matches_scored (wemail, wemail2, score, 
+            isMatched) VALUES (%s, %s, %s, "no")''', [wemail, emailID, score])
 
             # insert emailID to current user wemail row
-            curs.execute(f'INSERT INTO matches_scored (wemail, wemail2, score, \
-            isMatched) VALUES ("{emailID}", "{wemail}", "{score}", "no")')
+            curs.execute('''INSERT INTO matches_scored (wemail, wemail2, score, 
+            isMatched) VALUES (%s, %s, %s, "no")''', [emailID, wemail, score])
+            curs.execute('''unlock tables''')
             
     conn.commit()
             
@@ -451,8 +851,10 @@ def updateScores(conn, wemail):
     '''Only used if the current user updates their profile,
     works given the current user's wemail. '''
     curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables userAccount read''')
     curs.execute('SELECT wemail from userAccount') # gives every person in database
     allUsers = curs.fetchall() # assuming allUsers is a list of dicts
+    curs.execute('''unlock tables''')
 
     # loop through every user and update their score with current user
     for user in allUsers:
@@ -461,12 +863,14 @@ def updateScores(conn, wemail):
             score = scoreQueries.matchScore(conn, emailID, wemail)
 
             # update current user wemail to emailID row
-            curs.execute(f'UPDATE matches_scored SET score = "{score}" WHERE wemail \
-                 = "{wemail}" and wemail2 = "{emailID}"')
+            curs.execute('''lock tables matches_scored write''')
+            curs.execute('''UPDATE matches_scored SET score = %s WHERE wemail 
+                 = %s and wemail2 = %s''', [score, wemail, emailID])
 
             # update emailID to current user wemail row
-            curs.execute(f'UPDATE matches_scored SET score = "{score}" WHERE wemail \
-                 = "{emailID}" and wemail2 = "{wemail}"')
+            curs.execute('''UPDATE matches_scored SET score = %s WHERE wemail 
+                 = %s and wemail2 = %s''', [score, emailID, wemail])
+            curs.execute('''unlock tables''')
 
     conn.commit()
 
@@ -474,8 +878,8 @@ def generatePotentialMatches(conn, wemail):
     '''Generates the matches for the current user given their wemail.
     Sorted by highest matching score to lowest matching score.'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM matches_scored WHERE wemail = "{wemail}" \
-        ORDER BY score DESC')
+    curs.execute('''SELECT * FROM matches_scored WHERE wemail = %s
+        ORDER BY score DESC''', [wemail])
     return curs.fetchall() # returns table of matches
 
 def generatePotentialInfo(conn, wemail):
@@ -483,41 +887,95 @@ def generatePotentialInfo(conn, wemail):
     current user given their wemail. Sorted by highest matching score 
     to lowest matching score.'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT userAccount.* FROM matches_scored \
-        INNER JOIN userAccount ON (matches_scored.wemail2 = userAccount.wemail) \
-        WHERE matches_scored.wemail = "{wemail}" \
-        ORDER BY score DESC')
+    curs.execute('''SELECT userAccount.* FROM matches_scored 
+        INNER JOIN userAccount ON (matches_scored.wemail2 = userAccount.wemail) 
+        WHERE matches_scored.wemail = %s
+        ORDER BY score DESC''', [wemail])
     return curs.fetchall()
 
 def setMatched(conn, wemail, wemail2):
     '''Takes current user and their matched person's info and updates
-    both of their matched status accordingly; wemail is the current user,
+    both of their matched status accordingly (two sided matching); wemail 
+    is the current user, wemail2 is the matched person'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables matches_scored write''')
+        # update matching status for user's row
+    curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
+        = %s and wemail2 = %s''', [wemail, wemail2])
+
+        # update matching status for matched person's row
+    curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
+        = %s and wemail2 = %s''', [wemail2, wemail])
+    curs.execute('''unlock tables''')
+    conn.commit()
+
+def unMatch(conn, wemail, wemail2):
+    '''Takes current user and their old matched person's info and updates
+    both of their matched status to NO; wemail is the current user,
+    wemail2 is the matched person'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables matches_scored write''')
+        # update matching status for user's row
+    curs.execute('''UPDATE matches_scored SET isMatched = "no" WHERE wemail 
+        = %s and wemail2 = %s''', [wemail, wemail2])
+
+        # update matching status for old matched person's row
+    curs.execute('''UPDATE matches_scored SET isMatched = "no" WHERE wemail 
+        = %s and wemail2 = %s''', [wemail2, wemail])
+    curs.execute('''unlock tables''')
+    conn.commit()
+
+def getMatches(conn, userEmail): 
+    '''Gets all of the user's matches only under a two sided match'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT wemail, fname, lname, year FROM userAccount 
+        WHERE wemail <> %s''', [userEmail])
+    people = curs.fetchall()
+    
+    twoSidedMatching = []
+    for person in people: 
+        userSideMatching = matchExists(conn, userEmail, person['wemail'])
+        personSideMatching = matchExists(conn, person['wemail'], userEmail)
+        if (len(userSideMatching) > 0) and (len(personSideMatching) > 0):
+            twoSidedMatching.append(person)
+    return twoSidedMatching
+
+def getOneSidedMatches(conn, userEmail): 
+    '''Returns the information of all the people that clicked match with 
+    the user but the user had not clicked matched with yet (one sided match)'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''select wemail, fname, lname, year from userAccount 
+        where wemail in (select wemail from matches_scored where 
+        wemail2 = %s and isMatched = 'yes')''', [userEmail])
+    possibleOneSided = curs.fetchall()
+    twoSidedMatches = getMatches(conn, userEmail) 
+    oneSidedMatches = []
+  
+    #if there are two sided matches, check that oneSidedMatches does not exist in that set
+    if len(twoSidedMatches) > 0: 
+        for oneSDMatch in possibleOneSided:
+            if oneSDMatch not in twoSidedMatches:
+                oneSidedMatches.append(oneSDMatch)
+    else: #no two sided matches
+        return possibleOneSided #could be 0 or more
+
+    return oneSidedMatches #could be 0 or more
+
+def setOneSDMatch(conn, wemail, wemail2): #one sided
+    '''Takes current user and their matched person's info and updates
+    only user's matched status; wemail is the current user,
     wemail2 is the matched person'''
     curs = dbi.dict_cursor(conn)
         # update matching status for user's row
-    curs.execute(f'UPDATE matches_scored SET isMatched = "yes" WHERE wemail \
-        = "{wemail}" and wemail2 = "{wemail2}"')
-
-        # update matching status for matched person's row
-    curs.execute(f'UPDATE matches_scored SET isMatched = "yes" WHERE wemail \
-        = "{wemail2}" and wemail2 = "{wemail}"')
+    curs.execute('''UPDATE matches_scored SET isMatched = "yes" WHERE wemail 
+        = %s and wemail2 = %s''', [wemail, wemail2])
     conn.commit()
-
-def getMatches(conn, wemail):
-    '''Returns the information of the people the user has matched with,
-    given the user's wemail'''
-    curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT b.wemail, b.fname, b.lname, b.year \
-    FROM userAccount as a INNER JOIN matches_scored m ON (m.wemail \
-    = a.wemail) INNER JOIN userAccount as b ON (m.wemail2 = b.wemail) \
-    WHERE m.isMatched = "yes" and m.wemail = "{wemail}"') 
-    return curs.fetchall()
 
 def matchExists(conn, wemail, wemail2):
     '''Checks if a match exists between two people'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM matches_scored \
-    WHERE (wemail = "{wemail}"  AND wemail2 = "{wemail2}") AND isMatched = "yes"') 
+    curs.execute('''SELECT * FROM matches_scored 
+    WHERE (wemail = %s  AND wemail2 = %s) AND isMatched = "yes"''', [wemail, wemail2]) 
     return curs.fetchall()
 
 if __name__ == '__main__':
@@ -526,23 +984,42 @@ if __name__ == '__main__':
     conn = dbi.connect()
     #insertScores(conn, 'aEstrada')
     #updateScores(conn, 'aEstrada')
-    #generatePotentialMatches(conn, 'aEstrada')
+    #print(generatePotentialMatches(conn, 'aEstrada'))
+    #print(generatePotentialInfo(conn, 'aEstrada'))
+    #setMatched(conn, 'aEstrada', 'gPortill')
+    #unMatch(conn, 'aEstrada', 'gPortill')
     #setMatched(conn, 'aEstrada', 'eRamos')
+    #setOneSDMatch(conn,  'aEstrada', 'gPortill')
     #print(matchExists(conn, 'aEstrada', 'eRamos'))
-    #curs = dbi.dict_cursor(conn)
-from flask import (Flask, render_template, make_response, url_for, request,
+    #print(getMatches(conn, 'mguzman2'))
+    #curs = dbi.dict_cursor(conn)from flask import (Flask, render_template, make_response, url_for, request,
                    redirect, flash, session, send_from_directory, jsonify)
 from werkzeug.utils import secure_filename
+from threading import Lock # threading & locking
 app = Flask(__name__)
 import cs304dbi as dbi 
 
 '''**************** Queries for getting info ****************'''
 
+def find_meeting(conn, meetingID):
+    '''Returns the meeting info associated with a given meetingID'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('SELECT * FROM meeting WHERE meetingID = %s', 
+    [meetingID])
+    return curs.fetchone()
+
+def find_all_meetings(conn, wemail):
+    '''Returns all meetings associated with a given wemail'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('SELECT * FROM meeting WHERE wemail = %s or wemail2 = %s', 
+    [wemail, wemail])
+    return curs.fetchall()
+
 def find_profile(conn, wemail):
     '''Returns the info associated with a given wemail'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM userAccount WHERE wemail =\
-         "{wemail}"')
+    curs.execute('''SELECT * FROM userAccount WHERE wemail =
+         %s''', [wemail])
     person = curs.fetchone()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the demographics
@@ -550,11 +1027,35 @@ def find_profile(conn, wemail):
         return person
     return "No user by that name yet"
 
+def find_profile_v2(conn, wemail):
+    '''Returns the info associated with a given wemail'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT * FROM userAccount WHERE wemail =
+         %s''', [wemail])
+    person = curs.fetchone()
+    # returns a string in the case where the person has not filled info out
+    # otherwise, returns the demographics
+    if person != None:
+        return person
+    return None
+
+def find_person(conn, name):
+    '''Gives all the people who match part of a given name'''
+    curs = dbi.dict_cursor(conn)
+    name = name.split()
+    if len(name) == 1: #just first name provided
+        curs.execute('''select fname, wemail, year from userAccount
+            where fname like %s''', ['%' + name[0] + '%']) 
+    else:
+        curs.execute('''select fname, lname, wemail, year from userAccount
+            where fname like %s and lname like %s''', ['%' + name[0] + '%', '%' + name[-1] + '%']) 
+    return curs.fetchall()
+
 def find_dem(conn, wemail):
     '''Returns a user's demographic information; singular row returned'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT country, state, city FROM userAccount WHERE wemail =\
-         "{wemail}"')
+    curs.execute('''SELECT country, state, city FROM userAccount 
+            WHERE wemail = %s''', [wemail])
     demographics = curs.fetchall()
     # returns a string in the case where the person has not filled info out
     # otherwise, returns the demographics
@@ -565,63 +1066,68 @@ def find_dem(conn, wemail):
 def find_phoneNum(conn, wemail):
     '''Returns a user's phone number'''
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT phoneNumber FROM contact WHERE wemail = \
-         "{wemail}"')
-    phoneNum = curs.fetchall()
-    # returns a string in the case where the person has not filled info out
-    # otherwise, returns the demographics
-    if len(phoneNum) != 0:
-        return phoneNum
-    return "No phone number input yet"
+    curs.execute('''SELECT phoneNumber FROM contact WHERE 
+        wemail = %s''', [wemail])
+    return curs.fetchall()
+
+def find_contacts(conn, wemail):
+    '''Returns user's available contact information as a
+    list of dictionaries'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT * FROM contact WHERE
+        wemail = %s''', [wemail])
+    return curs.fetchall()
 
 '''**************** Queries for changing tables ****************'''
 
 ############ INSERT, UPDATE User Profile
 
-def insert_profile(conn, wemail, password, fname, lname, country,
-            state, city, MBCode, major, year, onCampus): 
+def insert_profile(conn, wemail, fname, lname, country,
+            state, city, major, year, onCampus, pronouns): #got rid of password and MBCode
     '''Takes new user's initial inputs and adds them into the table'''
     # assumption: user MUST input all categories 
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM userAccount WHERE wemail = "{wemail}"')
+    curs.execute('''lock tables userAccount read''')
+    curs.execute('''SELECT * FROM userAccount WHERE wemail = %s''', [wemail])
     checkUser = curs.fetchall()
+    curs.execute('''unlock tables''')
     # if account for this user doesn't already exist, we will add them to
     # the userAccounts table
     if len(checkUser) == 0: 
-        curs.execute(f'INSERT INTO userAccount (wemail, password, fname, lname, country, \
-            state, city, MBCode, major, year, onCampus) \
-            VALUES ("{wemail}", "{password}", "{fname}", "{lname}", "{country}", \
-            "{state}", "{city}", "{MBCode}", "{major}", "{year}", "{onCampus}")')
+        curs.execute('''lock tables userAccount write''')
+        curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, 
+            state, city, major, year, onCampus, pronouns) VALUES (%s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, %s)''', 
+            [wemail, fname, lname, country, state, city, major, year, onCampus, pronouns])
+        curs.execute('''unlock tables''')
     conn.commit()
 
-def update_profile(conn, wemail, password, fname, lname, country,
-            state, city, MBCode, major, year, onCampus): 
+def update_profile(conn, wemail, fname, lname, country,
+            state, city, major, year, onCampus, pronouns): #got rid of password
     '''Takes user's changed inputs for their profile and updates the
     profile accordingly'''
 
     curs = dbi.dict_cursor(conn)
-    wemail = f'''"{wemail}"''' if wemail else "NULL" #this causes wemail to not need quotes below
-
-    curs.execute(f'UPDATE userAccount SET password = "{password}" \
-         WHERE wemail = {wemail}') 
-    curs.execute(f'UPDATE userAccount SET fname = "{fname}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET lname = "{lname}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET country = "{country}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET state = "{state}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET city = "{city}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET MBCode = "{MBCode}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET major = "{major}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET year = "{year}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE userAccount SET onCampus = "{onCampus}" \
-        WHERE wemail = {wemail}')
+    curs.execute('''lock tables userAccount write''')
+    curs.execute('''UPDATE userAccount SET fname = %s 
+        WHERE wemail = %s''', [fname, wemail])
+    curs.execute('''UPDATE userAccount SET lname = %s
+        WHERE wemail = %s''', [lname, wemail])
+    curs.execute('''UPDATE userAccount SET country = %s
+        WHERE wemail = %s''', [country, wemail])
+    curs.execute('''UPDATE userAccount SET state = %s
+        WHERE wemail = %s''', [state, wemail])
+    curs.execute('''UPDATE userAccount SET city = %s
+        WHERE wemail = %s''', [city, wemail])
+    curs.execute('''UPDATE userAccount SET major = %s
+        WHERE wemail = %s''', [major, wemail])
+    curs.execute('''UPDATE userAccount SET year = %s
+        WHERE wemail = %s''', [year, wemail])
+    curs.execute('''UPDATE userAccount SET onCampus = %s
+        WHERE wemail = %s''', [onCampus, wemail])
+    curs.execute('''UPDATE userAccount SET pronouns = %s
+        WHERE wemail = %s''', [pronouns, wemail])
+    curs.execute('''unlock tables''')
 
     conn.commit()
 
@@ -630,43 +1136,56 @@ def delete_profile(conn, wemail):
     curs = dbi.dict_cursor(conn)
     user = find_profile(conn, wemail)
     if len(user) != 0:
-        curs.execute(f'DELETE FROM userAccount WHERE wemail = "{wemail}"')
+        curs.execute('''DELETE FROM userAccount WHERE wemail = %s''', [wemail])
 
     conn.commit()
 
 ############ INSERT, UPDATE User Profile
 
-def insert_contact(conn, wemail, phoneNumber, handle, url, platform):
+def insert_contact(conn, wemail, phoneNumber, url, platform):
     '''Takes new user's contact information (phone number and info
     about most used social medial platform) so others can reach out
     Note: users can only insert one row of their contact information''' 
 
     curs = dbi.dict_cursor(conn)
-    curs.execute(f'SELECT * FROM contact WHERE wemail = "{wemail}"')
-    checkContact = curs.fetchall()
-    # if contact for this user doesn't already exist, we will add their info to
-    # the contact table
-    if len(checkContact) == 0: 
-        curs.execute(f'INSERT INTO contact (wemail, phoneNumber, \
-            handle, url, platform) VALUES ("{wemail}", "{phoneNumber}", \
-            "{handle}", "{url}", "{platform}")')
+    curs.execute('''INSERT INTO contact (wemail, phoneNumber, 
+            url, platform) VALUES (%s, %s, %s, %s)''', 
+            [wemail, phoneNumber, url, platform])
     conn.commit()
 
-def update_contact(conn, wemail, phoneNumber, handle, url, platform): 
+def update_contact(conn, wemail, phoneNumber, url, platform): 
     '''Takes user's changed inputs for their contacts and updates the
     profile accordingly'''
 
     curs = dbi.dict_cursor(conn)
-    wemail = f'''"{wemail}"''' if wemail else "NULL" #this causes wemail to not need quotes below
 
-    curs.execute(f'UPDATE contact SET phoneNumber = "{phoneNumber}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE contact SET handle = "{handle}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE contact SET url = "{url}" \
-        WHERE wemail = {wemail}')
-    curs.execute(f'UPDATE contact SET platform = "{platform}" \
-        WHERE wemail = {wemail}')
+    curs.execute('''lock tables contact write''')
+    curs.execute('''UPDATE contact SET phoneNumber = %s
+        WHERE wemail = %s''', [phoneNumber, wemail])
+    curs.execute('''UPDATE contact SET url = %s
+        WHERE wemail = %s''', [url, wemail])
+    curs.execute('''UPDATE contact SET platform = %s
+        WHERE wemail = %s''', [platform, wemail])
+    curs.execute('''unlock tables''')
+
+    conn.commit()
+
+def update_social(conn, wemail, url, platform): 
+    '''Takes user's changed inputs for their contacts and updates the
+    profile accordingly'''
+
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''UPDATE contact SET url = %s
+        WHERE wemail = %s and platform = %s''', [url, wemail, platform])
+    conn.commit()
+
+def update_phone(conn, wemail, phoneNumber): 
+    '''Takes user's changed inputs for their contacts and updates the
+    profile accordingly'''
+
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''UPDATE contact SET phoneNumber = %s
+        WHERE wemail = %s''', [phoneNumber, wemail])
 
     conn.commit()
 
@@ -675,22 +1194,332 @@ def delete_contact(conn, wemail):
     curs = dbi.dict_cursor(conn)
     phone = find_phoneNum(conn, wemail)
     if len(phone) != 0:
-        curs.execute(f'DELETE FROM contact WHERE wemail = "{wemail}"')
+        curs.execute('''DELETE FROM contact WHERE wemail = %s''', [wemail])
+    conn.commit()
+
+############ INSERT, DELETE Meetings
+def insert_meeting(conn, wemail, wemail2, what, type,
+            location, time, date, notes): #got rid of password and MBCode
+    '''Creates a meeting using info'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''INSERT INTO meeting (meetingID, wemail, wemail2, what, 
+        type, location, time, date, notes) VALUES (null, %s, %s, %s, %s, 
+        %s, %s, %s, %s)''', 
+        [wemail, wemail2, what, type, location, time, date, notes])
+    conn.commit()
+
+def delete_meeting(conn, meetingID):
+    '''Deletes a meeting given the meetingID'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''DELETE FROM meeting WHERE meetingID = %s''', [meetingID])
     conn.commit()
 
 if __name__ == '__main__':
     dbi.cache_cnf()   # defaults to ~/.my.cnf
     dbi.use('wellesleymatch_db')
     conn = dbi.connect()
-    #print(find_profile(conn, 'mTuzman'))
-    #print(find_dem(conn, 'mTuzman'))
+    #print(find_profile(conn, 'aEstrada'))
+    #print(find_dem(conn, 'aEstrada'))
     #print(find_phoneNum(conn, 'aEstrada'))
-    #update_profile(conn, 'mTuzman', 'fake6', 'Melissa', 'Guzman', 'USA',
-            #'CA', 'Bellflower', '1', 'Computer Science', 2020, 'no')
+    #insert_profile(conn, 'mTuzman', 'Melisa', 'Tuzman', 'USA',
+            #'CA', 'Bellflower', 'Data Science', 2020, 'no')
+    #update_profile(conn, 'mTuzman', 'Melisa', 'Tuzman', 'USA',
+            #'CA', 'Los Angeles', 'Data Science', 2020, 'no')
+    #delete_profile(conn, 'mTuzman')
     #insert_contact(conn, 'mTuzman', 703, 'somehandle11', 'someurlq', 'facebook')
     #update_contact(conn, 'mTuzman', 703, 'somehandle11', 'someurlq', 'instagram')
     #delete_contact(conn, 'mTuzman')
-    <!doctype html>
+    
+from flask import (Flask, render_template, make_response, url_for, request,
+                   redirect, flash, session, send_from_directory, jsonify)
+from werkzeug.utils import secure_filename
+app = Flask(__name__)
+
+import cs304dbi as dbi
+import userInfoQueries
+
+'''**************** Queries for creating match score ****************'''
+''' Scoring algorithm is built in this file '''
+
+def matchScore(conn, wemail, wemail2):
+    '''Gives a match score between two given users'''
+    curs = dbi.dict_cursor(conn)
+
+    if wemail == wemail2:
+        return 'Cannot match with self'
+    
+    curs.execute('''SELECT major, city, state, country, onCampus, 
+                favorites.itemType, favorites.name FROM userAccount INNER 
+                JOIN favorites USING 
+                (wemail) INNER JOIN loveLanguages using (wemail) 
+                WHERE wemail = %s''', [wemail])
+
+    firstInfo = curs.fetchall()
+
+    if len(firstInfo) == 0:
+        return 'No possible match here'
+    firstPerson = firstInfo[0] # assumes firstInfo is a list of one dictionary
+
+    curs.execute('''SELECT major, city, state, country, onCampus 
+                FROM userAccount INNER JOIN favorites USING (wemail) INNER JOIN loveLanguages 
+                using (wemail) WHERE wemail = %s''', [wemail2])
+    
+    secondInfo = curs.fetchall()
+
+    if len(secondInfo) == 0:
+        return 'No possible match here'
+    secondPerson = secondInfo[0] # assumes secondInfo is a list of one dictionary
+
+    score = 0
+
+    #in case information that was not filled in somehow still passes throuh
+    
+    if secondPerson.get('major', -1) == firstPerson.get('major', -2):
+        score += 1
+    if secondPerson.get('city', -1) == firstPerson.get('city', -2):
+        score += 1
+    if secondPerson.get('state', -1) == firstPerson.get('state', -2):
+        score += 1
+    if secondPerson.get('country', -1) == firstPerson.get('country', -2):
+        score += 1
+    if secondPerson.get('onCampus', -1) == firstPerson.get('onCampus', -2):
+        score += 1
+
+    score += matchScore_LL(conn, wemail, wemail2) # add in score from love languages
+    score += matchScore_favorites(conn,wemail,wemail2) # add in score from favorites
+
+    return score
+
+def matchScore_LL(conn, wemail, wemail2):
+    # assumes that firstFaves and secondFaves is a list of dictionaries
+    firstLLs = userInfoQueries.find_person_LLs(conn, wemail)
+    secondLLs = userInfoQueries.find_person_LLs(conn, wemail2)
+
+    score = 0
+    if not firstLLs or not secondLLs:
+        return score
+
+    #handles case in which users can have more than 1 love language
+    for langDict in firstLLs: 
+        language = langDict['language']
+        for langDict2 in secondLLs: 
+            if langDict2['language'] == language:
+                score += 1
+    return score 
+
+def matchScore_favorites(conn, wemail, wemail2):
+    # assumes that firstFaves and secondFaves is a list of dictionaries
+    firstFaves = userInfoQueries.find_favorites(conn, wemail)
+    secondFaves = userInfoQueries.find_favorites(conn, wemail2)
+
+    score = 0
+    if not firstFaves or not secondFaves:
+        return score
+
+    #handles case in which users can have more than 1 favorite item
+    for faveDict in firstFaves:
+        fave1 = faveDict['name'].lower()
+        fave1Type = faveDict['itemType']
+        for faveDict2 in secondFaves:
+            fave2 = faveDict2['name'].lower()
+            fave2Type = faveDict2['itemType']
+            if fave1 == fave2 and fave1Type == fave2Type:
+                score += 1
+    return score  
+
+if __name__ == '__main__':
+    dbi.cache_cnf()   # defaults to ~/.my.cnf
+    dbi.use('wellesleymatch_db')
+    conn = dbi.connect()
+    #print(matchScore(conn, 'aEstrada', 'aEstrada'))
+    #print(matchScore(conn, 'aEstrada', 'eRamos'))
+    #print(matchScore_LL(conn, 'gPortill', 'eRamos'))
+    #print(matchScore_favorites(conn, 'mPap', 'eRamos'))
+    #curs = dbi.dict_cursor(conn)
+from flask import (Flask, render_template, make_response, url_for, request,
+                   redirect, flash, session, send_from_directory, jsonify)
+from werkzeug.utils import secure_filename
+from threading import Lock # threading & locking
+app = Flask(__name__)
+
+import cs304dbi as dbi
+import scoreQueries
+
+'''**************** Queries for getting info ****************'''
+
+def find_profInt(conn, wemail):
+    '''Returns a user's professional interest information; singular
+    row returned'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT * FROM professionalInterests
+        WHERE wemail = %s''', [wemail])
+    profInt = curs.fetchall()
+    # returns a string in the case where the person has not filled info out
+    # otherwise, returns the professional interests
+    if len(profInt) != 0:
+        return profInt
+    return "No professional interests input yet"
+
+def find_photo(conn, wemail):
+    '''Returns the user's image; singular
+    row returned'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT * FROM picfile
+        WHERE wemail = %s''', [wemail])
+    return curs.fetchone()
+
+def find_favorites(conn, wemail):
+    '''Returns a user's favorites things and their respective genres; will be 
+    multiple rows'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT * FROM favorites
+        WHERE wemail = %s''', [wemail])
+    return curs.fetchall()
+    # returns a string in the case where the person has not filled info out
+    # otherwise, returns their favorite things and the respective genres
+    
+
+def find_person_LLs(conn, wemail):
+    '''Returns all of user's love languages; 3 rows returned'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT * FROM loveLanguages 
+        WHERE wemail = %s''', [wemail])
+    LLInt = curs.fetchall()
+    # returns a string in the case where the person has not filled info out
+    # otherwise, returns the love languages
+    if len(LLInt) != 0:
+        return LLInt
+
+def getBio(conn, userEmail):
+    '''Returns a user's bio'''
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''SELECT bio FROM bio WHERE wemail = %s''', [userEmail]) 
+    return curs.fetchone()
+
+'''**************** Queries for changing tables ****************'''
+
+############ INSERT, UPDATE Professional Interests
+
+def insert_professionalInterests(conn, wemail, industry, dreamJob):
+    '''Takes user's initial inputs for their professional interests and
+    inserts them into the table. Can have one input per professional interest
+    column.'''
+
+    # assumption: user MUST have an input for ALL categories 
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables professionalInterests read''')
+    curs.execute('''SELECT wemail FROM professionalInterests WHERE 
+        wemail = %s''', [wemail])
+    checkInt = curs.fetchall()
+    curs.execute('''unlock tables''')
+    # if list of professional interests by said wemail doesn't exist,
+    # we will insert a new row into the table for this person
+    if len(checkInt) == 0: 
+        curs.execute('''lock tables professionalInterests write''')
+        curs.execute('''INSERT INTO professionalInterests (wemail, 
+            industry, dreamJob) VALUES (%s, %s, %s)''', 
+            [wemail, industry, dreamJob])
+        curs.execute('''unlock tables''')
+        conn.commit()
+
+def update_professionalInterests(conn, wemail, industry, dreamJob):
+    '''Takes user's changed inputs for their professional interests and
+    updates them.'''
+
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables professionalInterests write''')
+    curs.execute('''UPDATE professionalInterests SET industry = %s
+                WHERE wemail = %s''', [industry, wemail]) 
+    curs.execute('''UPDATE professionalInterests SET dreamJob = %s
+        WHERE wemail = %s''', [dreamJob, wemail]) 
+    curs.execute('''unlock tables''')
+    conn.commit()
+
+############ INSERT, UPDATE Favorite and Genres
+
+def insert_favorites(conn, wemail, name, itemType):
+    '''Takes user's inputs for their favorite things and their respective 
+    genres.'''
+
+    # assumption: user MUST have a favorite of each genre listed 
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''INSERT INTO favorites (wemail, name, itemType) 
+        VALUES (%s, %s, %s)''', [wemail, name, itemType])
+    conn.commit()
+
+def update_favorites(conn, wemail, name, itemType):
+    '''Takes user's changed inputs for their favorite genres and
+    updates them. Assumes 1 to 1 ratio between itemType and favorite
+    thing'''
+
+    # update favorite and genres info 
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''lock tables favorites write''')
+    curs.execute('''UPDATE favorites SET name = %s
+        WHERE itemType = %s and wemail = %s''', [name, itemType, wemail]) 
+    curs.execute('''UPDATE favorites SET itemType = %s
+        WHERE name = %s and wemail = %s''', [itemType, name, wemail]) 
+    curs.execute('''unlock tables''')
+    conn.commit()
+
+def update_bio(conn, wemail, bio):
+    '''Takes user's changed inputs for their bio
+    updates them.'''
+
+    # update favorite and genres info 
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''UPDATE bio SET bio = %s
+        WHERE wemail = %s''', [bio, wemail]) 
+    conn.commit()
+    
+
+############ INSERT, UPDATE Love languages
+
+def insert_top3_LL(conn, wemail, language, langNum):
+    '''Takes user's inputs for a love language and inserts it into the
+    table. We assume that the user inputs their top 3 languages (all of
+    equal weight). Only occurs if the user is filling these out for 
+    the first time. Must be called thrice, once for each language.'''
+
+    # assumption: user MUST have 3 LLs
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''INSERT INTO loveLanguages (wemail, language, langNum) 
+        VALUES (%s, %s, %s)''', [wemail, language, langNum])
+    conn.commit()
+
+def update_top3_lang(conn, wemail, language, langNum):
+    '''Takes user's changed inputs for one of their love languages. Updates
+    with new top 3 languages for user. Can be called thrice every time a user
+    makes an update, essentially updating all three languages even if any of
+    them remain the same for simplicity's sake'''
+
+    # update love languages info 
+    curs = dbi.dict_cursor(conn)
+    curs.execute('''UPDATE loveLanguages SET language = %s
+        WHERE wemail = %s and langNum = %s''', [language, wemail, langNum])
+    curs.execute('''commit''')
+    conn.commit()
+
+
+if __name__ == '__main__':
+    dbi.cache_cnf()   # defaults to ~/.my.cnf
+    dbi.use('wellesleymatch_db')
+    conn = dbi.connect()
+    #print(find_profInt(conn, 'aEstrada'))
+    #print(find_person_LLs(conn, 'gPortillo'))
+    #print(find_MB_info(conn, 2)) #aEstrada
+    #print(getBio(conn, 'mPap'))
+    #insert_professionalInterests(conn, 'mTuzman', 'Government', 'International Affairs')
+    #update_professionalInterests(conn, 'mTuzman', 'Education', 'Teacher')
+    #insert_favorites(conn, 'mTuzman', 'Malo', 'album')
+    #update_favorites(conn, 'mTuzman', 'Azteca', 'album')
+    #insert_top3_LL(conn, 'mTuzman', 'gift', '1')
+    #update_top3_lang(conn, 'mTuzman', 'affirmation', '1')
+
+    #insert_Myers_Briggs_table(conn,'1')
+    #insert_Myers_Briggs(conn, 'mTuzman', '1')
+    #curs = dbi.dict_cursor(conn)
+<!doctype html>
 <html lang='en'>
 <head>
     <meta charset='utf-8'>
@@ -740,6 +1569,260 @@ if __name__ == '__main__':
 </html>
 {% extends "base.html" %}
 
+{% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div id="profile-logout-container">
+        <a href="{{url_for('profile')}}">
+            <div id="user-circle" class="circle-img">
+              <p>{{person.fname[0]}}{{person.lname[0]}}</p>
+            </div>
+          </a>
+      <form method=post action="{{url_for('logout')}}">
+        <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
+      </form>
+    </div>
+  </nav>
+{% endblock %}
+
+{% block main_content %}
+
+<div class="main-content">
+  <form method='POST' enctype="multipart/form-data" action="{{ url_for('edit') }}">
+    <div id="signup-container">
+      <h2 class="action-title">Edit Profile</h2>
+        <div class="twocol-flex">
+          <div class="textbox signup-textbox">
+            <label for="fname">First Name</label>
+            <input type="text" id="fname" name="fname" value="{{person.fname}}"required>
+          </div>
+
+          <div class="textbox signup-textbox">
+            <label for="lname">Last Name</label>
+            <input type="text" id="lname" name="lname" value="{{person.lname}}" required>
+          </div>
+        </div>
+
+        <div class="textbox signup-textbox">
+          <label for="pronouns">Pronouns</label>
+          <input type="text" id="pronouns" name="pronouns" value="{{person.pronouns}}">
+        </div>
+
+        <div class="twocol-flex">
+          <div class="textbox signup-textbox">
+            <label for="city">City</label>
+            <input type="text" id="city" name="city" value="{{person.city}}" required>
+          </div>
+          <div class="textbox signup-textbox">
+            <label for="state">State</label>
+            <input type="text" id="state" name="state" value="{{person.state}}">
+          </div>
+        </div>
+        <div class="textbox signup-textbox">
+          <label for="country">Country</label>
+          <input type="text" id="country" name="country" value="{{person.country}}" required>
+        </div>
+
+        <br>
+        <h2 class="action-title">School Information</h2>
+
+        <fieldset class="r-pill">
+          <legend>
+            Current Location
+          </legend>
+        {% if person.onCampus == 'no' %}
+          <span class="r-pill__item">
+            <input type="radio" id="home" name="onCampus" value="no" checked>
+            <label for="home">At Home</label>
+          </span>
+
+          <span class="r-pill__item">
+            <input type="radio" id="campus" name="onCampus" value="yes">
+            <label for="campus">On Campus</label>
+          </span>
+        {% else %}
+        <span class="r-pill__item">
+            <input type="radio" id="home" name="onCampus" value="no">
+            <label for="home">At Home</label>
+          </span>
+
+          <span class="r-pill__item">
+            <input type="radio" id="campus" name="onCampus" value="yes" checked>
+            <label for="campus">On Campus</label>
+          </span>
+        {% endif %}
+
+        </fieldset>
+
+        <div class="twocol-flex">
+          <div class="textbox signup-textbox">
+            <label for="major">Major(s)</label>
+            <input type="text" id="major" name="major" value="{{person.major}}"required>
+          </div>
+
+          <div class="textbox signup-textbox">
+            <label for="year">Year</label>
+            <input type="text" id="year" name="year" value="{{person.year}}" required>
+          </div>
+        </div>
+        <br>
+        <button id="continue-button" type="button">Continue</button>
+    </div>
+
+    <!-- Interests Form -->
+      <div id="interests-container">      
+        <br>
+        <h2 class="action-title">Favorites</h2>
+        <!-- <p>Choose your favorites!</p> -->
+        <div class = "textbox signup-textbox">
+          <label for="book">Book</label>
+          <input type ="text" id="book" name="book" value="{{favorites.book}}" required>
+        </div>
+
+          <div class = "textbox signup-textbox">
+            <label for="color">Color</label>
+            <input type ="text" id="color" name="color" value="{{favorites.color}}" required>
+            <!-- <label for="color">Color:</label>
+            <input type ="color" id="color" name="color" required> -->
+          </div>
+
+          <div class = "textbox signup-textbox">
+              <label for="song">Song</label>
+              <input type ="text" id="song" name="song" value="{{favorites.song}}" required>
+          </div>
+
+        <div id="bio-textbox" class = "textbox signup-textbox">
+          <label for="bio">Bio</label>
+          <p class="match-subheader">Introduce yourself! Let your personality or other
+                interests shine. <i>(Limit 200 characters)</i>
+          </p>
+          <textarea id="bio" name="bio" rows="3" cols="50" maxlength="200" required>{{personBio.bio}}</textarea>
+        </div>
+
+        <div class = "textbox signup-textbox">
+          <label for="pic">Picture</label>
+          <p class="match-subheader"><i>File must be under 1MB</i></p>
+          <input id="pic" type="file" name="pic">
+        </div>
+        <br>
+
+        <h2 class="action-title">Contact</h2>
+        <p class="match-subheader">List platforms you want to use to communicate on (<i>add up to 2 options</i>)</p>
+            <div class="socials-flex">
+            <div class = "textbox signup-textbox">
+                <label for="contact-type1">Contact #1</label>
+                <select id="contact-type1" name="contact-type1" class="social-form">
+                <option {% if contacts[0].platform == 'instagram' %} selected='selected' {% endif %} value="Instagram">Instagram</option>
+                <option {% if contacts[0].platform == 'facebook' %} selected='selected' {% endif %} value="Facebook">Facebook</option>
+                <option {% if contacts[0].platform == 'text' %} selected='selected' {% endif %} value="Text">Text</option>
+                </select>
+            </div>
+            
+            <div class="textbox signup-textbox social-links">
+                <label for="social-url1">Link</label>
+                <input type ="url" id="social-url1" name="social-url1" 
+                {% if contacts[0].platform != 'text' %} value="{{contacts[0].url}}" {% else %} placeholder="Social URL" {% endif %}>
+            </div>
+            <div class="textbox signup-textbox phonenumber-form">
+                <label for="phonenumber1">Phone Number</label>
+                <input type ="tel" id="phonenumber1" name="phonenumber1" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+                {% if contacts[0].platform == 'text' %} value="{{contacts[0].phoneNumber}}" {% else %} placeholder="123-456-7890" {% endif %}>
+            </div>
+        </div>
+        {% if contacts|length == 2 %}
+            <div class="socials-flex">
+            <div class = "textbox signup-textbox">
+                <label for="contact-type2">Contact #2</label>
+                <select id="contact-type2" name="contact-type2" class="social-form">
+                <option {% if contacts[1].platform == 'facebook' %} selected='selected' {% endif %} value="Facebook">Facebook</option>
+                <option {% if contacts[1].platform == 'instagram' %} selected='selected' {% endif %} value="Instagram">Instagram</option>
+                <option {% if contacts[1].platform == 'text' %} selected='selected' {% endif %} value="Text">Text</option>
+                </select>
+            </div>
+    
+            <div class="textbox signup-textbox social-links">
+                <label for="social-url2">Link</label>
+                <input type ="url" id="social-url2" name="social-url2" 
+                {% if contacts[1].platform != 'text' %} value="{{contacts[1].url}}" {% else %} placeholder="Social URL" {% endif %}>
+            </div>
+
+            <div class="textbox signup-textbox phonenumber-form">
+                <label for="phonenumber2">Phone Number</label>
+                <input type ="tel" id="phonenumber2" name="phonenumber2" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+                {% if contacts[1].platform == 'text' %} value="{{contacts[1].phoneNumber}}" {% else %} placeholder="123-456-7890" {% endif %}>
+            </div>
+            </div>
+        {% else %}
+        <div class="socials-flex">
+            <div class = "textbox signup-textbox">
+              <label for="contact-type2">Contact #2</label>
+              <select id="contact-type2" name="contact-type2" class="social-form">
+                <option value="Facebook">Facebook</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Text">Text</option>
+              </select>
+            </div>
+    
+            <div class="textbox signup-textbox social-links">
+              <label for="social-url2">Link</label>
+              <input type ="url" id="social-url2" name="social-url2" placeholder="Social URL">
+            </div>
+  
+            <div class="textbox signup-textbox phonenumber-form">
+              <label for="phonenumber2">Phone Number</label>
+              <input type ="tel" id="phonenumber2" name="phonenumber2" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+              placeholder="123-456-7890">
+            </div>
+          </div>
+        {% endif %}
+        <p id="format-message" class="match-subheader">* Please enter your phone number in this format: 123-456-7890</p>
+
+
+        <br>
+        <div class="two-col-buttons">
+            <button id="back-button" class="gray-button" type="button">Back</button>
+            <button class="blue-button" type="submit">Update</button>
+          </div>
+      </div>
+  </form>
+</div>
+
+  {% endblock %}
+
+  {% block end_scripts %}
+<script>
+  $('select').change(function(){
+    value = $(this).val();
+    $form = $(this).closest('.socials-flex');
+    $socialform = $form.find('.social-links');
+    $phoneform = $form.find('.phonenumber-form');
+    $phoneformat = $('#format-message');
+
+    if (value == "Text") {
+      $socialform.css('display', 'none');
+      $phoneform.css('display', 'block');
+      $phoneformat.css('display', 'block');
+    }
+    else {
+      $phoneform.css('display', 'none');
+      $phoneformat.css('display', 'none');
+      $socialform.css('display', 'block');
+    }
+});
+
+$('#continue-button').on('click', function() {
+  $('#signup-container').css('display', 'none');
+  $('#interests-container').css('display', 'block');
+});
+
+$('#back-button').on('click', function() {
+  $('#signup-container').css('display', 'block');
+  $('#interests-container').css('display', 'none');
+});
+
+</script>
+{% endblock %}{% extends "base.html" %}
+
 {% block main_content %}
 
 <h1>Welcome to Wellesley's very own Wintrest!</h1>
@@ -775,15 +1858,34 @@ if __name__ == '__main__':
 {% block nav %}
   <nav>
     <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div>
+      <form id="search-form" method="GET" action="{{url_for('query')}}">
+        <div class="search-container">
+          <label for="search-text">Search </label>
+          <input id="search-text" type="text" required name="query">
+        </div>
+
+        <div class="search-container">
+          <label for="search-kind">Kind</label>
+          <select id="search-kind" required name = "kind">
+              <option value="">choose one</option>
+                <option value="person">person name</option>
+                <option value="email">wellesley email</option>
+          </select>
+        </div>
+        <button id="search-button" class="gray-button" type="submit">Search</button>
+      </form>
+    </div>
     <div id="profile-logout-container">
-      <div id="user-circle" class="circle-img">
-        <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
-      </div>
-      <form method=post action="">
+      <a href="{{url_for('profile')}}">
+        <div id="user-circle" class="circle-img">
+          <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
+        </div>
+      </a>
+      <form method=post action="{{url_for('logout')}}">
         <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
       </form>
     </div>
-    </a>
   </nav>
 {% endblock %}
 
@@ -792,33 +1894,56 @@ if __name__ == '__main__':
 <section class="match-section">
   <h1 class="section-header">Find Friends</h1>
   <div class="match-photo">
-    <div class="one-match active" value="{{person.wemail}}">
+    <div class="one-match active">
       <!-- Will update once we learn about file upload -->
       {% if photo %}
-      <img id="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
       {% else %}
-      <img id="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
       {% endif %}
       <!-- <img id="match-image" src="{{url_for('static', filename = 'person.jpg')}}" alt=""> -->
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
-        <p class="match-subheader">Class of {{person.year}}</p>
+        <p class="action-subheader">Class of {{person.year}}
+          {% if person.pronouns %}
+            <br>{{person.pronouns}}
+          {% endif %}
+        </p>
         <div id="more-profile">
           <p class="profile-bio">
             {{matchBio.bio}}
           </p>
+          <h2 class="match-section-titles">More Information</h2>
+            <div>
+              <p>üìö {{person.major}} Major</p>
+              <p class="match-location-info">üìç {{person.city}},
+                {% if person.state %}
+                {{person.state}},
+                {% endif %}
+                {% if person.country %}
+                {{person.country}}
+                {% endif %}
+              </p>
+              <p class="match-campus-info">Currently
+                {% if person.onCampus == 'yes' %}
+                on campus. Hit me up ü§©
+                {% else %}
+                at home. Let's set up a Zoom meeting üíª
+                {% endif %}
+              </p>
+            </div>
           <div class="profile-interests" data-state="closed">
             {% if person.favorites %}
               {% for favorite in person.favorites %}
               <div class="interest-box">
                 <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
-                <p>My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+                <p>&emsp;My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
               </div>
               {% endfor %}
             {% else %}
               <div class="interest-box">
                 <div class="interest-emoji">‚ùì</div>
-                <p>Ask me for my interests!</strong></p>
+                <p>Ask me for my interests!</p>
               </div>
             {% endif %}
           </div>
@@ -827,36 +1952,35 @@ if __name__ == '__main__':
     </div>
     <form class="button-form" method=post action="{{url_for('back')}}">
       <button class="button-form-element" type="submit" name="submit" value="{{person.wemail}}">
-        <div id="left-button" class="circle left-arrow">
-          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="">
-        </div>
+        <span id="left-button" class="circle left-arrow">
+          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="left">
+        </span>
       </button>
     </form>
     <form class="button-form" method=post action="{{url_for('next')}}">
       <button class="button-form-element" type="submit" name="submit" value="{{person.wemail}}">
-        <div id="right-button" class="circle right-arrow">
-          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="">
-        </div>
+        <span id="right-button" class="circle right-arrow">
+          <img src="{{url_for('static', filename = 'arrow.png')}}" alt="right">
+        </span>
       </button>
     </form>
     <div class="match-buttons">
-      <button class="blue-button" id="more-info-button" type="submit" name="submit" value="info">üëÄ More Information</button>
+      <button class="blue-button" id="more-info-button" type="button" name="submit" value="more">üëÄ More Information</button>
       {% if matchStatus %}
-              <!-- not yet implemented -->
-
-      <form id="match-button-form" method=post action="">
-        <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">üíî Unmatch</button>
+      <form class="match-button-form" method=post action="{{url_for('deleteMatch')}}">
+        <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">üíî Unmatch</button>
       </form>
       {% else %}
-        <form id="match-button-form" method=post action="{{url_for('makeMatch')}}">
-          <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">üíñ Match</button>
+        <form class="match-button-form" method=post action="{{url_for('makeMatch', location='home')}}">
+          <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">üíñ Match</button>
         </form>
       {% endif %}
       <button class="gray-button" id="shuffle-button" type="submit" name="submit" value="shuffle">üîÄ Shuffle</button>
     </div>
+  </div>
 </section>
 <section id="current-matches">
-  <h1 class="section-header">Current Matches</h1>
+  <h1 class="section-header">Your Current Matches</h1>
   {% for match in currentMatches %}
   <a class="match-link" href="{{url_for('match', wemail=match.wemail)}}">
     <div class="match-containers">
@@ -871,7 +1995,7 @@ if __name__ == '__main__':
   </a>
   {% endfor %}
 
-  {% if matches|length <= 4 %}
+  {% if currentMatches|length == 0 %}
   <div class="more-container">
     <div class="matches-info">
       <h3>much empty.</h3>
@@ -880,6 +2004,30 @@ if __name__ == '__main__':
   </div>
   {% endif %}
 
+  <h1 class="section-header">People Who Matched You</h1>
+  {% for oneSDMatch in oneSidedMatches %}
+  <a class="match-link" href="{{url_for('match', wemail= oneSDMatch.wemail)}}">
+    <div class="match-containers">
+      <div class="circle-img">
+        <p>{{oneSDMatch.fname[0]}}{{oneSDMatch.lname[0]}}</p>
+      </div>
+      <div class="matches-info">
+        <h3>{{oneSDMatch.fname}}</h3>
+        <p class="match-subheader">Class of {{oneSDMatch.year}}</p>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+
+  {% if oneSidedMatches|length == 0 %}
+  <div class="more-container">
+    <div class="matches-info">
+      <h3>much empty.</h3>
+      <p class="match-subheader">No one new has clicked to match yet!</p>
+    </div>
+  </div>
+  {% endif %}
+  
 </section>
 </div>
 {% endblock %}
@@ -902,18 +2050,18 @@ if __name__ == '__main__':
     }
 });
 
-  /* Toggles between match and unmatch */
-  $matchButton = $("#match-button");
-  $matchButton.on("click", function(event) {
-      value = $matchButton.attr('value');
-      if (value == 'match') {
-        // Do some match thingy
-        $button.text("üíî Unmatch");
-      }
-      else {
-        $button.text("‚ù§Ô∏è Match");
-      }
-    });
+  // /* Toggles between match and unmatch */
+  // $matchButton = $("#match-button");
+  // $matchButton.on("click", function(event) {
+  //     value = $matchButton.attr('value');
+  //     if (value == 'match') {
+  //       // Do some match thingy
+  //       $button.text("üíî Unmatch");
+  //     }
+  //     else {
+  //       $button.text("‚ù§Ô∏è Match");
+  //     }
+  //   });
     
     // carosel = 0;
     // matchSlides = $(".one-match")
@@ -941,7 +2089,7 @@ if __name__ == '__main__':
 {% block main_content %}
 
 <div class="main-content">
-    <div class="signup-container">      
+    <div class="interests-container">      
       <form method='POST' enctype="multipart/form-data" action="{{url_for('interests')}}">
         <br>
         <h2 class="action-title">Favorites</h2>
@@ -968,14 +2116,62 @@ if __name__ == '__main__':
           <p class="match-subheader">Introduce yourself! Let your personality or other
                 interests shine. <i>(Limit 200 characters)</i>
           </p>
-          <textarea type ="text" id="bio" name="bio" rows="3" cols="50" maxlength="200" placeholder="Tell us about yourself!"  required></textarea>
+          <textarea id="bio" name="bio" rows="3" cols="50" maxlength="200" placeholder="Tell us about yourself!"  required></textarea>
         </div>
 
         <div class = "textbox signup-textbox">
           <label for="pic">Picture</label>
           <p class="match-subheader"><i>File must be under 1MB</i></p>
-          <input id="pic-form" type="file" name="pic">
+          <input id="pic" type="file" name="pic">
         </div>
+        <br>
+
+        <h2 class="action-title">Contact</h2>
+        <p class="match-subheader">List platforms you want to use to communicate on (<i>add up to 2 options</i>)</p>
+        <div class="socials-flex">
+          <div class = "textbox signup-textbox">
+            <label for="contact-type1">Contact #1</label>
+            <select id="contact-type1" name="contact-type1" class="social-form">
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
+              <option value="Text">Text</option>
+            </select>
+          </div>
+  
+          <div class="textbox signup-textbox social-links">
+            <label for="social-url1">Link</label>
+            <input type ="url" id="social-url1" name="social-url1" placeholder="Social URL">
+          </div>
+
+          <div class="textbox signup-textbox phonenumber-form">
+            <label for="phonenumber1">Phone Number</label>
+            <input type ="tel" id="phonenumber1" name="phonenumber1" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+            placeholder="123-456-7890">
+          </div>
+        </div>
+        <div class="socials-flex">
+          <div class = "textbox signup-textbox">
+            <label for="contact-type2">Contact #2</label>
+            <select id="contact-type2" name="contact-type2" class="social-form">
+              <option value="Facebook">Facebook</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Text">Text</option>
+            </select>
+          </div>
+  
+          <div class="textbox signup-textbox social-links">
+            <label for="social-url2">Link</label>
+            <input type ="url" id="social-url2" name="social-url2" placeholder="Social URL">
+          </div>
+
+          <div class="textbox signup-textbox phonenumber-form">
+            <label for="phonenumber2">Phone Number</label>
+            <input type ="tel" id="phonenumber2" name="phonenumber2" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+            placeholder="123-456-7890">
+          </div>
+        </div>
+        <p id="format-message" class="match-subheader">* Please enter your phone number in this format: 123-456-7890</p>
+
 
         <br>
         <button type="submit">Sign up</button>
@@ -983,13 +2179,36 @@ if __name__ == '__main__':
     </div>
   </div>
 
-  {% endblock %}{% extends "base.html" %}
+  {% endblock %}
+
+{% block end_scripts %}
+<script>
+  $('select').change(function(){
+    value = $(this).val();
+    $form = $(this).closest('.socials-flex');
+    $socialform = $form.find('.social-links');
+    $phoneform = $form.find('.phonenumber-form');
+    $phoneformat = $('#format-message');
+
+    if (value == "Text") {
+      $socialform.css('display', 'none');
+      $phoneform.css('display', 'block');
+      $phoneformat.css('display', 'block');
+    }
+    else {
+      $phoneform.css('display', 'none');
+      $phoneformat.css('display', 'none');
+      $socialform.css('display', 'block');
+    }
+});
+</script>
+{% endblock %}{% extends "base.html" %}
 
 {% block main_content %}
 
 <body>
 <div class="main-content">
-<div class="signup-container">
+<div class="landing-container">
 <h2 class="action-title">üëã Welcome</h2>
     <div class="landing-buttons">
         <a href="{{ url_for('login') }}"><button class="blue-button">Login</button></a>
@@ -1006,30 +2225,20 @@ if __name__ == '__main__':
 
 <body>
     <h1>Login</h1>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <div id="messages">
-    {% for msg in messages %}
-        <p>{{msg}}</p>
-    {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
     <div class="main-content">
-        <div class="signup-container">
-    <form method = 'POST' action={{ url_for('authenticate', kind = 'login') }}>
+        <div class="landing-container">
+    <form method = 'POST' action="{{ url_for('login') }}">
         <div class="textbox signup-textbox">
             <label for="email">Username</label>
-            <input type="text" placeholder="Wellesley Username" name="email" required>
+            <input id="email" type="text" placeholder="Wellesley Username" name="email" required>
         </div>
     
         <div class="textbox signup-textbox">
             <label for="password">Password</label>
-            <input type="password" placeholder="Enter Password" name="password" required>
+            <input id="password" type="password" placeholder="Enter Password" name="password" required>
         </div>
         <br>
         <button type="submit">Login</button>
-        <label>
     </form>
     </div>
     </div>
@@ -1040,15 +2249,34 @@ if __name__ == '__main__':
 {% block nav %}
   <nav>
     <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div>
+      <form id="search-form" method="GET" action="{{url_for('query')}}">
+        <div class="search-container">
+          <label for="search-text">Search </label>
+          <input id="search-text" type="text" required name="query">
+        </div>
+
+        <div class="search-container">
+          <label for="search-kind">Kind</label>
+          <select id="search-kind" required name = "kind">
+              <option value="">choose one</option>
+                <option value="person">person name</option>
+                <option value="email">wellesley email</option>
+          </select>
+        </div>
+        <button id="search-button" class="gray-button" type="submit">Search</button>
+      </form>
+    </div>
     <div id="profile-logout-container">
-      <div id="user-circle" class="circle-img">
-        <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
-      </div>
-      <form method=post action="">
+      <a href="{{url_for('profile')}}">
+        <div id="user-circle" class="circle-img">
+          <p>{{currentUserInfo.fname[0]}}{{currentUserInfo.lname[0]}}</p>
+        </div>
+      </a>
+      <form method=post action="{{url_for('logout')}}">
         <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
       </form>
     </div>
-    </a>
   </nav>
 {% endblock %}
 
@@ -1056,110 +2284,236 @@ if __name__ == '__main__':
 <div class="main-content">
 <section class="match-section">
   <div class="match-photo">
-    <div class="one-match active" value="{{person.wemail}}">
+    <div class="one-match active">
       {% if photo %}
-      <img id="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
       {% else %}
-      <img id="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
+      <img class="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
       {% endif %}
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
-        <p class="match-subheader">Class of {{person.year}}</p>
+        <p class="action-subheader">Class of {{person.year}}
+          {% if person.pronouns %}
+            <br>{{person.pronouns}}
+          {% endif %}
+        </p>
         <div class="active">
           <p class="profile-bio">
             {{personBio.bio}}
           </p>
-          <div class="profile-interests" data-state="closed">
-            {% for favorite in person.favorites %}
-            <div class="interest-box">
-              <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
-              <p>My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+          <div id="more-profile">
+            <h2 class="match-section-titles">Location</h2>
+            <div>
+              <p>üìö {{person.major}} Major</p>
+              <p class="match-location-info">üìç {{person.city}},
+                {% if person.state %}
+                {{person.state}},
+                {% endif %}
+                {% if person.country %}
+                {{person.country}}
+                {% endif %}
+              </p>
+              <p class="match-campus-info">Currently
+                {% if person.onCampus == 'yes' %}
+                on campus. Hit me up ü§©
+                {% else %}
+                at home. Let's set up a Zoom meeting üíª
+                {% endif %}
+              </p>
             </div>
-            {% endfor %}
+            <h2 class="match-section-titles">Favorites</h2>
+            <div class="profile-interests" data-state="closed">
+              {% for favorite in person.favorites %}
+              <div class="interest-box">
+                <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
+                <p>&emsp;My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+              </div>
+              {% endfor %}
+            </div>
           </div>
         </div>
+        <h2 class="match-section-titles">Contact</h2>
+          {% if contacts|length == 2 %}
+          <div id="contact-buttons">
+            {% for contact in contacts %}
+              {% if contact.platform == 'text' %}
+                <button class="phone-box" id="phone-button1" type="button" name="button">{{contact.phoneNumber}}</button>
+              {% else %}
+                {% if contact.platform == 'instagram'%}
+                  <a href='{{contact.url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
+                {% else %}
+                  <a href="{{contact.url}}" target='_blank'><button class="blue-butto facebook-button" type="button" name="button">Facebook</button></a>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+            {% if contacts[0].platform == 'text' %}
+              <button class="phone-box" id="phone-button2" type="button" name="button">{{contacts[0].phoneNumber}}</button>
+            {% else %}
+              {% if contacts[0].platform == 'instagram' %}
+                <a href='{{contacts[0].url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
+              {% else %}
+                <a href="{{contacts[0].url}}" target='_blank'><button class="blue-button facebook-button" type="button" name="button">Facebook</button></a>
+              {% endif %}
+            {% endif %}
+          {% endif %}
       </div>
     </div>
   </div>
-  <form id="match-button-form2" method=post action="">
-    <button id="match-button" type="submit" name="submit" value="{{person.wemail}}">üíî Unmatch</button>
-  </form>
+  <div class="match-buttons">
+    <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">üëÄ More Information</button>
+    {% if oneSDMatchStatus %} <!-- a one sided matching -->
+      <form class="match-button-form" method=post action="{{url_for('makeMatch', location='matches')}}">
+        <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">üíñ Match</button>
+      </form>
+    {% else %} <!-- a two sided matching -->
+      <form class="match-button-form" method=post action="{{url_for('deleteMatch')}}">
+        <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">üíî Unmatch</button>
+      </form>
+    {% endif %}
+  </div>
 </section>
 
     <section id="match-actions">
+      <div class="upcoming-meetings">
+        <h2 class="action-title">Upcoming meetings</h2>
+        <div id="all-meetings">
+          {% if meetings %}
+            {% for meeting in meetings %}
+            <div class="meeting-container">
+              <div class="meeting-time">
+                <p>{{meeting.date}} @ 
+                  {% if meeting.type == "Remote" %}
+                  {{meeting.type}}
+                  {% else %}
+                  {{meeting.location}}
+                  {% endif %}
+                </p>
+                <p>{{meeting.time}}</p>
+              </div>
+              <h2 class="meeting-title">{{meeting.what}}</h2>
+              <div class="meeting-options">
+                {% if meeting.type == "Remote" %}
+                <a href="{{meeting.location}}">
+                  <button id="zoom-meeting" name="zoom-meeting" value="{{meeting.meetingID}}">Zoom Link</button>
+                </a>
+                {% endif %}
+                <form action="{{url_for('deleteMeeting')}}" method="post">
+                  <button id="delete-meeting" type="submit" name="deleteMeeting" value="{{meeting.meetingID}}">Delete</button>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div id="no-meeting" class="meeting-container">
+            <p>No meetings scheduled yet üòî</p>
+          </div>
+          {% endif %}
+        </div>
+    </div>
+
       <div class="icebreaker-action">
-        <h2 class="action-title">Random Icebreaker</h2>
-        <p id="icebreaker"></p>
-        <div id="icebreaker-buttons">
-          <button class="gray-button" id="ice-shuffle-button" type="button" name="button">üîÄ Shuffle</button>
-          <button class="blue-button" id="copy-button" type="button" name="button">Copy</button>
+        <div class="action-title-container">
+          <h2 class="action-title">Random Icebreaker</h2>
+          <img id="icebreaker-arrow" class="minimize" src="{{url_for('static', filename = 'arrow.png')}}" alt="Minimize Arrow">
+        </div>
+        <div id="icebreaker-container">
+          <p class="action-subheader">Wanna break the ice? Copy a random icebreaker
+            and DM your match.
+          </p>
+          <p id="icebreaker"></p>
+          <div id="icebreaker-buttons">
+            <button class="gray-button" id="ice-shuffle-button" type="button" name="button">üîÄ Shuffle</button>
+            <button class="blue-button" id="copy-button" type="button" name="button">Copy</button>
+          </div>
         </div>
       </div>
+
       <div id="schedule-meeting">
-        <h2 class="action-title">Schedule meeting</h2>
-        <form method="post" action="#">
-						<fieldset class="r-pill">
-							<legend>
-								What
-							</legend>
-
-							<span class="r-pill__item">
-								<input type="radio" id="coffee" name="radios_2" checked>
-								<label for="coffee">Coffee Chat</label>
-							</span>
-
-							<span class="r-pill__item">
-								<input type="radio" id="study" name="radios_2">
-								<label for="study">Study Session</label>
-							</span>
-
-							<span class="r-pill__item">
-								<input type="radio" id="hangout" name="radios_2">
-								<label for="hangout">General Hangout</label>
-							</span>
-
-							<span class="r-pill__item">
-								<input type="radio" id="game" name="radios_2">
-								<label for="game">Game Night</label>
-							</span>
-
-              <span class="r-pill__item">
-								<input type="radio" id="food" name="radios_2">
-								<label for="food">Grab some food</label>
-							</span>
-						</fieldset>
-
-            <fieldset class="r-pill">
-							<legend>
-								Where
-							</legend>
-
-							<span class="r-pill__item">
-								<input type="radio" id="remote" name="radios_3" checked>
-								<label for="remote">Remote</label>
-							</span>
-
-							<span class="r-pill__item">
-								<input type="radio" id="inperson" name="radios_3">
-								<label for="inperson">In-Person</label>
-							</span>
-            </fieldset>
-
-            <div class="textbox">
-              <label for="avail">When</label>
-              <input type="text" id="avail" name="avail" placeholder="I‚Äôm available from...">
-            </div>
-
-            <div id="notes-textbox" class="textbox">
-              <label for="notes">Notes</label>
-              <input type="text" id="notes" name="notes" placeholder="Excited to chat with you!">
-            </div>
-
-            <button class="blue-button" id="schedule-button" type="submit" value="Submit Form" name="button">Schedule</button>
-					</form>
-      </div>
-      <div class="upcoming-meetings">
-          <h2 class="action-title">Upcoming meetings</h2>
+        <div class="action-title-container">
+          <h2 class="action-title">Schedule meeting</h2>
+          <img id="schedule-arrow" class="minimize" src="{{url_for('static', filename = 'arrow.png')}}" alt="Minimize Arrow">
+        </div>
+        <div id="schedule-meeting-container">
+          <p class="action-subheader">Once you've figured out a good time that works for
+            the both of you, go ahead and schedule a meeting!
+          </p>
+          <form method="post" action="{{url_for('scheduleMeeting', wemail=person.wemail)}}">
+              <fieldset class="r-pill">
+                <legend>
+                  What
+                </legend>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="coffee" name="schedule-what" value="Coffee Chat" checked>
+                  <label for="coffee">Coffee Chat</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="study" name="schedule-what" value="Study Session">
+                  <label for="study">Study Session</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="hangout" name="schedule-what" value="General Hangout">
+                  <label for="hangout">General Hangout</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="game" name="schedule-what" value="Game Night">
+                  <label for="game">Game Night</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="food" name="schedule-what" value="Grab food">
+                  <label for="food">Grab some food</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="other" name="schedule-what" value="Other">
+                  <label for="other">Other</label>
+                </span>
+              </fieldset>
+  
+              <fieldset id="where-pills" class="r-pill">
+                <legend>
+                  Where
+                </legend>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="remote" name="schedule-where" value="Remote" checked>
+                  <label for="remote">Remote</label>
+                </span>
+  
+                <span class="r-pill__item">
+                  <input type="radio" id="inperson" name="schedule-where" value="In-Person">
+                  <label for="inperson">In-Person</label>
+                </span>
+              </fieldset>
+  
+              <div class="textbox notes-textbox">
+                <label id="location-label" for="schedule-location">Location</label>
+                <p id="location-subheader" class="action-subheader">Paste a video call link if remote, or a location
+                  (like "The Lulu") for in-person meetings.
+                </p>
+                <input type="text" id="schedule-location" name="schedule-location" placeholder="Location" maxlength="30" required>
+              </div>
+  
+              <div class="textbox">
+                <label id="when-label" for="schedule-when">When</label>
+                <p id="when-subheader" class="action-subheader">Note: Time is in EST.</p>
+                <input type="datetime-local" id="schedule-when" name="schedule-when" required>
+              </div>
+  
+              <div class="textbox notes-textbox">
+                <label for="notes">Notes</label>
+                <input type="text" id="notes" name="notes" maxlength="100" placeholder="Excited to chat with you!">
+              </div>
+  
+              <button class="blue-button" id="schedule-button" type="submit" value="Submit Form" name="button">Schedule</button>
+            </form>
+        </div>
       </div>
     </section>
 </div>
@@ -1202,7 +2556,7 @@ function getIceBreaker() {
 function copyToClipboard(element) {
     var $temp = $("<input>");
     $("body").append($temp);
-    $temp.val($(element).text()).select();
+    $temp.val("Icebreaker from WINTEREST: " + $(element).text()).select();
     document.execCommand("copy");
     $temp.remove();
     alert("Copied!");
@@ -1218,6 +2572,439 @@ $("#copy-button").on('click', function(event) {
   copyToClipboard("#icebreaker");
 });
 
+
+$icebreakarrow = $("#icebreaker-arrow")
+$schedulearrow = $("#schedule-arrow")
+
+$icebreakarrow.on('click', function(event) {
+  $container = $("#icebreaker-container")
+  if ($container.css("display") == 'none') {
+      $container.css("display", "block");
+      $icebreakarrow.css("transform", "rotate(90deg)");
+    }
+    else {
+      $container.css("display", "none");
+      $icebreakarrow.css("transform", "rotate(-90deg)");
+    }
+});
+
+$schedulearrow.on('click', function(event) {
+  $container = $("#schedule-meeting-container")
+  if ($container.css("display") == 'none') {
+      $container.css("display", "block");
+      $schedulearrow.css("transform", "rotate(90deg)");
+    }
+    else {
+      $container.css("display", "none");
+      $schedulearrow.css("transform", "rotate(-90deg)");
+    }
+});
+
+
+</script>
+{% endblock %}
+
+{% extends "base.html" %}
+
+{% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div>
+      <form id="search-form" method="GET" action="{{url_for('query')}}">
+        <div class="search-container">
+          <label for="search-text">Search </label>
+          <input id="search-text" type="text" required name="query">
+        </div>
+
+        <div class="search-container">
+          <label for="search-kind">Kind</label>
+          <select id="search-kind" required name = "kind">
+              <option value="">choose one</option>
+                <option value="person">person name</option>
+                <option value="email">wellesley email</option>
+          </select>
+        </div>
+        <button id="search-button" class="gray-button" type="submit">Search</button>
+      </form>
+    </div>
+    <div id="profile-logout-container">
+        <a href="{{url_for('profile')}}">
+            <div id="user-circle" class="circle-img">
+              <p>{{currentUser.fname[0]}}{{currentUser.lname[0]}}</p>
+            </div>
+          </a>
+      <form method=post action="{{url_for('logout')}}">
+        <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
+      </form>
+    </div>
+  </nav>
+{% endblock %}
+
+{% block main_content %}
+<div class="main-content">
+<section class="match-section">
+    <h1 class="section-header">People Found:</h1>
+    {% for person in peopleFound %}
+    <a class="match-link" href="{{url_for('searched_profile', wemail=person.wemail)}}">
+      <div class="match-containers">
+        <div class="circle-img">
+            {% if lname in person%}
+            <p>{{person.fname[0]}}{{person.lname[0]}}</p>
+            {% else %}
+            <p>{{person.fname[0]}}</p>
+            {% endif %}
+        </div>
+        <div class="matches-info">
+          <h3>{{person.fname}}</h3>
+          <p class="match-subheader">Class of {{person.year}}</p>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+</section>
+</div>
+{% endblock %}{% extends "base.html" %}
+
+{% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div>
+      <form id="search-form" method="GET" action="{{url_for('query')}}">
+        <div class="search-container">
+          <label for="search-text">Search </label>
+          <input id="search-text" type="text" required name="query">
+        </div>
+
+        <div class="search-container">
+          <label for="search-kind">Kind</label>
+          <select id="search-kind" required name = "kind">
+              <option value="">choose one</option>
+                <option value="person">person name</option>
+                <option value="email">wellesley email</option>
+          </select>
+        </div>
+        <button id="search-button" class="gray-button" type="submit">Search</button>
+      </form>
+    </div>
+    <div id="profile-logout-container">
+        <a href="{{url_for('profile')}}">
+            <div id="user-circle" class="circle-img">
+              <p>{{person.fname[0]}}{{person.lname[0]}}</p>
+            </div>
+          </a>
+      <form method=post action="{{url_for('logout')}}">
+        <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
+      </form>
+    </div>
+  </nav>
+{% endblock %}
+
+{% block main_content %}
+<div class="main-content">
+<section class="match-section">
+  <div class="match-photo">
+    <div class="one-match active">
+      {% if photo %}
+      <img class="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
+      {% else %}
+      <img class="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
+      {% endif %}
+      <div class="match-header">
+        <h2 class="match-name">{{person.fname}}</h2>
+        <p class="action-subheader">Class of {{person.year}}
+          {% if person.pronouns %}
+            <br>{{person.pronouns}}
+          {% endif %}
+        </p>
+        <div class="active">
+          <p class="profile-bio">
+            {{personBio.bio}}
+          </p>
+          <div id="more-profile">
+            <h2 class="match-section-titles">More Information</h2>
+            <div>
+              <p>üìö {{person.major}} Major</p>
+              <p class="match-location-info">üìç {{person.city}},
+                {% if person.state %}
+                {{person.state}},
+                {% endif %}
+                {% if person.country %}
+                {{person.country}}
+                {% endif %}
+              </p>
+              <p class="match-campus-info">Currently
+                {% if person.onCampus == 'yes' %}
+                on campus. Hit me up ü§©
+                {% else %}
+                at home. Let's set up a Zoom meeting üíª
+                {% endif %}
+              </p>
+            </div>
+            <h2 class="match-section-titles">Favorites</h2>
+            <div class="profile-interests" data-state="closed">
+              {% for favorite in person.favorites %}
+              <div class="interest-box">
+                <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
+                <p>&emsp;My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <h2 class="match-section-titles">Contact</h2>
+          {% if contacts|length == 2 %}
+          <div id="contact-buttons">
+            {% for contact in contacts %}
+              {% if contact.platform == 'text' %}
+                <button class="phone-box" id="phone-button1" type="button" name="button">{{contact.phoneNumber}}</button>
+              {% else %}
+                {% if contact.platform == 'instagram'%}
+                  <a href='{{contact.url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
+                {% else %}
+                  <a href="{{contact.url}}" target='_blank'><button class="blue-button facebook-button" type="button" name="button">Facebook</button></a>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+            {% if contacts[0].platform == 'text' %}
+              <button class="phone-box" id="phone-button2" type="button" name="button">{{contacts[0].phoneNumber}}</button>
+            {% else %}
+              {% if contacts[0].platform == 'instagram' %}
+                <a href='{{contacts[0].url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
+              {% else %}
+                <a href="{{contacts[0].url}}" target='_blank'><button class="blue-button facebook-button" type="button" name="button">Facebook</button></a>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="match-buttons">
+    <button class="blue-button" id="more-info-button" type="button" name="button" value="more">üëÄ More Information</button>
+  </div>
+</section>
+
+    <section id="match-actions">
+      <div class="upcoming-meetings">
+        <h2 class="action-title">Upcoming meetings</h2>
+        <div id="all-meetings">
+          {% if meetings %}
+            {% for meeting in meetings %}
+            <div class="meeting-container">
+              <div class="meeting-time">
+                <p>{{meeting.date}} @ 
+                  {% if meeting.type == "Remote" %}
+                  {{meeting.type}}
+                  {% else %}
+                  {{meeting.location}}
+                  {% endif %}
+                </p>
+                <p>{{meeting.time}}</p>
+              </div>
+              <h2 class="meeting-title">{{meeting.what}}</h2>
+              <div class="meeting-options">
+                {% if meeting.type == "Remote" %}
+                <a href="{{meeting.location}}">
+                  <button id="zoom-meeting" name="zoom-meeting" value="{{meeting.meetingID}}">Zoom Link</button>
+                </a>
+                {% endif %}
+                <form action="{{url_for('deleteMeeting')}}" method="post">
+                  <button id="delete-meeting" type="submit" name="deleteMeeting" value="{{meeting.meetingID}}">Delete</button>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div id="no-meeting" class="meeting-container">
+            <p>No meetings scheduled yet üòî</p>
+          </div>
+          {% endif %}
+        </div>
+        </div>
+        <div id="edit-profile">
+          <h2 class="action-title">Edit Profile</h2>
+          <form action="{{url_for('edit')}}">
+            <button class="blue-button" type="submit" name="edit">Edit</button>
+          </form>
+        </div>
+    </section>
+
+
+
+</div>
+{% endblock %}
+
+{% block end_scripts %}
+<script>
+$("#more-info-button").on("click", function(event) {
+    $button = $("#more-info-button");
+    $profile = $("#more-profile");
+    if ($profile.css("display") == 'none') {
+      $profile.css("display", "block");
+      $button.text("‚úåÔ∏è Less Information");
+    }
+    else {
+      $profile.css("display", "none");
+      $button.text("üëÄ More Information");
+    }
+  });
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
+</script>
+{% endblock %}
+
+{% extends "base.html" %}
+
+{% block nav %}
+  <nav>
+    <a href="{{url_for('home')}}"><p id="winterest-logo">Winterest</p></a>
+    <div>
+      <form id="search-form" method="GET" action="{{url_for('home')}}">
+        <div class="search-container">
+          <label for="search-text">Search </label>
+          <input id="search-text" type="text" required name="query">
+        </div>
+
+        <div class="search-container">
+          <label for="search-kind">Kind</label>
+          <select id="search-kind" required name = "kind">
+              <option value="">choose one</option>
+                <option value="person">person name</option>
+                <option value="email">wellesley email</option>
+          </select>
+        </div>
+        <button id="search-button" class="gray-button" type="submit">Search</button>
+      </form>
+    </div>
+
+    <div id="profile-logout-container">
+        <a href="{{url_for('profile')}}">
+            <div id="user-circle" class="circle-img">
+              <p>{{person.fname[0]}}{{person.lname[0]}}</p>
+            </div>
+          </a>
+      <form method=post action="{{url_for('logout')}}">
+        <button class="gray-button" id="logout-button" type="submit" name="logout" value="logout">Logout</button>
+      </form>
+    </div>
+  </nav>
+{% endblock %}
+
+{% block main_content %}
+<div class="main-content">
+<section class="match-section">
+  <div class="match-photo">
+    <div class="one-match active">
+      {% if photo %}
+      <img class="match-image-cropped" src="{{url_for('pic', wemail=person.wemail)}}" alt="">
+      {% else %}
+      <img class="match-image-cropped" src="{{url_for('static', filename='nophoto.jpg')}}" alt="">
+      {% endif %}
+      <div class="match-header">
+        <h2 class="match-name">{{person.fname}}</h2>
+        <p class="action-subheader">Class of {{person.year}} <br> {{person.major}} Major</p>
+        <div class="active">
+          <p class="profile-bio">
+            {{personBio.bio}}
+          </p>
+          <div id="more-profile">
+            <h2 class="match-section-titles">Location</h2>
+            <div>
+              <p class="match-location-info">üìç{{person.city}},
+                {% if person.state %}
+                {{person.state}},
+                {% endif %}
+                {% if person.country %}
+                {{person.country}}
+                {% endif %}
+              </p>
+              <p class="match-campus-info">Currently
+                {% if person.onCampus == 'yes' %}
+                on campus. Hit me up ü§©
+                {% else %}
+                at home. Let's set up a Zoom meeting üíª
+                {% endif %}
+              </p>
+            </div>
+            <h2 class="match-section-titles">Favorites</h2>
+            <div class="profile-interests" data-state="closed">
+              {% for favorite in person.favorites %}
+              <div class="interest-box">
+                <div class="interest-emoji">{{emojis[favorite.itemType]}}</div>
+                <p>&emsp;My favorite {{favorite.itemType}} is <strong>{{favorite.name}}</strong></p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <h2 class="match-section-titles">Contact</h2>
+          {% if contacts|length == 2 %}
+          <div id="contact-buttons">
+            {% for contact in contacts %}
+              {% if contact.platform == 'text' %}
+                <button class="phone-box" id="phone-button1" type="button" name="button">{{contact.phoneNumber}}</button>
+              {% else %}
+                {% if contact.platform == 'instagram'%}
+                  <a href='{{contact.url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
+                {% else %}
+                  <a href="{{contact.url}}" target='_blank'><button class="blue-button facebook-button" type="button" name="button">Facebook</button></a>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+            {% if contacts[0].platform == 'text' %}
+              <button class="phone-box" id="phone-button2" type="button" name="button">{{contacts[0].phoneNumber}}</button>
+            {% else %}
+              {% if contacts[0].platform == 'instagram' %}
+                <a href='{{contacts[0].url}}' target='_blank'><button class="gray-button insta-button" type="button" name="button">Instagram</button></a>
+              {% else %}
+                <a href="{{contacts[0].url}}" target='_blank'><button class="blue-button facebook-button" type="button" name="button">Facebook</button></a>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="match-buttons">
+    <button class="blue-button" id="more-info-button" type="submit" name="submit" value="more">üëÄ More Information</button>
+    {% if matchStatus %}
+    <form class="match-button-form" method=post action="{{url_for('deleteMatch')}}">
+      <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">üíî Unmatch</button>
+    </form>
+    {% else %}
+      <form class="match-button-form" method=post action="{{url_for('makeMatch', location='home')}}">
+        <button class="match-button" type="submit" name="submit" value="{{person.wemail}}">üíñ Match</button>
+      </form>
+    {% endif %}
+  </div>
+</section>
+</div>
+{% endblock %}
+
+{% block end_scripts %}
+<script>
+$("#more-info-button").on("click", function(event) {
+    $button = $("#more-info-button");
+    $profile = $("#more-profile");
+    if ($profile.css("display") == 'none') {
+      $profile.css("display", "block");
+      $button.text("‚úåÔ∏è Less Information");
+    }
+    else {
+      $profile.css("display", "none");
+      $button.text("üëÄ More Information");
+    }
+  });
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
 </script>
 {% endblock %}
 
@@ -1226,12 +3013,11 @@ $("#copy-button").on('click', function(event) {
 {% block main_content %}
 
 <div class="main-content">
-    <div class="signup-container">
+  <form method='POST' enctype="multipart/form-data" action="{{ url_for('signup') }}">
+    <div id="signup-container">
       <h2 class="action-title">Sign Up</h2>
-      
-      <form method='POST' action="{{ url_for('authenticate', kind = 'signup') }}">
         <div id="wellesley-email-box" class="textbox signup-textbox">
-          <label for="wemail">Wellesley Email</label>
+          <label for="email">Wellesley Email</label>
           <p class="match-subheader">Please omit (@wellesley.edu)</p>
           <input type="text" id="email" name="email" placeholder="Wellesley User" required>
         </div>
@@ -1248,6 +3034,11 @@ $("#copy-button").on('click', function(event) {
           </div>
         </div>
 
+        <div class="textbox signup-textbox">
+          <label for="country">Pronouns</label>
+          <input type="text" id="pronouns" name="pronouns" placeholder="Pronouns">
+        </div>
+
         <div class="twocol-flex">
           <div class="textbox signup-textbox">
             <label for="city">City</label>
@@ -1255,7 +3046,7 @@ $("#copy-button").on('click', function(event) {
           </div>
           <div class="textbox signup-textbox">
             <label for="state">State</label>
-            <input type="text" id="state" name="state" placeholder="State" required>
+            <input type="text" id="state" name="state" placeholder="State">
           </div>
         </div>
         <div class="textbox signup-textbox">
@@ -1264,13 +3055,13 @@ $("#copy-button").on('click', function(event) {
         </div>
 
         <div class="textbox signup-textbox">
-          <label for="password">Password</label>
-          <input type="password" placeholder="Enter Password" name="password" required>
+          <label for="password1">Password</label>
+          <input id="password1" type="password" placeholder="Enter Password" name="password1" required>
         </div>
 
         <div class="textbox signup-textbox">
-          <label for="confirm_password">Confirm Password</label>
-          <input type="confirm_password" placeholder="Confirm Password" name="confirm_password" required>
+          <label for="password2">Confirm Password</label>
+          <input id="password2" type="password" placeholder="Confirm Password" name="password2" required>
         </div>
 
         <br>
@@ -1282,19 +3073,15 @@ $("#copy-button").on('click', function(event) {
           </legend>
 
           <span class="r-pill__item">
-            <input type="radio" id="home" name="radios_3" checked>
+            <input type="radio" id="home" name="onCampus" value="no" checked>
             <label for="home">At Home</label>
           </span>
 
           <span class="r-pill__item">
-            <input type="radio" id="campus" name="radios_3">
+            <input type="radio" id="campus" name="onCampus" value="yes">
             <label for="campus">On Campus</label>
           </span>
 
-          <span class="r-pill__item">
-            <input type="radio" id="other" name="radios_3">
-            <label for="other">Other</label>
-          </span>
         </fieldset>
 
         <div class="twocol-flex">
@@ -1308,35 +3095,138 @@ $("#copy-button").on('click', function(event) {
             <input type="text" id="year" name="year" placeholder="2023" required>
           </div>
         </div>
+        <br>
+        <button id="continue-button" type="button">Continue</button>
+    </div>
 
-        <!-- <br>
+    <!-- Interests Form -->
+      <div id="interests-container">      
+        <br>
         <h2 class="action-title">Favorites</h2>
+        <!-- <p>Choose your favorites!</p> -->
         <div class = "textbox signup-textbox">
           <label for="book">Book</label>
-          <input type ="text" id="book" name="book" required>
-      </div>
+          <input type ="text" id="book" name="book" placeholder="Favorite book" required>
+        </div>
 
-        <div class="twocol-flex">
           <div class = "textbox signup-textbox">
             <label for="color">Color</label>
-            <input type ="text" id="color" name="color" required> -->
+            <input type ="text" id="color" name="color" placeholder="Favorite color" required>
             <!-- <label for="color">Color:</label>
             <input type ="color" id="color" name="color" required> -->
-          <!-- </div>
+          </div>
 
           <div class = "textbox signup-textbox">
-              <label for="album">Album</label>
-              <input type ="text" id="album" name="album" required>
+              <label for="song">Song</label>
+              <input type ="text" id="song" name="song" placeholder="Favorite song" required>
           </div>
-        </div> -->
+
+        <div id="bio-textbox" class = "textbox signup-textbox">
+          <label for="bio">Bio</label>
+          <p class="match-subheader">Introduce yourself! Let your personality or other
+                interests shine. <i>(Limit 200 characters)</i>
+          </p>
+          <textarea id="bio" name="bio" rows="3" cols="50" maxlength="200" placeholder="Tell us about yourself!"  required></textarea>
+        </div>
+
+        <div class = "textbox signup-textbox">
+          <label for="pic">Picture</label>
+          <p class="match-subheader"><i>File must be under 1MB</i></p>
+          <input id="pic" type="file" name="pic">
+        </div>
+        <br>
+
+        <h2 class="action-title">Contact</h2>
+        <p class="match-subheader">List platforms you want to use to communicate on (<i>add up to 2 options</i>)</p>
+        <div class="socials-flex">
+          <div class = "textbox signup-textbox">
+            <label for="contact-type1">Contact #1</label>
+            <select id="contact-type1" name="contact-type1" class="social-form">
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
+              <option value="Text">Text</option>
+            </select>
+          </div>
+  
+          <div class="textbox signup-textbox social-links">
+            <label for="social-url1">Link</label>
+            <input type ="url" id="social-url1" name="social-url1" placeholder="Social URL">
+          </div>
+
+          <div class="textbox signup-textbox phonenumber-form">
+            <label for="phonenumber1">Phone Number</label>
+            <input type ="tel" id="phonenumber1" name="phonenumber1" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+            placeholder="123-456-7890">
+          </div>
+        </div>
+        <div class="socials-flex">
+          <div class = "textbox signup-textbox">
+            <label for="contact-type2">Contact #2</label>
+            <select id="contact-type2" name="contact-type2" class="social-form">
+              <option value="Facebook">Facebook</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Text">Text</option>
+            </select>
+          </div>
+  
+          <div class="textbox signup-textbox social-links">
+            <label for="social-url2">Link</label>
+            <input type ="url" id="social-url2" name="social-url2" placeholder="Social URL">
+          </div>
+
+          <div class="textbox signup-textbox phonenumber-form">
+            <label for="phonenumber2">Phone Number</label>
+            <input type ="tel" id="phonenumber2" name="phonenumber2" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" 
+            placeholder="123-456-7890">
+          </div>
+        </div>
+        <p id="format-message" class="match-subheader">* Please enter your phone number in this format: 123-456-7890</p>
+
 
         <br>
-        <button type="submit">Continue</button>
-      </form>
-    </div>
-  </div>
+        <div class="two-col-buttons">
+          <button id="back-button" class="gray-button" type="button">Back</button>
+          <button class="blue-button" type="submit">Sign up</button>
+        </div>
+      </div>
+  </form>
+</div>
 
-  {% endblock %}âPNG
+  {% endblock %}
+
+  {% block end_scripts %}
+<script>
+  $('select').change(function(){
+    value = $(this).val();
+    $form = $(this).closest('.socials-flex');
+    $socialform = $form.find('.social-links');
+    $phoneform = $form.find('.phonenumber-form');
+    $phoneformat = $('#format-message');
+
+    if (value == "Text") {
+      $socialform.css('display', 'none');
+      $phoneform.css('display', 'block');
+      $phoneformat.css('display', 'block');
+    }
+    else {
+      $phoneform.css('display', 'none');
+      $phoneformat.css('display', 'none');
+      $socialform.css('display', 'block');
+    }
+});
+
+$('#continue-button').on('click', function() {
+  $('#signup-container').css('display', 'none');
+  $('#interests-container').css('display', 'block');
+});
+
+$('#back-button').on('click', function() {
+  $('#signup-container').css('display', 'block');
+  $('#interests-container').css('display', 'none');
+});
+
+</script>
+{% endblock %}âPNG
 
    IHDR         π‹   	pHYs     öú   sRGB ÆŒÈ   gAMA  ±è¸a   PIDATxÌë± EÉEå`4∞öŒF`‚pß"*M˛›ÎﬁKÄ1É8 ÆÀ©‘h8˙…KP&k‚$k$m◊=ÀTπœæ»
 â0(A{Ò?vïÕ^À    IENDÆB`Çˇÿˇ‡ JFIF  H H  ˇ€ C ˇ€ Cˇ¿ > ˇƒ           	
@@ -7281,7 +9171,8 @@ GåêÌ˜)Åp¡ÕWTGtÜ4√‚ëı |–9÷à˛±Õ'‚‡∫C€ã<WÒƒÜr¨–∞Ê{¡”h≈ ‡¿·≤pôÇ`%ne&QofìN˝dJÚ∫b
 ø&AÑ/ı™â]w4N≈¸¶;XôF˚pU;™
 ¬ÙsÅT8™Vî”Æ}e ‡r¡%ÊÛÙÔQ‰ãsÏ«„éQ˘î,W‹ÃãŸó¿Â&ñ2Y¢w·ç0¨…‰fTÏ√òÈö…wlaz #îI˙pVj∫pV¶åbY·H˘†´ﬂº~<d@‡;ˆc€üÉçPq	pÓÁ\¨ü¬a◊√ßï◊ã·rÎó¬¯rˇ ”À<˛@ü„Ú≥,À0‹ó¸¢Ló ﬂÛyéèfIà;√á≈˛\•’ 0erçpu\åF_˛∞Fˇ Œ[¯h«1Äˇ XD£«˚˜ëáÇ›‡@‡˝‚©–WÏÈœxˇ Ë–)Ï?£^”ûˇ '˛L›=°2˜˜ß∏xÄ1‹V—vﬁUp‡9Ê˛W{˛?˘§N/&IØ∞„Ó˜‚rπJÆèl‹N\ﬁoÄ√âÏ√<öeônØ‚/^C¿d…¸TòÒÄSWI¨û∏M«∑¿nÓñ‰ZaÌÖ7>‹‹]9Zva–‹só+'l
 Mò<?Ã<‹ø√ºòr˘8uˇ :ˇ “À?âgÚY¸	rœ+?Ç_pﬂπ.IÇx,˛ øÊ'É«÷P„¶„GÓˆ—π∑&V9UeÕ÷È3†G*èFÉ\âÓE?ØYë?á(Cë•ƒÎ˛¡9°?¨dÜ.÷x˝t?äOyé0æø”É«1;Ãm80Ø<–zUiG‹Ñù∞Î=∏îœã˛∞∆W”®ıªÄ3èxh(j1^oä”qñuŒÄ~zpœ∫√ó¯€ßﬁCÆπ„ƒ*ÖıwlƒÌ◊º¶)„√∫¯ˆ‘jLﬂúa)—È”%Îw˚—∫w«À\π|Ã5ÛuÀ‡|πù›ˇ ®-√Ç_‡Ú7Ú˛@æ@ò'Åæ<·ü¿ó%˛`œ˙ Ë<Wè¨˙û`0Xcí}–	Ï.¸xG4?ﬁ*rÅ2W‘«ıäU8Ω~˚3:V˜Zú¸ˇ Î©Ç’√Ù‚tºΩËÉÏÒä.–∏`=ßFf?¸|‹∫ú	]¿ü0]π;’˘>Ã<÷$∏â‡·ê\`≠1.mÀ?\w4ªÅ¡ù÷ëÅ'Å|
-ù∑«Xf	í±…‡≥ Ãπp‹¯á&[&‰∆º>æ`∆ALjÒ>nìp√XÚ ìIêI÷°0ú{1∆ ò!<Ã>Lô3É¸È¸G˛≠fK‡'˘Dæ<˛0_ÊYÜ`æCp‹7,˛$ü»‡$˛)<|á\∑'ê∑ÔDQy¡<üúpã©K⁄ßÓakË‹œ∆ñ_Ò˝z9Z$Löé:¸Í®8%	©j:π;r‹Áï0‚ÙuÄ¸ßo‹”ﬂ§]	xÅ˝ò/' üÔDîÇØ&Hûüa~ë°⁄_ˆ¨◊ÃLÚæòwá¶‹.˙ô_'í›¿)áÙ—Cπnüñr˙40¯[∫œ·<Ÿ¸/õCáp≈£k8ƒ‹)Ç'3X.Ó±\‘0<ÆòÒr‡Ú?»ê·˛GÒÜÎ˛¬˛$øƒYñúó…ëu¡´€‡<ïRÛ‚!…cπçpuôkÌ¿Y1~Ü!ØTOÎ"3‚ˇ ≠ŒCüo∆@Q'ıÄ!œO”π5¸/‰Î‰·È‹&©Ï¯ÔhîÔÒú#íÇÆ:ye#≠è^˜=˝µÈ¿‚çã§ÌÔ¸Û{sC=r=5Ïj˜•ÇµåPﬁã≠ Å¸k¡2¶∫£Ö®ΩoªÅ†M>Pr0x‡SÒ‡‹a‡<.ô~áÎv’”ëzÂßÏ»`Ëz›+à!‚¯∫Â√ª…¸ì yOó&O	ΩÄXk» hD˙òi|Òü·∫ˇ Ÿ‘¨ˇ nøˇŸ@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+ù∑«Xf	í±…‡≥ Ãπp‹¯á&[&‰∆º>æ`∆ALjÒ>nìp√XÚ ìIêI÷°0ú{1∆ ò!<Ã>Lô3É¸È¸G˛≠fK‡'˘Dæ<˛0_ÊYÜ`æCp‹7,˛$ü»‡$˛)<|á\∑'ê∑ÔDQy¡<üúpã©K⁄ßÓakË‹œ∆ñ_Ò˝z9Z$Löé:¸Í®8%	©j:π;r‹Áï0‚ÙuÄ¸ßo‹”ﬂ§]	xÅ˝ò/' üÔDîÇØ&Hûüa~ë°⁄_ˆ¨◊ÃLÚæòwá¶‹.˙ô_'í›¿)áÙ—Cπnüñr˙40¯[∫œ·<Ÿ¸/õCáp≈£k8ƒ‹)Ç'3X.Ó±\‘0<ÆòÒr‡Ú?»ê·˛GÒÜÎ˛¬˛$øƒYñúó…ëu¡´€‡<ïRÛ‚!…cπçpuôkÌ¿Y1~Ü!ØTOÎ"3‚ˇ ≠ŒCüo∆@Q'ıÄ!œO”π5¸/‰Î‰·È‹&©Ï¯ÔhîÔÒú#íÇÆ:ye#≠è^˜=˝µÈ¿‚çã§ÌÔ¸Û{sC=r=5Ïj˜•ÇµåPﬁã≠ Å¸k¡2¶∫£Ö®ΩoªÅ†M>Pr0x‡SÒ‡‹a‡<.ô~áÎv’”ëzÂßÏ»`Ëz›+à!‚¯∫Â√ª…¸ì yOó&O	ΩÄXk» hD˙òi|Òü·∫ˇ Ÿ‘¨ˇ nøˇŸ/* styles.css by Julie Lely */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 html, body {
     max-width: 100%;
@@ -7333,12 +9224,12 @@ nav a {
   flex-direction: row;
   justify-content: center;
   margin: auto;
-  padding: 25px 250px;
+  margin-top: 40px;
 }
 
 .match-section {
   width: 440px;
-  margin-right: 65px;
+  margin-right: 36px;
 }
 
 .section-header {
@@ -7349,18 +9240,46 @@ nav a {
   color: #1B3966;
 }
 
-.match-name {
+.match-name, .match-section-titles {
   font-weight: bold;
   font-size: 24px;
   line-height: 29px;
   margin: 0px;
 }
 
-.match-subheader {
+.insta-button, .facebook-button {
+  margin: 0px;
+  width: 100%;
+}
+
+#phone-button1, #phone-button2 {
+  margin: 0px;
+  width: 48%;
+}
+
+
+.match-section-titles {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.match-subheader, .action-subheader {
   font-size: 14px;
   line-height: 17px;
   color: #696969;
   margin: 0px;
+}
+
+/* .action-subheader {
+  margin-top: 4px;
+} */
+
+#location-label {
+  margin-bottom: 4px;
+}
+
+#location-subheader, #when-subheader {
+  margin-bottom: 8px;
 }
 
 .match-photo {
@@ -7447,12 +9366,19 @@ button {
   transition: .5s ease-out;
 }
 
-#match-button {
+.match-button {
   background-color: #1B3966;
 }
 
 .gray-button {
-  background-color: #F4F4F4;
+  background-color: #eaeaea;
+  color: #2D2D2D;
+  box-shadow: 0px 2px 10px rgb(0 0 0 / 5%);
+}
+
+.phone-box {
+  pointer-events: none;
+  background-color: #eaeaea;
   color: #2D2D2D;
 }
 
@@ -7533,7 +9459,7 @@ button {
   background: rgba(67, 119, 198, 0.8);
 }
 
-#match-button:hover {
+.match-button:hover {
   background: rgba(27, 57, 102, 0.8);}
 
 .gray-button:hover {
@@ -7552,26 +9478,31 @@ button {
 #match-actions > div {
   background: #FFFFFF;
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
+  border-radius: 14px;
   margin-bottom: 24px;
   padding: 20px;
 }
 
 #icebreaker {
-  margin-top: 6px;
-  margin-bottom: 16px;
+  margin: 16px 0px;
+  font-size: 16px;
 }
 
-#icebreaker-buttons {
+#ice-shuffle-button {
+  margin-right: 16px;
+}
+#icebreaker-buttons, #contact-buttons {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
 }
 
-#icebreaker-buttons button{
+#contact-buttons a {
   width: 48%;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.0);
+}
 
+#icebreaker-buttons button, #contact-buttons button{
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.0);
 }
 
 .action-title {
@@ -7593,6 +9524,10 @@ https://github.com/scottaohara/a11y_styled_form_controls/blob/main/src/assets/cs
   margin-top: 12px;
 }
 
+#where-pills {
+  margin-top: 0px;
+}
+
 /* radio groups need a legend */
 .r-pill legend, #avail label {
   font-weight: 500;
@@ -7601,6 +9536,7 @@ https://github.com/scottaohara/a11y_styled_form_controls/blob/main/src/assets/cs
   color: #000000;
   margin-top: 6px;
   margin-bottom: 8px;
+  padding-inline-start: 0px;
 }
 
 /*
@@ -7625,8 +9561,6 @@ https://github.com/scottaohara/a11y_styled_form_controls/blob/main/src/assets/cs
 
 
 .r-pill input {
-	-webkit-appearance: none;
-	-moz-appearance: none;
 	appearance: none;
 	background: none;
 	border: 2px solid;
@@ -7699,10 +9633,11 @@ https://github.com/scottaohara/a11y_styled_form_controls/blob/main/src/assets/cs
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 8px;
+  margin-top: 8px;
   width: 100%;
 }
 
-#notes-textbox {
+.notes-textbox {
   margin-top: 8px;
 }
 
@@ -7761,21 +9696,28 @@ form {
   margin-bottom: 8px;
 }
 
-.signup-container {
+#signup-container, .landing-container, #interests-container {
   background-color: #FFF;
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
   border-radius: 14px;
   width: 440px;
   padding: 24px;
+  margin-bottom: 10px;
 }
 
-#match-button-form, #match-button-form2 {
+#interests-container {
+  display: none;
+}
+
+
+
+.match-button-form {
   width: 100%;
 }
-
+/* 
 #match-button-form2 {
   margin-top: 18px;
-}
+} */
 
 .landing-buttons a {
   text-decoration: none;
@@ -7822,6 +9764,10 @@ form {
   /* height: 100px; */
 }
 
+#schedule-when {
+  font-family: 'Inter';
+}
+
 textarea {
   margin-top: 12px;
   resize: none;
@@ -7839,15 +9785,210 @@ textarea {
   padding: 40px
 }
 
-#match-image-cropped {
+.match-image-cropped {
   width: 100%;
   object-fit: cover;
   height: 380px;
   border-radius: 14px 14px 0px 0px;
 }
 
-#pic-form {
+#pic {
   border: transparent;
   padding: 10px 14px 0px 0px;
   font-family: 'Inter';
+}
+
+.action-title-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.minimize {
+  transform: rotate(-90deg);
+  width: 12px;
+  height: 100%;
+  opacity: 30%;
+  margin-right: 4px;
+}
+
+/* Meeting Box CSS */
+#all-meetings {
+  margin-top: 12px;
+}
+
+.meeting-container {
+  padding: 10px;
+  background-color: #4377C6;
+  color: #FFF;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.meeting-container:last-child {
+  margin-bottom: 0px;
+}
+
+.meeting-time{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.meeting-time p {
+  margin: 0px;
+}
+
+.meeting-title {
+  font-weight: bold;
+  font-size: 16px;
+  color: #FFFFFF;
+  margin: 0px;
+  margin-bottom: 16px;
+}
+
+.location-pill, .cancel-pill {
+  background: #2B3640;
+  border-radius: 100px;
+  padding: 6px 18px;
+  width: fit-content;
+  margin-right: 8px;
+}
+
+.cancel-pill {
+  background: #FFFFFF;
+  color: #4377C6;
+}
+
+.location-pill p, .cancel-pill p{
+  font-weight: bold;
+  font-size: 13px;
+  text-align: center;
+  margin: 0px;
+}
+
+.meeting-options {
+  display: flex;
+  align-items: center;
+}
+
+#delete-meeting, #zoom-meeting {
+  font-size: 13px;
+  border-radius: 100px;
+  padding: 6px 18px;
+  width: fit-content;
+  margin-right: 8px;
+  color: #4377C6;
+  background: white;
+  box-shadow: 0px 2px 4px rgb(0 0 0 / 5%);
+}
+
+#zoom-meeting {
+  background: #2B3640;
+  color: white;
+}
+
+#no-meeting {
+  background: #F4F4F4;
+  color: #000;
+  text-align: center;
+}
+
+#schedule-meeting-container {
+  display: none;
+}
+
+#icebreaker-container {
+  display: none;
+}
+
+#when-label {
+  margin-bottom: 0px;
+}
+
+.social-form {
+  padding: 2px 12px;
+  height: 34px;
+  border: 1.5px solid #C6C7CA;
+  box-sizing: border-box;
+  border-radius: 4px;
+  font-family: 'Inter';
+}
+
+.match-location-info {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.match-campus-info {
+  margin-top: 0px
+}
+
+.socials-flex {
+  display: flex;
+}
+
+.social-links, .phonenumber-form {
+  width: 100%;
+  margin-left: 12px;
+}
+
+.phonenumber-form {
+  display: none;
+}
+
+.two-col-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.two-col-buttons button {
+  width: 48%;
+}
+
+#format-message {
+  padding-top: 8px;
+  display: none;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+}
+
+.search-container input {
+  display: block;
+  padding: 8px 12px;
+  border: 1.5px solid #C6C7CA;
+  box-sizing: border-box;
+  border-radius: 4px;
+  width: 100%;
+  margin-right: 12px;
+  height: 30px;
+}
+
+.search-container label{
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+#search-form {
+  display: flex;
+}
+
+#search-kind {
+  padding: 2px 6px;
+  height: 30px;
+  border: 1.5px solid #C6C7CA;
+  border-radius: 4px;
+  font-family: 'Inter';
+}
+
+#search-button {
+  width: fit-content;
+  padding: 7px 10px;
+  font-size: 14px;
+  margin-left: 12px;
 }

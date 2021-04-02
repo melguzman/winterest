@@ -311,12 +311,9 @@ def makeMatch(location):
     conn = dbi.connect()
     userEmail = session.get('wemail')
     matchEmail = request.form.get('submit')
-    #matches.setMatched(conn, userEmail, matchEmail)
     #return redirect(url_for('home'))
     
     #check if one sided match already exists
-    #print("Does one sided exist?")
-    #print(matches.matchExists(conn, matchEmail, userEmail))
     if matches.matchExists(conn, matchEmail, userEmail): #works perfect
         #print("worked")
         matches.setMatched(conn, userEmail, matchEmail) #updated both so two sided match
@@ -357,7 +354,8 @@ def match(wemail):
     photo = userInfo.find_photo(conn, wemail)
     contacts = profileQueries.find_contacts(conn, wemail)
 
-    #check if this person is a one sided match
+    #check if this person is a one sided match,
+    #would know if a one sided match exists if not symmetric in matches_scored table
     oneSidedMatchStatus = (len(matches.matchExists(conn, wemail, userEmail)) > 0) \
                         and (len(matches.matchExists(conn, userEmail, wemail)) == 0)
 
@@ -367,7 +365,7 @@ def match(wemail):
     return render_template('matches.html', person = completeInfo, 
         oneSDMatchStatus = oneSidedMatchStatus, emojis = emojis, personBio = bio, 
         currentUserInfo = currentUserInfo, photo = photo, meetings = meetings, 
-        contacts=contacts, page_title=completeInfo["fname"] + "'s Profile") #addeddddddddddddd
+        contacts=contacts, page_title=completeInfo["fname"] + "'s Profile")
 
 @app.route('/profile/', methods=['GET','POST'])
 def profile():
@@ -517,6 +515,7 @@ def searched_profile(wemail):
 
 @app.route('/query/')
 def query():
+    '''Redircts/renders to different pages depending on search bar input'''
     userEmail = session.get('wemail')
     if not userEmail:
         flash('Session timed out. Log in again!')
