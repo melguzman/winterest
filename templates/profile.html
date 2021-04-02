@@ -46,15 +46,20 @@
       {% endif %}
       <div class="match-header">
         <h2 class="match-name">{{person.fname}}</h2>
-        <p class="action-subheader">Class of {{person.year}} <br> {{person.major}} Major</p>
+        <p class="action-subheader">Class of {{person.year}}
+          {% if person.pronouns %}
+            <br>{{person.pronouns}}
+          {% endif %}
+        </p>
         <div class="active">
           <p class="profile-bio">
             {{personBio.bio}}
           </p>
           <div id="more-profile">
-            <h2 class="match-section-titles">Location</h2>
+            <h2 class="match-section-titles">More Information</h2>
             <div>
-              <p class="match-location-info">📍{{person.city}},
+              <p>📚 {{person.major}} Major</p>
+              <p class="match-location-info">📍 {{person.city}},
                 {% if person.state %}
                 {{person.state}},
                 {% endif %}

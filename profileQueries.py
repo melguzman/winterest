@@ -89,7 +89,7 @@ def find_contacts(conn, wemail):
 ############ INSERT, UPDATE User Profile
 
 def insert_profile(conn, wemail, fname, lname, country,
-            state, city, major, year, onCampus): #got rid of password and MBCode
+            state, city, major, year, onCampus, pronouns): #got rid of password and MBCode
     '''Takes new user's initial inputs and adds them into the table'''
     # assumption: user MUST input all categories 
     curs = dbi.dict_cursor(conn)
@@ -102,14 +102,14 @@ def insert_profile(conn, wemail, fname, lname, country,
     if len(checkUser) == 0: 
         curs.execute('''lock tables userAccount write''')
         curs.execute('''INSERT INTO userAccount (wemail, fname, lname, country, 
-            state, city, major, year, onCampus) VALUES (%s, %s, %s, %s, 
-            %s, %s, %s, %s, %s)''', 
-            [wemail, fname, lname, country, state, city, major, year, onCampus])
+            state, city, major, year, onCampus, pronouns) VALUES (%s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, %s)''', 
+            [wemail, fname, lname, country, state, city, major, year, onCampus, pronouns])
         curs.execute('''unlock tables''')
     conn.commit()
 
 def update_profile(conn, wemail, fname, lname, country,
-            state, city, major, year, onCampus): #got rid of password
+            state, city, major, year, onCampus, pronouns): #got rid of password
     '''Takes user's changed inputs for their profile and updates the
     profile accordingly'''
 
@@ -131,6 +131,8 @@ def update_profile(conn, wemail, fname, lname, country,
         WHERE wemail = %s''', [year, wemail])
     curs.execute('''UPDATE userAccount SET onCampus = %s
         WHERE wemail = %s''', [onCampus, wemail])
+    curs.execute('''UPDATE userAccount SET pronouns = %s
+        WHERE wemail = %s''', [pronouns, wemail])
     curs.execute('''unlock tables''')
 
     conn.commit()

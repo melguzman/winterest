@@ -20,7 +20,8 @@ create table userAccount (
     country varchar(50),
     state varchar(2),
     city varchar(50),
-    onCampus enum("yes", "no")
+    onCampus enum("yes", "no"),
+    pronouns varchar(10)
 )
 
 ENGINE = InnoDB;

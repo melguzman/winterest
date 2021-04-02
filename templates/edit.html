@@ -25,28 +25,33 @@
         <div class="twocol-flex">
           <div class="textbox signup-textbox">
             <label for="fname">First Name</label>
-            <input type="text" id="fname" name="fname" value={{person.fname}} required>
+            <input type="text" id="fname" name="fname" value="{{person.fname}}"required>
           </div>
 
           <div class="textbox signup-textbox">
             <label for="lname">Last Name</label>
-            <input type="text" id="lname" name="lname" value={{person.lname}} required>
+            <input type="text" id="lname" name="lname" value="{{person.lname}}" required>
           </div>
+        </div>
+
+        <div class="textbox signup-textbox">
+          <label for="pronouns">Pronouns</label>
+          <input type="text" id="pronouns" name="pronouns" value="{{person.pronouns}}">
         </div>
 
         <div class="twocol-flex">
           <div class="textbox signup-textbox">
             <label for="city">City</label>
-            <input type="text" id="city" name="city" value={{person.city}} required>
+            <input type="text" id="city" name="city" value="{{person.city}}" required>
           </div>
           <div class="textbox signup-textbox">
             <label for="state">State</label>
-            <input type="text" id="state" name="state" value={{person.state}}>
+            <input type="text" id="state" name="state" value="{{person.state}}">
           </div>
         </div>
         <div class="textbox signup-textbox">
           <label for="country">Country</label>
-          <input type="text" id="country" name="country" value={{person.country}} required>
+          <input type="text" id="country" name="country" value="{{person.country}}" required>
         </div>
 
         <br>
@@ -83,12 +88,12 @@
         <div class="twocol-flex">
           <div class="textbox signup-textbox">
             <label for="major">Major(s)</label>
-            <input type="text" id="major" name="major" value={{person.major}} required>
+            <input type="text" id="major" name="major" value="{{person.major}}"required>
           </div>
 
           <div class="textbox signup-textbox">
             <label for="year">Year</label>
-            <input type="text" id="year" name="year" value={{person.year}} required>
+            <input type="text" id="year" name="year" value="{{person.year}}" required>
           </div>
         </div>
         <br>

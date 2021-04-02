@@ -62,7 +62,7 @@ def login():
                 # Same response as wrong password,
                 # so no information about what went wrong
                 print("Row is none")
-                flash('Login incorrect. Try again or join')
+                flash('Login incorrect. Try again or sign up')
                 return redirect( url_for('login'))
             hashed = row['hashed']
             hashed2 = bcrypt.hashpw(passwd.encode('utf-8'),
@@ -107,6 +107,7 @@ def signup():
             state = request.form['state']
             city = request.form['city']
             onCampus = request.form['onCampus']
+            pronouns = request.form['pronouns']
 
             # check if the passwords match and if so, 
             # continue to add them to the user pass table
@@ -119,7 +120,8 @@ def signup():
             hashed_str = hashed.decode('utf-8')
             try:
                 # insert user account if passwords match AND username is not taken
-                profileQueries.insert_profile(conn, wemail, fname, lname, country, state, city, major, year, onCampus)
+                profileQueries.insert_profile(conn, wemail, fname, lname, 
+                    country, state, city, major, year, onCampus, pronouns)
                 curs.execute('''INSERT INTO userpass(wemail, hashed)
                             VALUES(%s, %s)''',
                             [wemail, hashed_str])
@@ -400,6 +402,7 @@ def edit():
         conn = dbi.connect()
         info = profileQueries.find_profile(conn, userEmail)
         completeInfo = favoritesInformation(info)
+        print(completeInfo)
         favorites = formatFavorites(completeInfo['favorites'])
         bio = userInfo.getBio(conn, userEmail)
         photo = userInfo.find_photo(conn, userEmail)
@@ -421,8 +424,10 @@ def edit():
         state = request.form['state']
         city = request.form['city']
         onCampus = request.form['onCampus']
+        pronouns = request.form['pronouns']
 
-        profileQueries.update_profile(conn, wemail, fname, lname, country, state, city, major, year, onCampus)
+        profileQueries.update_profile(conn, wemail, fname, lname, 
+            country, state, city, major, year, onCampus, pronouns)
 
         #interests
         book = request.form['book']
@@ -444,7 +449,7 @@ def edit():
         if (social1_type == 'Text'): 
             social1_value = request.form['phonenumber1']
             profileQueries.update_phone(conn, wemail, social1_value, social1_type)
-        else: # for Instagram/Faceobok, which hold links
+        else: # for Instagram/Facebook, which hold links
             # Two cases were necessary since the inputs held different values
             social1_value = request.form['social-url1']
             print(social1_value)
